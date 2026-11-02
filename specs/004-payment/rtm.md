@@ -3,7 +3,7 @@
 รุ่น: 0.2 (AI ร่าง แก้ตาม prompt-log #3) | วันที่: 2026-11-02 | ผู้ตรวจ: (ทีมเติม)
 ร่างโดย AI จาก spec.md v1.1, payment.feature, plan.md, tasks.md, backend/tests/test_payments.py และคอมเมนต์ "รองรับ REQ-xx" ในโค้ด (prompt-log #2)
 **ช่อง "ทีมตัดสิน" ในข้อ 4 ทีมเขียนเอง AI เว้นว่างไว้**
-ผล test อ้างจากการรัน `pytest -v` เมื่อ 2026-11-02 (รอบหลังแก้ prompt-log #3): 25 passed (ยังไม่มีไฟล์ test-run.txt)
+ผล test อ้างจากการรัน `pytest -v` เมื่อ 2026-11-02 (รอบหลังแก้ prompt-log #6): 27 passed (ยังไม่มีไฟล์ test-run.txt)
 
 ## 1. ตามรอยไปข้างหน้า (หลักฐาน ถึง ของที่สร้าง)
 
@@ -14,7 +14,7 @@
 | REQ-FN-402 | ไม่มี EV (US-2) | ใช่ | AC-04-04, AC-04-05 | test_AC_04_04_qr_payload_has_deposit_amount, test_AC_04_05_qr_success_confirms_booking | T-07, T-09, T-10, T-16 | service.promptpay_payload, service.mock_gateway, service.pay, PromptPayPanel.jsx, UI-04-01 | ครบ |
 | REQ-FN-403 | ไม่มี EV (US-3) | ใช่ | AC-04-06, AC-04-07, AC-04-08 | test_AC_04_06_invalid_card_rejected, test_AC_04_07_card_ending_0000_fails_then_retry_succeeds, test_AC_04_08_other_card_success_confirms_booking | T-05, T-07, T-10, T-17 | schemas.CardInfo, service.mock_gateway, CardForm.jsx, UI-04-01 | ครบ (มีของเกิน F-06) |
 | REQ-PRV-401 | ไม่มี EV (AC-3.4) | ใช่ | AC-04-09 | test_AC_04_09_full_card_number_not_stored | T-08 | service.pay (`card_last4`) | ครบ |
-| REQ-FN-404 | ไม่มี EV (US-4, กฎข้อ 8) | ใช่ | AC-04-10, AC-04-11, AC-04-12 | test_AC_04_10_seconds_left_within_15_minutes, test_AC_04_11_timeout_on_pay_cancels_booking, test_AC_04_11_timeout_detected_on_view · AC-04-12 ไม่มี test | T-06, T-09, T-15, T-21 | service.expire_if_timeout, service.summary, Countdown.jsx, UI-04-01 | ขาด (F-03) |
+| REQ-FN-404 | ไม่มี EV (US-4, กฎข้อ 8) | ใช่ | AC-04-10, AC-04-11, AC-04-12 | test_AC_04_10_seconds_left_within_15_minutes, test_AC_04_11_timeout_on_pay_cancels_booking, test_AC_04_11_timeout_detected_on_view, test_AC_04_12_view_returns_timeout_cancel_reason, test_AC_04_12_view_returns_cancel_reason_from_other_feature · AC-04-12 ส่วนหน้าจอยังไม่มี test | T-06, T-09, T-15, T-21 | service.expire_if_timeout, service.summary, Countdown.jsx, UI-04-01 | ขาด (F-03) |
 | REQ-FN-405 | ไม่มี EV (US-5) | ใช่ | AC-04-13, AC-04-14 | test_AC_04_13_non_pending_booking_conflict, test_AC_04_14_cannot_pay_twice | T-08, T-10, T-18 | service.pay, PaymentPage.jsx (ปิดปุ่ม) | ครบ |
 | REQ-IF-401 | ไม่มี EV (US-6) | ใช่ | AC-04-15 ถึง AC-04-18 | test_AC_04_15_refund_sets_refunded, test_AC_04_16_forfeit_sets_forfeited, test_AC_04_17_refund_again_returns_none, test_AC_04_17_no_payment_returns_none, test_AC_04_18_does_not_change_booking_status | T-11, T-24 | service.refund, service.forfeit | ครบ |
 | REQ-IF-402 | ไม่มี EV (spec v1.0 ส่วน 6) | ใช่ | AC-04-05, AC-04-11 | test_AC_04_05_..., test_AC_04_11_timeout_on_pay_cancels_booking | T-02, T-06, T-08 | mock_db.change_status | ครบ |

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+// UI-04-01 เวลาที่เหลือ mm:ss — รองรับ REQ-FN-404 (AC-04-10, AC-04-12)
 // นับถอยหลังจาก seconds_left ที่ backend ส่งมา (กฎข้อ 8)
 export default function Countdown({ secondsLeft, onExpire }) {
   const [left, setLeft] = useState(secondsLeft);
@@ -18,10 +19,10 @@ export default function Countdown({ secondsLeft, onExpire }) {
   const mm = String(Math.floor(Math.max(left, 0) / 60)).padStart(2, "0");
   const ss = String(Math.max(left, 0) % 60).padStart(2, "0");
   return (
-    <div className={`countdown ${left <= 120 ? "urgent" : ""}`}>
-      <span>ชำระมัดจำภายใน</span>
-      <strong>{mm}:{ss}</strong>
-      <small>ไม่ชำระภายใน 15 นาที ระบบจะยกเลิกการจองอัตโนมัติ</small>
+    <div className="timer">
+      ชำระมัดจำภายใน
+      <b>{mm}:{ss}</b>
+      ไม่ชำระภายใน 15 นาที ระบบจะยกเลิกการจองอัตโนมัติ
     </div>
   );
 }

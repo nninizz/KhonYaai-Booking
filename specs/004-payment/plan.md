@@ -80,7 +80,7 @@ npm run dev                                    # http://localhost:5173
 
 | รายการ | input / output หลัก | รองรับ |
 |---|---|---|
-| `GET /api/payments/{booking_id}` | out: `booking_status, total_price, deposit_amount, remaining_amount, expires_at, seconds_left, promptpay_qr, payments[]` · 404 | REQ-FN-401, REQ-FN-402, REQ-FN-404, REQ-SEC-401 |
+| `GET /api/payments/{booking_id}` | out: `booking_status, total_price, deposit_amount, remaining_amount, cancel_reason, expires_at, seconds_left, promptpay_qr, payments[]` · 404 | REQ-FN-401, REQ-FN-402, REQ-FN-404, REQ-SEC-401 |
 | `POST /api/payments` | in: `booking_id, method, card?` (ไม่มี amount) · out: 201 / 402 / 404 / 409 / 422 | REQ-FN-402, REQ-FN-403, REQ-FN-405, REQ-PRV-401, REQ-DAT-401 |
 | `service.refund(booking_id)` / `service.forfeit(booking_id)` | `dict \| None` | REQ-IF-401 |
 | `service.expire_if_timeout(booking)` | `bool` | REQ-FN-404 |
@@ -129,7 +129,7 @@ npm run dev                                    # http://localhost:5173
 | AC-04-09 | `test_AC_04_09_full_card_number_not_stored` | `card_last4 == "1111"` และไม่มีเลขเต็มใน payment |
 | AC-04-10 | `test_AC_04_10_seconds_left_within_15_minutes` | `0 < seconds_left <= 900` (รูปแบบ mm:ss บนจอ รอ Q-04) |
 | AC-04-11 | `test_AC_04_11_timeout_on_pay_cancels_booking`, `test_AC_04_11_timeout_detected_on_view` | แก้ `created_at` ย้อน 15:01 / 16 นาที → CANCELLED โดย system, POST 409, GET 200 พร้อม CANCELLED |
-| AC-04-12 | `AC-04-12.test.jsx` (รอ Q-04) | Countdown ถึง 0 → ไม่มีปุ่มจ่าย มีข้อความยกเลิก |
+| AC-04-12 | `test_AC_04_12_view_returns_timeout_cancel_reason`, `test_AC_04_12_view_returns_cancel_reason_from_other_feature` (หลังบ้าน) · `AC-04-12.test.jsx` (รอ Q-04) | GET ส่ง cancel_reason ตามที่บันทึก หรือ null · หน้าจอ: Countdown ถึง 0 → ไม่มีปุ่มจ่าย มีข้อความยกเลิก |
 | AC-04-13 | `test_AC_04_13_non_pending_booking_conflict` | booking CANCELLED → POST 409 ไม่มี payment |
 | AC-04-14 | `test_AC_04_14_cannot_pay_twice` | จ่ายสำเร็จแล้วจ่ายซ้ำ → 409 payment 1 รายการ |
 | AC-04-15 | `test_AC_04_15_refund_sets_refunded` | refund → REFUNDED + refunded_at |

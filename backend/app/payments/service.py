@@ -49,7 +49,7 @@ def payments_of(booking_id):
 
 
 def summary(booking_id, user):
-    # รองรับ REQ-FN-401, REQ-FN-404 (AC-04-01, AC-04-10, AC-04-11)
+    # รองรับ REQ-FN-401, REQ-FN-404 (AC-04-01, AC-04-10, AC-04-11, AC-04-12)
     booking = find_booking(booking_id, user)
     expire_if_timeout(booking)
     pending = booking["status"] == "PENDING_DEPOSIT"
@@ -60,6 +60,7 @@ def summary(booking_id, user):
         "total_price": booking["total_price"],
         "deposit_amount": booking["deposit_amount"],
         "remaining_amount": booking["remaining_amount"],
+        "cancel_reason": booking.get("cancel_reason"),   # AC-04-12 หน้าจอแสดงเหตุผลการยกเลิก
         "expires_at": expires_at(booking),
         "seconds_left": seconds_left,
         "promptpay_qr": promptpay_payload(booking) if pending else None,

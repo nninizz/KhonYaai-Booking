@@ -1,6 +1,6 @@
 # SPEC-04 | ชำระค่าบริการ (Payment) (UC-04)
 
-version: 1.2 | status: draft | owner: กลุ่ม Khonย้าย (ApiwanK) / PO: SH-xx (ยังไม่ระบุ) | date: 2026-11-02
+version: 1.3 | status: draft | owner: กลุ่ม Khonย้าย (ApiwanK) / PO: SH-xx (ยังไม่ระบุ) | date: 2026-11-02
 baseline: ยังไม่เข้า Baseline | supersedes: spec.md v1.0 (khonyaai-payment.zip) | related: 003-booking (③), 005-tracking (⑤), 006-cancel (⑥), ② ยืนยันตัวตน | feature file: payment.feature v1.0
 Constraint กลาง: ยังไม่มี specs/000-shared/constraints.md (ดู Q-03) | mockups: UI-04-01 (ร่าง รอ PO ยืนยัน)
 
@@ -15,6 +15,7 @@ Constraint กลาง: ยังไม่มี specs/000-shared/constraints.m
 | 1.0 (v1) | 2026-11-02 | spec ฉบับแรกของ feature ④ (วัตถุประสงค์ ขอบเขต กฎ US/AC API ข้อมูล สถานะ จุดเชื่อม) | เริ่ม feature | ผู้รับผิดชอบ ④ |
 | 1.1 | 2026-11-02 | จัดเนื้อหาเดิมเข้าโครง 12 ส่วน ตั้งรหัส REQ / AC-04-nn / BR / MD / UI ย้ายกฎไป rules.md โมเดลไป models.md AC ไป payment.feature เพิ่ม Q-01 ถึง Q-08 จากความกำกวมที่พบ | ให้ตรงรูปแบบ template และกฎข้อ 8 ของ AGENTS.md | AI ร่าง (prompt-log #2) ทีมตรวจ |
 | 1.2 | 2026-11-02 | AC-04-11 ระบุผลแยก: เรียกดู (GET) ตอบ 200 พร้อม CANCELLED และ seconds_left 0, จ่าย (POST) ตอบ 409 ปิด Q-06 · AC-04-02 ถ้อยคำ "ส่วนที่เหลือ X บาท จ่ายกับคนขับหลังจบงาน" ต้องตรงทุกตัวอักษร ปิด Q-07 | ทีมตัดสินให้ AC ตรงกับส่วน API และโค้ด และให้หน้าจอใช้ถ้อยคำของ AC | ทีมสั่ง AI แก้ (prompt-log #3) |
+| 1.3 | 2026-11-02 | ส่วน 5 API: `GET /api/payments/{booking_id}` ส่ง `cancel_reason` (ข้อความเหตุผลการยกเลิก หรือ `null`) เพิ่มคำอธิบายการแสดงผลตอนยกเลิก | ข้อความ "ไม่ชำระมัดจำภายใน 15 นาที" บนหน้าจอผิดเมื่อการจองถูกยกเลิกด้วยเหตุอื่น (เช่น ⑥) | ทีมสั่ง AI แก้ (prompt-log #6) |
 
 ## 1. Intent
 
@@ -91,13 +92,16 @@ Non-goals:
   "total_price": 300,
   "deposit_amount": 90,
   "remaining_amount": 210,
+  "cancel_reason": null,
   "expires_at": "2026-11-02T10:15:00",
   "seconds_left": 742,
   "promptpay_qr": "MOCK-PROMPTPAY|KHONYAI|BK1|90.00",
   "payments": [ { "id": 1, "amount": 90, "method": "CREDIT_CARD", "status": "FAILED", "card_last4": "0000", "paid_at": null, "refunded_at": null, "created_at": "..." } ]
 }
 ```
-ถ้าหมดเวลา booking ถูกยกเลิก และตอบ 200 พร้อม `booking_status: "CANCELLED"`, `seconds_left: 0` ส่วน POST ตอบ 409 (AC-04-11)
+ถ้าหมดเวลา booking ถูกยกเลิก และตอบ 200 พร้อม `booking_status: "CANCELLED"`, `seconds_left: 0` และ `cancel_reason: "ไม่ชำระมัดจำภายใน 15 นาที"` ส่วน POST ตอบ 409 (AC-04-11)
+
+`cancel_reason` คือค่า `bookings.cancel_reason` ตามที่ feature ที่ยกเลิกบันทึกไว้ (④ บันทึกเมื่อหมดเวลา ⑥ บันทึกเมื่อลูกค้ายกเลิก) เป็น `null` ถ้ายังไม่ยกเลิกหรือไม่มีการบันทึกเหตุผล หน้าจอแสดงหัวข้อ "การจองนี้ถูกยกเลิกแล้ว" ตามด้วย `cancel_reason` ถ้ามี (AC-04-12)
 
 `POST /api/payments` (REQ-FN-402, REQ-FN-403, REQ-FN-405)
 ```json

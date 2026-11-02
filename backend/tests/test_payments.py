@@ -148,6 +148,27 @@ def test_AC_04_11_timeout_detected_on_view():
     assert s["booking_status"] == "CANCELLED"
 
 
+def test_AC_04_12_view_returns_timeout_cancel_reason():
+    # หน้าจอแสดงเหตุผลการยกเลิกจาก cancel_reason
+    b = seed()
+    s = client.get(f"/api/payments/{b['id']}", headers=AUTH).json()
+    assert s["cancel_reason"] is None
+    mock_db.bookings[0]["created_at"] = datetime.now() - timedelta(minutes=16)
+    s = client.get(f"/api/payments/{b['id']}", headers=AUTH).json()
+    assert s["booking_status"] == "CANCELLED"
+    assert s["cancel_reason"] == "ไม่ชำระมัดจำภายใน 15 นาที"
+
+
+def test_AC_04_12_view_returns_cancel_reason_from_other_feature():
+    # ยกเลิกด้วยเหตุอื่น (เช่น ⑥) ได้ cancel_reason ตามที่ feature นั้นบันทึก หรือ None ถ้าไม่ได้บันทึก
+    b1, b2 = seed(), seed()
+    mock_db.bookings[0]["cancel_reason"] = "ลูกค้ายกเลิกเอง"
+    mock_db.change_status(mock_db.bookings[0], "CANCELLED", "customer")
+    mock_db.change_status(mock_db.bookings[1], "CANCELLED", "customer")
+    assert client.get(f"/api/payments/{b1['id']}", headers=AUTH).json()["cancel_reason"] == "ลูกค้ายกเลิกเอง"
+    assert client.get(f"/api/payments/{b2['id']}", headers=AUTH).json()["cancel_reason"] is None
+
+
 # ---- US-5 กันจ่ายซ้ำ / จ่ายผิดสถานะ (REQ-FN-405) ----
 
 def test_AC_04_13_non_pending_booking_conflict():

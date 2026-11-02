@@ -1,4 +1,5 @@
-// ④ หน้าชำระมัดจำ — รับ bookingId จากหน้าจองของ ③
+// ④ หน้าชำระมัดจำ (UI-04-01 mockups/UI-04-01-payment.html) — รับ bookingId จากหน้าจองของ ③
+// รองรับ REQ-FN-401, REQ-FN-402, REQ-FN-403, REQ-FN-404, REQ-FN-405
 import { useCallback, useEffect, useState } from "react";
 import { createPayment, getPayment } from "../api.js";
 import CardForm from "./CardForm.jsx";
@@ -7,19 +8,25 @@ import PromptPayPanel from "./PromptPayPanel.jsx";
 
 const METHOD_LABEL = { PROMPTPAY_QR: "QR พร้อมเพย์", CREDIT_CARD: "บัตรเครดิต" };
 const PAY_STATUS_LABEL = { SUCCESS: "สำเร็จ", FAILED: "ไม่สำเร็จ", REFUNDED: "คืนเงินแล้ว", FORFEITED: "ริบมัดจำ" };
-const BOOKING_STATUS_LABEL = {
-  PENDING_DEPOSIT: "รอชำระมัดจำ", CONFIRMED: "จองสำเร็จ", FINDING_DRIVER: "กำลังหาคนขับ",
-  DRIVER_ACCEPTED: "คนขับรับงาน", COMPLETED: "จบงาน", CANCELLED: "ยกเลิกแล้ว",
-};
+const FAIL_TITLE = "ชำระเงินไม่สำเร็จ";
 
 const baht = (n) => `${n.toLocaleString()} บาท`;
 const time = (s) => (s ? new Date(s).toLocaleTimeString("th-TH") : "-");
+
+function Alert({ ok, title, children }) {
+  return (
+    <div className={`alert${ok ? " ok" : ""}`} role={ok ? "status" : "alert"}>
+      <b>{title}</b>
+      {children}
+    </div>
+  );
+}
 
 export default function PaymentPage({ bookingId }) {
   const [info, setInfo] = useState(null);
   const [method, setMethod] = useState("PROMPTPAY_QR");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState(null); // { type: "error" | "success", text }
+  const [message, setMessage] = useState(null); // ข้อความผิดพลาดจากการจ่ายครั้งล่าสุด
   const [loadError, setLoadError] = useState("");
 
   const load = useCallback(async () => {
@@ -38,44 +45,44 @@ export default function PaymentPage({ bookingId }) {
     setMessage(null);
     try {
       await createPayment({ booking_id: bookingId, method, ...(card ? { card } : {}) });
-      setMessage({ type: "success", text: "ชำระมัดจำสำเร็จ การจองของคุณได้รับการยืนยันแล้ว" });
     } catch (e) {
-      setMessage({ type: "error", text: e.message });
+      // AC-04-07: หัวข้อ "ชำระเงินไม่สำเร็จ" ตามด้วยรายละเอียดจาก backend
+      setMessage(e.message.replace(new RegExp(`^${FAIL_TITLE}\\s*`), ""));
     } finally {
       setBusy(false);
       load();
     }
   }
 
-  if (loadError) return <section className="card"><p className="msg error">{loadError}</p></section>;
-  if (!info) return <section className="card"><p className="muted">กำลังโหลด…</p></section>;
+  if (loadError) {
+    return <section className="card"><div className="bar">ชำระมัดจำ</div><Alert title={FAIL_TITLE}>{loadError}</Alert></section>;
+  }
+  if (!info) return <section className="card"><div className="bar">ชำระมัดจำ</div><p className="hint">กำลังโหลด…</p></section>;
 
   const pending = info.booking_status === "PENDING_DEPOSIT";
 
   return (
     <section className="card">
-      <div className="head">
-        <h2>ชำระมัดจำ · การจอง #{info.booking_id}</h2>
-        <span className={`badge s-${info.booking_status}`}>{BOOKING_STATUS_LABEL[info.booking_status]}</span>
-      </div>
+      <div className="bar">ชำระมัดจำ</div>
 
-      <dl className="summary">
-        <div><dt>ค่าบริการทั้งหมด</dt><dd>{baht(info.total_price)}</dd></div>
-        <div className="hl"><dt>มัดจำ 30% (ชำระตอนนี้)</dt><dd>{baht(info.deposit_amount)}</dd></div>
-        <div><dt>ส่วนที่เหลือ 70%</dt><dd>{baht(info.remaining_amount)}</dd></div>
-      </dl>
-      <p className="muted small">ส่วนที่เหลือ {baht(info.remaining_amount)} จ่ายกับคนขับหลังจบงาน</p>  {/* AC-04-02 ต้องตรงทุกตัวอักษร */}
-
-      {pending && <Countdown secondsLeft={info.seconds_left} onExpire={load} />}
-
-      {message && <p className={`msg ${message.type}`}>{message.text}</p>}
+      {pending && message && <Alert title={FAIL_TITLE}>{message}</Alert>}
 
       {pending && (
         <>
+          <div className="sum">
+            <div><span>ค่าบริการทั้งหมด</span><span>{baht(info.total_price)}</span></div>
+            <div className="hl"><span>มัดจำ 30% (ชำระตอนนี้)</span><span>{baht(info.deposit_amount)}</span></div>
+            <div><span>ส่วนที่เหลือ 70%</span><span>{baht(info.remaining_amount)}</span></div>
+          </div>
+          {/* AC-04-02 ต้องตรงทุกตัวอักษร */}
+          <p className="hint">ส่วนที่เหลือ {baht(info.remaining_amount)} จ่ายกับคนขับหลังจบงาน</p>
+
+          <Countdown secondsLeft={info.seconds_left} onExpire={load} />
+
           <div className="tabs" role="tablist">
             {Object.entries(METHOD_LABEL).map(([key, label]) => (
               <button key={key} role="tab" aria-selected={method === key}
-                className={method === key ? "active" : ""} onClick={() => setMethod(key)}>
+                className={method === key ? "on" : ""} onClick={() => setMethod(key)}>
                 {label}
               </button>
             ))}
@@ -90,15 +97,21 @@ export default function PaymentPage({ bookingId }) {
       )}
 
       {info.booking_status === "CONFIRMED" && (
-        <div className="done">
-          <p>จองสำเร็จ ระบบกำลังหาคนขับในละแวกใกล้เคียง</p>
-          <button className="primary" disabled title="ต่อกับหน้า ⑤ ติดตามสถานะ">ไปหน้าติดตามสถานะ</button>
-        </div>
+        <>
+          <Alert ok title="จองสำเร็จ">ชำระมัดจำสำเร็จ การจองของคุณได้รับการยืนยันแล้ว</Alert>
+          {/* รอ Q-05: ข้อความและปุ่มของ ⑤ คงไว้ตามเดิมจนกว่าทีมตัดสิน */}
+          <div className="done">
+            <p>จองสำเร็จ ระบบกำลังหาคนขับในละแวกใกล้เคียง</p>
+            <button className="btn" disabled title="ต่อกับหน้า ⑤ ติดตามสถานะ">ไปหน้าติดตามสถานะ</button>
+          </div>
+        </>
       )}
       {info.booking_status === "CANCELLED" && (
-        <p className="msg error">การจองนี้ถูกยกเลิกแล้ว (ไม่ชำระมัดจำภายใน 15 นาที หรือถูกยกเลิก)</p>
+        // AC-04-12: แสดงเหตุผลจาก cancel_reason ถ้ามี ถ้าไม่มีแสดงแค่หัวข้อ
+        <Alert title="การจองนี้ถูกยกเลิกแล้ว">{info.cancel_reason}</Alert>
       )}
 
+      {/* รอ Q-05: ตารางประวัติการชำระ ไม่มี REQ รองรับ คงไว้ตามเดิมจนกว่าทีมตัดสิน */}
       {info.payments.length > 0 && (
         <>
           <h3>ประวัติการชำระ</h3>

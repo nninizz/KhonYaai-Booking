@@ -1,3 +1,4 @@
+// UI-04-01 แท็บบัตรเครดิต — รองรับ REQ-FN-403 (AC-04-06)
 import { useState } from "react";
 
 // ตรวจรูปแบบฝั่งเว็บก่อนส่ง (backend ตรวจซ้ำเสมอ)
@@ -41,13 +42,13 @@ export default function CardForm({ amount, disabled, onSubmit }) {
     <form className="panel" onSubmit={submit} noValidate>
       <label className="field">
         เลขบัตร
-        <input inputMode="numeric" autoComplete="cc-number" placeholder="4111 1111 1111 1111"
+        <input inputMode="numeric" autoComplete="cc-number"
           value={card.number} onChange={set("number", formatNumber)} />
         {errors.number && <span className="err">{errors.number}</span>}
       </label>
       <label className="field">
         ชื่อบนบัตร
-        <input autoComplete="cc-name" placeholder="SOMCHAI JAIDEE"
+        <input autoComplete="cc-name"
           value={card.holder_name} onChange={set("holder_name", (v) => v.toUpperCase())} />
         {errors.holder_name && <span className="err">{errors.holder_name}</span>}
       </label>
@@ -60,13 +61,12 @@ export default function CardForm({ amount, disabled, onSubmit }) {
         </label>
         <label className="field">
           CVV
-          <input inputMode="numeric" autoComplete="cc-csc" placeholder="123" type="password"
+          <input inputMode="numeric" autoComplete="cc-csc" type="password"
             value={card.cvv} onChange={set("cvv", (v) => v.replace(/\D/g, "").slice(0, 3))} />
           {errors.cvv && <span className="err">{errors.cvv}</span>}
         </label>
       </div>
-      <p className="muted small">ทดสอบ: เลขบัตรลงท้าย 0000 = ชำระไม่สำเร็จ · เลขอื่น = สำเร็จ</p>
-      <button className="primary" type="submit" disabled={disabled}>
+      <button className="btn" type="submit" disabled={disabled}>
         ชำระ {amount.toLocaleString()} บาท
       </button>
     </form>
