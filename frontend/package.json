@@ -1,0 +1,19 @@
+{
+  "name": "tracking-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "description": "frontend ของ 005-tracking (T-02) รองรับ REQ-IF-001, REQ-QA-001",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "jsdom": "25.0.1",
+    "vite": "5.4.11",
+    "vitest": "2.1.5"
+  }
+}

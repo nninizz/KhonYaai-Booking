@@ -6,3 +6,353 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 
 ## #1 | <วันที่> | <เครื่องมือ> | <คำสั่ง>
 
+## #2 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | อ่าน Google Sheet และ Google Drive แล้วทำ plan.md เฉพาะการ tracking คนขับมาหาลูกค้า REQ-IF-001, REQ-QA-001
+
+- AI รายงาน: specs/005-tracking/spec.md, feature.feature, rules.md, models.md เป็นแม่แบบว่าง, ไม่มี specs/000-shared/constraints.md, ไม่มี docs/srs/catalogue.md, ไฟล์ Drive (context_diagram .drawio) ต้อง login จึงเปิดไม่ได้
+- AI ถาม: Q-01 ใช้ผู้ให้บริการแผนที่รายใด, Q-02 15 วินาทีหมายถึงอะไร, Q-03 ลูกค้าเห็นตำแหน่งช่วงไหน, Q-04 ถึง Q-10 (ดู plan.md ส่วน 8)
+- คำตอบของทีม: ดูบันทึก #3
+- AI เดา: ระบุ Intent จาก EV-009 และ EV-017 ซึ่งยัง pending verification, ตั้งชื่อกลุ่มในแผนว่า "ข้อกำหนดขนย้าย" จากชื่อ Sheet
+
+## #3 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-01 ถึง Q-03 ให้อัปเดต plan.md
+
+- คำตอบของทีม: Q-01 ใช้ Google Maps, Q-02 รับตำแหน่งจากแอปคนขับ และ 15 วินาทีคือรอบการอัปเดตพิกัดของคนขับ, Q-03 ตั้งแต่คนขับรับงานจนรถถึงปลายทาง และไม่แสดงตำแหน่งหลังจบงาน
+- AI อัปเดต plan.md เป็นเวอร์ชัน 0.2 และบันทึกเป็น D-05-01 ถึง D-05-03
+- AI รายงาน: Google Maps ไม่ได้ให้ตำแหน่งสดของรถโดยตรง พิกัดมาจาก GPS ของมือถือคนขับ จึงเพิ่ม Q-11 และ Q-12
+- AI เดา: ไม่มี
+
+## #4 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทำ spec.md ของ 005-tracking ก่อน
+
+- AI เขียน spec.md เวอร์ชัน 0.1 สถานะ draft ครบ 12 ส่วน ใช้ ID เดิมจาก Sheet คือ REQ-IF-001 และ REQ-QA-001
+- AI ถาม: Q-13 "รถถึงปลายทาง" นิยามอย่างไร, Q-04, Q-05, Q-11, Q-12 ต้องตอบก่อนเขียน AC
+- AI เดา: ยังไม่มี UC สำหรับการติดตาม จึงเขียนเป็น "ยังไม่ระบุ" ไม่สร้างขึ้นเอง, ส่วน Constraints ใช้แบบ ก เพราะยังไม่มีไฟล์กลาง
+
+## #5 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมสั่งให้เพิ่มบันทึกใน prompt-log.md และข้ามทุกอย่างที่ไม่เกี่ยวกับ tracking
+
+- คำสั่งของทีม: เพิ่ม prompt-log.md และข้ามเรื่องที่ไม่เกี่ยวกับ tracking
+- AI ทำ: บันทึกเฉพาะงานของ 005-tracking, ไม่แก้หรือเพิ่มข้อมูลของ feature อื่น (001 ถึง 004, 006), ไม่เติม REQ อื่นจาก Sheet เช่น REQ-DAT-001, REQ-OP-001, REQ-FN-001, REQ-PRV-001 (ยกเว้นที่ spec 005 อ้างเพราะเกี่ยวกับพิกัดคนขับ)
+- AI เดา: ไม่มี
+
+## #6 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-04 ถึง Q-13 ให้อัปเดต spec.md และ plan.md
+
+- คำตอบของทีม: Q-04 ยืนยัน 15 วินาทีแล้ว, Q-05 ควรเห็นตำแหน่งล่าสุดของคนขับ, Q-06 เป็น REQ ใหม่ได้, Q-07 เป็นข้อมูลส่วนบุคคลตาม PDPA และลบหลังคนขับกดยืนยันส่งงาน, Q-08 ระยะคลาดเคลื่อนไม่เกิน 20 ม., Q-09 แสดงเวลาถึงโดยประมาณ, Q-10 ไม่มี, Q-11 รับพิกัดจากแอปคนขับและใช้ Google Maps ทั้งสองอย่าง, Q-12 ระบบดันเอง 5 วินาที, Q-13 รถถึงปลายทางคือรับจากต้นทางแล้วส่งถึงปลายทางที่ผู้ใช้ปักหมุด
+- AI อัปเดต spec.md เป็นเวอร์ชัน 0.2 และ plan.md เป็นเวอร์ชัน 0.3
+- AI ถาม: Q-14 การดันทุก 5 วินาทีกับการส่งจากคนขับทุก 15 วินาทีใช้ค่าไหนเป็นเกณฑ์, Q-15 ขอ REQ-ID ของ ETA และการแจ้งเตือนสถานะงาน, Q-16 วิธีตรวจว่ารถถึงปลายทาง, Q-17 พิกัดปลายทางเป็น PII หรือไม่, Q-18 ตอนสัญญาณหายแสดงเวลาตำแหน่งล่าสุดหรือไม่
+- AI เดา: ไม่มี ยกเว้นการใช้ 15 วินาทีเป็นเกณฑ์ชั่วคราวจนกว่า Q-14 จะตอบ
+
+## #7 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-14 ถึง Q-18 ให้อัปเดต spec.md และ plan.md
+
+- คำตอบของทีม: Q-14 ใช้ 15 วินาที, Q-15 ตามที่เห็นควร, Q-16 รัศมี 100 เมตร, Q-17 เป็น PII, Q-18 แสดงเวลาของปัจจุบัน
+- AI อัปเดต spec.md เป็นเวอร์ชัน 0.3 และ plan.md เป็นเวอร์ชัน 0.4
+- AI ตัดสินใจ Q-15 ตามที่ทีมมอบหมาย: ไม่สร้าง REQ-ID ใหม่ (กติกาข้อ 5) ETA แสดงตาม Q-09 แต่ไม่มี requirement การแจ้งเตือนสถานะยังไม่อยู่ในขอบเขต (D-05-15)
+- AI ถาม: ขอให้ทีมกำหนด REQ-ID และข้อความของ ETA และการแจ้งเตือนสถานะ
+- AI เดา: (ก) Q-14 ตีความว่า 15 วินาทีใช้ทั้งการส่งจากคนขับและการอัปเดตให้ลูกค้า จึงแทนการดัน 5 วินาทีเดิม (D-05-11) (ข) Q-18 "แสดงเวลาของปัจจุบัน" ตีความว่าเวลาของตำแหน่งล่าสุด ต้องยืนยัน (D-05-14)
+
+## #8 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /plan (ค้าง ยังไม่ได้ทำ) และ /clarify ส่วน A-C (รอบแรก)
+
+- คำสั่ง /plan: AI หยุดก่อนร่าง เพราะ plan.md มีอยู่แล้ว (v0.4) และยังไม่มีการเลือกเทคโนโลยี ถามทีม 2 เรื่อง (ร่างใหม่ทั้งไฟล์หรือแก้บางหัวข้อ, เทคโนโลยี) ทีมปฏิเสธคำถาม จึงยังไม่ได้ทำ
+- คำสั่ง /clarify: AI อ่าน specs/005-tracking/spec.md v0.3 (ใช้ 005-tracking เพราะเป็นฟีเจอร์ที่ทำอยู่) พบจุดกำกวม 13 แถว และถามทีม 8 ข้อ (Q1 ถึง Q8: จุดเริ่มนับ, ไม่กดยืนยันหรือนอกรัศมี, ยกเลิกงาน, ระบบภายนอกล่ม, ค่าเก่าของตำแหน่ง, วิธีวัด 20 ม., ความยินยอม PDPA, ที่มาของปลายทาง)
+- คำตอบของทีม: "ทำสิ่งที่เห็นตามสมควร ระบบควรมีและสากลใช้"
+- AI แก้ spec.md เป็นเวอร์ชัน 0.4 ตามการตัดสินใจ ดังนี้
+  - จุดเริ่มนับ: กลับไปเป็น "รับงาน" ตามคำตอบ Q-03 เดิม (AS-02, D-05-16) v0.3 เขียนผิดเป็น "รับของจากต้นทาง"
+  - ยกเลิกงาน: หยุดและลบทันที (AS-05, D-05-17)
+  - Google Maps หรือ GPS ใช้ไม่ได้: แสดง "ตำแหน่งไม่พร้อมใช้งาน" และเวลาตำแหน่งล่าสุด (AS-06, D-05-18)
+  - ไม่ได้รับตำแหน่งนานเกิน 60 วินาที: แสดงป้ายไม่เป็นปัจจุบัน (AS-07, D-05-19)
+  - ความคลาดเคลื่อน 20 ม.: เปอร์เซ็นไทล์ที่ 95 (AS-08, D-05-20)
+  - "15 วินาที" ใน REQ-QA-001: ช่วงห่างสูงสุดระหว่างการอัปเดตที่ต่อเนื่องกัน (AS-09)
+  - กดยืนยันนอกรัศมี: ยอมรับ ไม่บล็อก (AS-03, D-05-22)
+  - ไม่กดยืนยัน: ลบเมื่อครบ 24 ชั่วโมง ค่าชั่วคราว (AS-04, D-05-21, Q-19)
+  - ความยินยอม: ยังไม่มีขั้นตอนแยก ส่งให้ที่ปรึกษากฎหมาย (AS-11, Q-20)
+  - ปลายทาง: ใช้พิกัดที่ปักหมุดเป็นแหล่งเดียว ไม่ดึงจากการจอง (AS-10, D-05-23)
+  - เพิ่มคำศัพท์ในส่วน 3 (ลูกค้า คนขับ ระบบ Google Maps) และเปลี่ยน ETA ออกจากหัวข้อ In
+- AI ถาม: Q-21 ต้องการแยก REQ-IF-001 หรือไม่ (ต้องมี ID ใหม่), Q-22 จำนวนรอบทดสอบ
+- AI เดา: AS-02 ถึง AS-11 และ D-05-14, D-05-15, D-05-16 ถึง D-05-23 เป็นการตัดสินใจของ AI ต้องให้ทีมยืนยันก่อน Baseline
+- ยังไม่ได้ทำ: ร่าง plan.md ใหม่ (plan v0.4 ตามสเปกเก่า ต้องร่างใหม่ตาม v0.4 เมื่อทีมตอบเรื่องวิธี) และเลือกเทคโนโลยี (ทีมต้องตัดสิน)
+
+## #9 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement ด้วย React.js หลังบ้านใช้ python (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนเขียนโค้ด เพราะ (1) คำสั่งไม่มี ID ของ task และกติกาห้ามเลือกเอง (2) ยังไม่มี specs/005-tracking/tasks.md (ค้นทั้ง specs/*/tasks.md ไม่พบ) (3) plan.md ยังเป็น v0.4 ที่อ้างสเปกเก่า และยังไม่มี AC ใน feature file จึงไม่มี task ให้ประกบ
+- ทีมระบุเทคโนโลยี React.js (frontend) และ Python (backend) ใน /implement ซึ่งเป็นการตัดสินใจของทีม ยังไม่ได้บันทึกใน plan.md หรือเป็น D-00-xx
+
+## #10 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /plan ร่าง plan.md ใหม่ทั้งไฟล์ React + Python (ทีมสั่ง)
+
+- ทีมสั่งให้ร่าง plan.md ใหม่ทั้งไฟล์ และเลือก React.js (frontend) และ Python (backend)
+- AI เขียน plan.md เป็นเวอร์ชัน 0.5 ตามโครง 8 หัวข้อของ /plan
+- AI รายงาน: ไม่มี constraints.md จึงตรวจ Constraint กลางไม่ได้ spec ยังเป็น status draft ไม่ใช่ Draft v1 ยังไม่มี AC-05-nn และ feature file ยังว่าง จึงทำแผนทดสอบจาก REQ เป็นร่างก่อน
+- AI ถาม: Q-23 ฐานข้อมูลที่ใช้, Q-24 วิธีส่งค่าไปแอปลูกค้า (polling หรือ WebSocket) และให้ทีมยืนยันชุดเสนอ FastAPI, React Tailwind, Vite, pytest, Vitest
+- AI เดา: ใช้ FastAPI, Vite, pytest, Vitest เป็นข้อเสนอ (ยังไม่ได้ตัดสิน) และเสนอ polling เป็นการส่งค่าไปแอปลูกค้า (ยังไม่ได้ตัดสิน)
+
+## #11 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /tasks แตก plan.md เป็น tasks.md (specs/005-tracking/tasks.md)
+
+- AI สร้าง tasks.md ใหม่ (ยังไม่มีไฟล์เดิม) ทั้งหมด 17 task คือ T-00 ถึง T-16 ตามโครงของ /tasks
+- สถานะ: T-00 รอทีมเขียน AC, T-05 และ T-14 พร้อมทำ (ต้องรอ T-01 หรือ T-02 ก่อน), ที่เหลือรอ Q-23 ถึง Q-26 หรือ AC
+- AI รายงาน: spec ยังเป็น status `draft` ไม่มี AC-05-nn และไม่มี constraints.md จึงตรวจ Constraint กลางไม่ได้ พบว่าไม่มี mockup จึงไม่มี task หน้าจอที่ประกบกับ mockup
+- AI ถาม: Q-25 ยืนยันชุดเครื่องมือ (FastAPI, Vite, pytest, Vitest), Q-26 ข้อความและการจัดวางหน้าจอ (ปุ่ม, ป้าย, ข้อความ)
+- AI เดา: ไม่มีการเดา แต่เสนอสิ่งที่ plan ไม่ระบุไว้ 1 เรื่อง คือ backend `latest` ไม่ส่งสถานะ unavailable และให้หน้าจอลูกค้าตรวจแทน (T-13) ต้องให้ทีมยืนยัน
+
+## #12 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ร่าง AC-05 (สั่งหลัง /tasks)
+
+- ทีมสั่ง "ร่าง AC-05 เลย" AI เขียน specs/005-tracking/005-tracking.feature (ร่าง v0.1) จำนวน 13 AC คือ AC-05-01 ถึง AC-05-13 ตามรูปแบบ Gherkin และแท็ก @AC @REQ ตามกติกา
+- AI แก้ spec.md ส่วน 4, 6 และ Change Log เป็น v0.5 ให้ชี้ไปยัง AC เหล่านี้
+- AI รายงาน: AC ทุกข้ออ้างอิงจาก spec v0.4 โดยไม่เพิ่ม REQ ใหม่ AC-05-08 และ AC-05-09 ใช้ข้อความบนหน้าจอที่ spec กำหนด ("ตำแหน่งไม่พร้อมใช้งาน") ส่วนที่ไม่มีใน spec คือการจัดวางหน้าจอ ยังไม่มี AC
+- AI ถาม: ไม่มีคำถามใหม่ แต่ AC ที่ตั้งบนค่าชั่วคราว (24 ชั่วโมง, 60 วินาที, 20 ม. เปอร์เซ็นไทล์ 95, Q-22 จำนวนรอบ) ต้องให้ทีมยืนยันก่อน Baseline
+- AI เดา: (ก) ผลลัพธ์ "ยังไม่ถึงปลายทาง" ใน AC-05-06 ตีความจากรัศมี 100 เมตร (ข) AC-05-12 และ AC-05-13 เป็นการลบข้อมูล ทดสอบโดยตรวจว่าเรียกดูไม่ได้ ต้องยืนยันวิธีตรวจกับทีม
+
+## #13 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมสั่งเปลี่ยนรัศมีถึงปลายทางจาก 100 ม. เป็น 5 ม.
+
+- ทีมสั่ง "เปลี่ยนละระยะ 5 ม.ดีกว่า" AI ปรับรัศมีในทุกไฟล์ของ 005-tracking จาก 100 เมตรเป็น 5 เมตร
+  - 005-tracking.feature: AC-05-06 Examples เปลี่ยนเป็น 4, 5, 6 เมตร (เดิม 99, 100, 101)
+  - spec.md เป็นเวอร์ชัน 0.6: เพิ่ม D-05-24 แทน D-05-12, เพิ่ม Q-27, เพิ่มแถว Change Log
+  - plan.md และ tasks.md: เปลี่ยนข้อความรัศมี ทดสอบที่ 4 และ 6 เมตร
+- AI รายงาน: 5 เมตรเล็กกว่าความคลาดเคลื่อนที่ยอมรับได้ 20 เมตร (AS-08) ทำให้การถึงปลายทางอัตโนมัติอาจไม่เกิดขึ้นจริง และ AC-05-06 จะผ่านได้เฉพาะในการทดสอบจำลอง จึงเพิ่มเป็น Q-27
+- AI ถาม: Q-27 ให้ทีมยืนยันว่าคงค่า 5 เมตร เพิ่มรัศมี หรือเปลี่ยนวิธีตรวจ
+- AI เดา: ไม่มี ใช้ค่า 5 เมตรตามคำสั่งและบันทึกเป็น D-05-24 พร้อมระบุว่ายังไม่ยืนยัน Q-27
+
+## #14 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-27 เลือกคงค่ารัศมี 5 เมตร
+
+- คำตอบของทีม: "งั้นเลือกค่าคงที่ 5 เมตร"
+- AI ปิด Q-27 ใน spec.md และบันทึกเป็น D-05-25 (คงค่า 5 เมตร รับทราบความเสี่ยง) spec.md เป็นเวอร์ชัน 0.7
+- AI แก้ plan.md และ tasks.md ให้ไม่มีงานรอ Q-27 และอัปเดต feature file ให้ระบุว่า Q-27 ตอบแล้ว
+- AI เดา: ไม่มี
+
+## #15 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement (ไม่มี ID ของ task) ยังไม่ได้ทำ
+
+- AI หยุดก่อนเขียนโค้ด เพราะคำสั่งไม่ระบุ ID ของ task และกติกาห้ามเลือกเอง
+- AI รายงาน: T-05 และ T-14 พร้อมทำ แต่ต้องรอ T-01 และ T-02 ซึ่งรอ Q-25 (ยืนยันชุดเครื่องมือ) งานอื่นรอ Q-23, Q-24, Q-26 หรือ T-00
+- AI ถาม: ให้ทีมตอบ Q-25 และระบุ ID ของ task ที่ต้องการ
+- AI เดา: ไม่มี
+
+## #16 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมสั่ง "ใช้ mock data ก่อน" และ "ทุก tasks approved" (อัปเดต tasks.md และ plan.md)
+
+- ทีมอนุมัติทุก task ใน tasks.md และใช้ mock data ก่อน
+- AI อัปเดต tasks.md: ปิด T-00 (เสร็จ), T-01, T-02 และ task ที่ไม่ต้องรอฐานข้อมูลเป็นพร้อมทำ, T-12 และ T-13 ยังรอ Q-26, T-15 รอ Q-23 และ Q-24 เพราะยังไม่เลิกใช้ mock
+- AI อัปเดต AC ที่ตรวจด้วยในแต่ละ task ให้ตรงกับ AC-05-01 ถึง AC-05-13 แทนคำว่ารอ AC-05-nn
+- AI อัปเดต plan.md ในส่วน 2 ให้ระบุว่าใช้ mock store ก่อน
+- AI รายงาน: /implement ต้องระบุ ID ของ task ทีละตัว จึงยังไม่ได้เริ่มเขียนโค้ดในรอบนี้
+- AI ถาม: Q-26 ข้อความและการจัดวางหน้าจอ ยังไม่ได้ตอบ T-12 และ T-13 รอ, ให้ทีมยืนยันว่าการอนุมัติ tasks รวมชุดเครื่องมือที่เสนอด้วย (ปิด Q-25 ตามการอนุมัติ)
+- AI เดา: ตีความ "ทุก tasks approved" รวมการอนุมัติชุดเครื่องมือ Q-25 และการปิด T-00 โดยใช้ AC-05-01 ถึง 13 ที่เป็นร่าง v0.1
+
+## #17 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมสั่ง "เอาเฉพาะ tracking ก่อน ยืนยันยังไม่ต้องสนใจอะไร" ตอบเรื่อง Q-26
+
+- ทีมสั่งให้ทำเฉพาะ tracking และไม่ต้องสนใจเรื่องอื่น
+- AI เพิ่ม Q-26 ลงใน Open Questions ของ spec.md เป็นเวอร์ชัน 0.8 (เดิมอยู่แค่ใน plan.md และ tasks.md) โดยยังไม่มีคำตอบ
+- AI ไม่ได้แก้ไฟล์ของเรื่องอื่นในระบบ
+- AI เดา: "ยืนยัน" หมายถึงยืนยันให้เพิ่ม Q-26 ลงใน spec เป็นคำถามเปิด และยังไม่ต้องตอบเรื่องข้อความบนหน้าจอในตอนนี้
+
+## #18 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-00 (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนทำ เพราะ T-00 มีสถานะ "เสร็จ" ไม่ใช่ "พร้อมทำ" ตามกติกาข้อ 1 และ T-00 เป็นงานเขียน AC ในเอกสาร ไม่ใช่งานโค้ด
+- AI รายงาน: AC-05-01 ถึง AC-05-13 ยังเป็นร่าง v0.1 ที่ทีมยังไม่ได้ตรวจทีละข้อ สถานะเสร็จใน tasks.md อาจต้องแก้เป็น "รอทีมตรวจ"
+- AI ถาม: ให้ทีมยืนยันว่าต้องการปิด T-00 หรือเปิดกลับให้ตรวจ และระบุ ID ของ task ที่ต้องการทำถัดไป
+- AI เดา: ไม่มี
+
+## #19 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-01 (ตั้งโครง backend)
+
+- ไฟล์ที่สร้าง: backend/requirements.txt (fastapi==0.115.0, pytest==8.3.3), backend/app/__init__.py, backend/tests/test_smoke.py
+- test_smoke.py ใช้ sys.path เพิ่มรากของ backend เพราะไฟล์ที่แตะได้มีแค่ 3 ไฟล์ (ไม่มี conftest.py หรือ __init__.py ใน tests)
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 1/1 (test_backend_package_importable)
+- tasks.md: T-01 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: ไม่มี ใช้เวอร์ชัน fastapi 0.115.0 และ pytest 8.3.3 ที่ไม่ได้ระบุในแผน (ข้อเสนอของแผนไม่ได้ระบุเวอร์ชัน) ต้องให้ทีมตรวจ
+
+## #20 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-02 (ตั้งโครง frontend)
+
+- ไฟล์ที่สร้าง: frontend/package.json (react 18.3.1, react-dom 18.3.1, vite 5.4.11, vitest 2.1.5, jsdom 25.0.1), frontend/src/App.jsx, frontend/src/main.jsx, frontend/src/App.test.jsx
+- ติดตั้งด้วย `npm install --no-package-lock` จึงไม่มี package-lock.json (ไฟล์นี้ไม่อยู่ในไฟล์ที่แตะ) node_modules ถูก .gitignore
+- ไม่ได้สร้าง index.html และ vite.config (ไม่อยู่ในไฟล์ที่แตะ) main.jsx จึงรอ root element ที่ยังไม่มี
+- ผล test: `npm test --prefix frontend` ผ่าน 1/1 (frontend_app_renders_root_element) ไม่มี warning
+- App.jsx ไม่มีข้อความหรือปุ่ม เพราะ Q-26 ยังไม่ตอบ
+- tasks.md: T-02 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: ไม่มี ใช้เวอร์ชันที่ระบุเองและต้องให้ทีมตรวจ ไม่ได้ตัดสินเรื่อง lockfile
+
+## #21 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-03 (โมเดล TrackingSession)
+
+- ไฟล์ที่สร้าง: backend/app/models/tracking_session.py (dataclass TrackingSession และ enum SessionStatus), backend/app/models/__init__.py, backend/tests/test_models_session.py
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 5/5 (4 ของ T-03 และ test_smoke ของ T-01)
+  - test_session_has_required_fields, test_session_status_values_match_spec, test_AC_05_05_session_created_on_accept_is_active_with_start_time, test_AC_05_12_cancelled_is_a_valid_status_for_session
+- AC-05-05 และ AC-05-12 ทดสอบเฉพาะส่วนโมเดล พฤติกรรมเต็มของ AC อยู่ที่ T-06 และ T-10
+- tasks.md: T-03 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: ไม่มี mock store ที่เก็บงานจริงยังไม่ทำ จะทำใน T-06 ตามแผน
+
+## #22 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-04 (โมเดล LocationPoint)
+
+- ไฟล์ที่สร้าง: backend/app/models/location_point.py (dataclass LocationPoint), backend/tests/test_models_point.py
+- ไม่ได้แก้ backend/app/models/__init__.py เพราะไม่อยู่ในไฟล์ที่แตะของ T-04 จึงไม่ export LocationPoint จากแพ็กเกจ test import ตรงจากโมดูล
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 7/7
+  - test_location_point_has_required_fields, test_AC_05_10_location_point_has_no_personal_identifier_fields และ test ของ T-01 และ T-03
+- AC-05-10 ตรวจเฉพาะส่วนโมเดล การลบพิกัดจริงอยู่ที่ T-09 และ T-16
+- tasks.md: T-04 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: ไม่มี ตั้งค่าชุดฟิลด์ต้องห้ามเองจากรายการที่ T-04 ระบุ (เลขบัตร ที่อยู่ เบอร์โทร) ต้องให้ทีมตรวจรายชื่อ
+
+## #23 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-05 (ระยะและรัศมี 5 เมตร)
+
+- ไฟล์ที่สร้าง: backend/app/geo.py (haversine_m, is_within_arrival_radius, ARRIVAL_RADIUS_M = 5.0), backend/tests/test_geo.py
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 12/12 รวม test ของ T-01, T-03, T-04
+  - test_AC_05_06_point_4m_from_destination_is_arrived, test_AC_05_06_point_6m_from_destination_is_not_arrived และ test ของสูตรระยะ
+- เงื่อนไขขอบเขต: ใช้ `<=` ระยะ 5 เมตรพอดีถือว่าถึง ยังไม่มี test ที่ 5 เมตรพอดี เพราะ AC-05-06 ใส่ 5 ใน Examples ซึ่งจะทดสอบใน T-07
+- tasks.md: T-05 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: ไม่มี ค่ารัศมี 5 เมตรมาจาก D-05-24 และ D-05-25 ที่ทีมเลือกแล้ว รัศมีโลก 6,371 กม. เป็นค่าที่ผมเลือกเองสำหรับสูตร haversine ทีมควรตรวจ
+
+## #24 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-06 (API เริ่มติดตาม)
+
+- ไฟล์ที่สร้าง: backend/app/routes/tracking.py (APIRouter, POST /api/tracking/{job_id}/start, mock store _SESSIONS, StartRequest, SessionOut), backend/tests/test_api_start.py
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 14/14 รวม test ของ T-01, T-03, T-04, T-05
+  - test_AC_05_05_start_creates_active_session_on_accept, test_start_same_job_twice_returns_same_session_without_new_row
+- ทดสอบเรียกฟังก์ชัน endpoint ตรง ไม่ผ่าน HTTP เพราะ TestClient ต้องใช้ httpx ซึ่งไม่อยู่ใน requirements.txt และไม่อยู่ในไฟล์ที่แตะได้ของ T-06 ทีมต้องอนุมัติเพิ่ม httpx ก่อนทดสอบผ่าน HTTP
+- ยังไม่ได้ต่อ app หลัก (ไม่มี main.py ในไฟล์ที่แตะ) router ยังไม่ถูก include ที่แอปจริง
+- เมื่อเรียกซ้ำกับ job_id เดิม คืนงานเดิมโดยไม่แก้สถานะ เพราะไม่มีข้อกำหนดว่าจะเปลี่ยนเมื่อไร
+- tasks.md: T-06 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) ให้ start รับ destination จาก body เพราะ AS-10 และ D-05-06 ต้องการปลายทางจากลูกค้าและ spec ไม่ได้กำหนดว่าจะส่งจากที่ไหน (ข) ใช้เวลาจากเซิร์ฟเวอร์เป็น started_at (ค) เก็บ mock store เป็น dict ระดับโมดูล ทีมควรตรวจทั้งสามข้อ
+
+## #25 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-07 (API รับพิกัดและตรวจการถึงปลายทาง)
+
+- ไฟล์ที่แก้: backend/app/routes/tracking.py (เพิ่ม POST /api/tracking/{job_id}/points, PointRequest, PointResponse, _POINTS)
+- ไฟล์ที่สร้าง: backend/tests/test_api_points.py
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 19/19
+  - test_AC_05_01_point_is_stored_for_active_session, test_AC_05_06_point_4m_from_destination_marks_arrived, test_AC_05_06_point_5m_from_destination_marks_arrived (ขอบเขตพอดี ผ่าน), test_AC_05_06_point_6m_from_destination_stays_active, test_point_for_unknown_job_returns_404
+- AC-05-02 (คลาดเคลื่อน 20 ม.) และ AC-05-03 (ช่วงห่าง 15 วินาที) ต้องวัดจากอุปกรณ์จริง ยังไม่ได้ทดสอบ
+- tasks.md: T-07 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) งานที่ไม่ active ไม่เก็บพิกัด และคืนสถานะเดิม spec ไม่ได้บอก (ข) received_at ใช้เวลาเซิร์ฟเวอร์ (ค) accuracy_m เก็บไว้แต่ยังไม่ตรวจค่า 20 เมตร (ง) ยังไม่ลบพิกัดเมื่อถึงปลายทาง เพราะเป็นงานของ T-09 และ T-11
+
+## #26 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-08 (API อ่านตำแหน่งล่าสุด)
+
+- ไฟล์ที่แก้: backend/app/routes/tracking.py (เพิ่ม GET /api/tracking/{job_id}/latest, LatestOut, _latest_at, STALE_AFTER_S = 60)
+- ไฟล์ที่สร้าง: backend/tests/test_api_latest.py
+- ผล test: `python3 -m pytest backend/tests -q` ผ่าน 23/23
+  - test_AC_05_04_latest_returns_most_recent_point, test_AC_05_08_latest_is_stale_after_60_seconds, test_AC_05_08_latest_is_fresh_within_60_seconds, test_latest_without_any_point_returns_404
+- AC-05-04 ทดสอบเฉพาะการคืนค่าล่าสุด ช่วงห่าง 15 วินาทีต้องวัดจากการใช้งานจริง
+- ไม่ได้ทดสอบผ่าน HTTP เหมือน T-06 และ T-07
+- tasks.md: T-08 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) ใช้เวลาที่ระบบรับ (received_at) นับ 60 วินาที ไม่ใช้เวลาจากเครื่องคนขับ (ข) ถ้าไม่มีพิกัดเลยตอบ 404 spec ไม่ได้บอก (ค) ตอบเฉพาะ lat, lng, recorded_at, is_stale ตามที่ "เสร็จเมื่อ" กำหนด ไม่รวมสถานะงาน (ง) ไม่ได้ตรวจว่า Google Maps ใช้ไม่ได้ ซึ่งเป็นงานฝั่งหน้าจอ T-13 ตามหมายเหตุในแผน
+
+## #27 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-09 (API ยืนยันส่งงานและลบพิกัด)
+
+- ไฟล์ที่แก้: backend/app/routes/tracking.py (เพิ่ม POST /api/tracking/{job_id}/confirm, ConfirmOut, confirm_delivery)
+- ไฟล์ที่สร้าง: backend/tests/test_api_confirm.py
+- ผล test: `python3 -m pytest backend/tests -q` ผ่าน 26/26
+  - test_AC_05_10_confirm_deletes_all_points_of_the_job, test_AC_05_11_confirm_is_accepted_when_outside_5_meters, test_confirm_for_unknown_job_returns_404
+- ไม่ได้ทดสอบผ่าน HTTP เหมือน task ก่อนหน้า
+- tasks.md: T-09 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) หลังยืนยันตั้งสถานะเป็น closed และบันทึก closed_at เพราะ spec ไม่ได้ระบุชื่อสถานะหลังจบงาน (ข) ยืนยันงานที่ปิดแล้วซ้ำได้โดยลบพิกัดซึ่งว่างอยู่แล้ว (ค) ยังไม่ตรวจว่างานถูกยกเลิกไปแล้วหรือไม่ ซึ่งเป็นงานของ T-10 (ง) ตอบ points_deleted เพิ่มจากที่ "เสร็จเมื่อ" กำหนด เพื่อให้ตรวจการลบได้
+
+## #28 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-10 (API ยกเลิกงานและลบพิกัดทันที)
+
+- ไฟล์ที่แก้: backend/app/routes/tracking.py (เพิ่ม POST /api/tracking/{job_id}/cancel, CancelOut, cancel_tracking)
+- ไฟล์ที่สร้าง: backend/tests/test_api_cancel.py
+- ผล test: `python3 -m pytest backend/tests -q` ผ่าน 28/28
+  - test_AC_05_12_cancel_sets_cancelled_and_deletes_points_immediately, test_cancel_for_unknown_job_returns_404
+- ไม่ได้ทดสอบผ่าน HTTP เหมือน task ก่อนหน้า
+- tasks.md: T-10 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) ยกเลิกได้ทุกสถานะที่มีงาน รวมถึงงานที่ปิดหรือถึงแล้ว spec ไม่ได้ห้าม (ข) ตอบ points_deleted เพิ่มจาก "เสร็จเมื่อ" เพื่อให้ตรวจการลบได้ (ค) ยังไม่ตรวจว่าการยกเลิกทำให้ลูกค้าหยุดเห็นตำแหน่งบนหน้าจอ ซึ่งเป็นงาน T-13
+
+## #29 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-11 (งานลบพิกัดเกิน 24 ชั่วโมง)
+
+- ไฟล์ที่สร้าง: backend/app/jobs/purge_points.py (purge_expired_points, PURGE_AFTER = 24 ชั่วโมง), backend/tests/test_purge_points.py
+- ผล test: `python3 -m pytest backend/tests -q` ผ่าน 31/31
+  - test_AC_05_13_points_are_deleted_after_24_hours_from_arrival, test_AC_05_13_points_are_kept_before_24_hours_from_arrival, test_active_job_points_are_not_purged
+- ไม่ได้ทดสอบผ่าน HTTP เหมือน task ก่อนหน้า
+- tasks.md: T-11 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) นับ 24 ชั่วโมงจาก arrived_at ตาม AS-04 (ข) ฟังก์ชันนี้ยังไม่มีตัวตั้งเวลาหรือ scheduler ให้รันอัตโนมัติ เพราะไม่มีไฟล์ในไฟล์ที่แตะได้ ต้องให้ทีมตัดสินวิธีรัน (ค) ค่า 24 ชั่วโมงเป็นค่าชั่วคราวรอ Q-19
+
+## #30 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-12 (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนเขียนโค้ด เพราะ T-12 มีสถานะ "รอ Q-26" ตามกติกาข้อ 1 ต้องปิด Q-26 ก่อน
+- Q-26 ยังไม่ได้ตอบ จึงยังไม่มีข้อความบนปุ่มยืนยันส่งงานและการจัดวางหน้าจอคนขับ
+- AI ถาม: ให้ทีมตอบ Q-26 หรือระบุข้อความและการจัดวางที่ต้องการ
+- AI เดา: ไม่มี
+
+## #31 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-13 (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนเขียนโค้ด เพราะ T-13 มีสถานะ "รอ Q-26" ตามกติกาข้อ 1 ต้องปิด Q-26 ก่อน
+- Q-26 ยังไม่ได้ตอบ จึงยังไม่มีข้อความและการจัดวางหน้าจอลูกค้า (ป้ายไม่เป็นปัจจุบัน รูปแบบเวลา การจัดวางแผนที่) และไม่มี mockup
+- AI ถาม: ให้ทีมตอบ Q-26 หรือระบุข้อความและการจัดวางที่ต้องการ
+- AI เดา: ไม่มี
+
+## #32 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-14 (เชื่อม Google Maps ผ่านตัวแปรสภาพแวดล้อม) บางส่วน
+
+- ไฟล์ที่สร้าง: frontend/src/maps.js (MAPS_KEY_ENV_NAME, getMapsApiKey, buildMapsScriptUrl), frontend/.env.example (ค่าว่าง), frontend/src/maps.test.js
+- ผล test: `npm test --prefix frontend` ผ่าน 5/5 (maps.test.js 4 ตัว และ App.test.jsx 1 ตัว)
+- ค้างที่ "เสร็จเมื่อ": .env ยังไม่อยู่ใน .gitignore และไฟล์นั้นไม่อยู่ในไฟล์ที่แตะได้ของ T-14 จึงหยุดถามทีมก่อนแก้
+- tasks.md: T-14 เปลี่ยนเป็น "ค้าง รอทีมอนุญาตแตะ .gitignore"
+- AI เดา: ใช้ชื่อตัวแปร VITE_GOOGLE_MAPS_API_KEY เพราะ Vite ส่งเฉพาะตัวแปรที่ขึ้นต้นด้วย VITE_ ให้ frontend ซึ่ง plan ไม่ได้ระบุชื่อ ต้องให้ทีมยืนยัน
+
+## #33 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-15 (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนเขียนโค้ด เพราะ T-15 มีสถานะ "รอ Q-23 และ Q-24" และยังไม่ทำจนกว่าทีมจะสั่งเลิกใช้ mock
+- ต้องทำหลัง T-12 และ T-13 ซึ่งยังรอ Q-26 ทั้งสองตัว จึงยังไม่เสร็จ
+- AI ถาม: ให้ทีมตอบ Q-23 (ฐานข้อมูลจริง) และ Q-24 (วิธีส่งค่า) และสั่งเลิกใช้ mock พร้อมปิด Q-26
+- AI เดา: ไม่มี
+
+## #34 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-16 (ทดสอบวงจรงานทั้งหมด)
+
+- ไฟล์ที่สร้าง: backend/tests/test_flow_tracking.py
+- ผล test: `python3 -m pytest backend/tests -q -rxX` ผ่าน 32 และ xfail 1
+  - test_flow_start_to_confirm_hides_latest_and_deletes_points ผ่าน (วงจรเต็มจนยืนยันส่งงาน)
+  - test_AC_05_07_latest_hidden_after_arrival_before_confirm เป็น xfail (strict) เพราะ _latest_at ยังคืนตำแหน่งหลังรถถึงปลายทางก่อนยืนยัน
+- พบข้อบกพร่องใน T-08 (tracking.py): ตามสเปก Behaviour ส่วน 5 และ AC-05-07 หลังรถถึงปลายทางลูกค้าต้องไม่เห็นตำแหน่ง แต่ latest ยังคืนค่า แก้ได้ใน tracking.py ซึ่งไม่อยู่ในไฟล์ที่แตะของ T-16 จึงไม่แก้เองและรอทีมอนุญาต
+- tasks.md: T-16 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ" พร้อมบันทึกข้อบกพร่องของ T-08
+- AI เดา: ไม่มี ใช้ xfail แทนการแก้โค้ดนอกไฟล์ที่แตะ เพื่อให้ชัดว่า AC-05-07 ยังไม่ผ่าน
+
+## #35 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-15 (ยังไม่ได้ทำ) และคำสั่งทีม "T-15 ยังไม่มีฐานข้อมูลจริง ใช้การ mockup ข้อมูลไปก่อน"
+
+- AI หยุดก่อนเขียนโค้ด เพราะ T-15 มีสถานะ "รอ Q-23 และ Q-24" และต้องทำหลัง T-12 กับ T-13 ซึ่งยังรอ Q-26
+- คำสั่งทีมให้ใช้ mock data ต่อ แต่ T-15 มีเป้าหมาย "เลิกใช้ mock" จึงขัดกับคำสั่งนี้ AI ไม่ได้แก้สถานะ T-15 เอง
+- AI ถาม: (ก) ให้ปรับ T-15 เป็นการต่อหน้าจอกับ API ที่รันในเครื่องด้วย mock store แล้วแยกงานฐานข้อมูลจริงเป็น task ใหม่ที่รอ Q-23 หรือ (ข) คงสถานะเดิม และขอให้ตอบ Q-26 เพื่อปลด T-12 กับ T-13 ก่อน
+- AI เดา: ไม่มี
+
+## #36 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-26 "ออกแบบอย่างไรก็ได้"
+
+- คำตอบของทีม: ข้อความบนปุ่มและการจัดวางหน้าจอออกแบบอย่างไรก็ได้
+- AI ปิด Q-26 ใน spec.md เป็น D-05-26 (ยกเว้นข้อความ "ตำแหน่งไม่พร้อมใช้งาน" ที่ spec กำหนดไว้แล้ว)
+- AI ปลด T-12 และ T-13 ใน tasks.md เป็น "พร้อมทำ"
+- AI เดา: "ออกแบบอย่างไรก็ได้" หมายถึงให้ผู้พัฒนาเลือกข้อความและการจัดวางเองได้ ยกเว้นข้อความที่ spec กำหนด ไม่ได้หมายถึงให้เพิ่มฟีเจอร์ใหม่
+
+## #37 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-12 (หน้าจอคนขับ)
+
+- ไฟล์ที่สร้าง: frontend/src/pages/DriverTrackingPage.jsx (ส่งพิกัดทุก 15 วินาที ปุ่มยืนยันส่งงาน), frontend/src/api/trackingMock.js (API จำลอง sendPoint และ confirmDelivery), frontend/src/pages/DriverTrackingPage.test.jsx
+- ผล test: `npm test --prefix frontend` ผ่าน 8/8 รวม T-02 และ T-14
+  - AC_05_03_driver_page_sends_position_every_15_seconds, AC_05_11_confirm_button_calls_api_even_outside_radius, driver_page_stops_sending_after_confirm
+- ไม่มี mockup จึงออกแบบข้อความและการจัดวางเองตาม D-05-26 ข้อความปุ่มคือ "ยืนยันส่งงาน"
+- ไม่ได้ทดสอบบนเบราว์เซอร์จริง และไม่มี index.html ใน task นี้
+- tasks.md: T-12 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) ข้ามรอบส่งพิกัดถ้าอ่าน GPS ไม่ได้ ไม่ส่งค่าปลอม (ข) ปุ่มถูกปิดหลังยืนยันแล้วหยุดส่งพิกัด (ค) ใช้ navigator.geolocation ของเบราว์เซอร์เป็นแหล่งพิกัด (ง) ข้อความปุ่มเป็นการออกแบบเองตาม D-05-26
+
+## #38 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-13 (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนเขียนโค้ด เพราะ T-13 ต้องทำหลัง T-14 แต่ T-14 มีสถานะ "ค้าง รอทีมอนุญาตแตะ .gitignore" ยังไม่ใช่ "เสร็จ" ตามกติกาข้อ 2
+- T-13 มีสถานะ "พร้อมทำ" และ T-02 เสร็จแล้ว ส่วนที่บล็อกคือ T-14 เท่านั้น
+- AI ถาม: ให้ทีมอนุญาตให้เพิ่ม .env ลงใน .gitignore เพื่อปิด T-14 หรือยอมรับ T-14 ตามสถานะปัจจุบันเพื่อให้ T-13 ทำต่อได้
+- AI เดา: ไม่มี
+
+## #39 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมอนุญาต "อนุญาตเพิ่ม .env ใน .gitignore" และปิด T-14
+
+- ทีมอนุญาตให้แตะ .gitignore เพื่อปิดข้อ "เสร็จเมื่อ" ของ T-14
+- AI เพิ่มบรรทัด `.env` ที่ท้าย .gitignore (ตัวเดียว ไม่แตะบรรทัดเดิม)
+- ตรวจด้วย git check-ignore: frontend/.env ถูกเพิ่มเป็น ignored ส่วน frontend/.env.example ยังไม่ถูกเพิ่ม (ใช้ commit ได้)
+- tasks.md: T-14 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ" ทำให้ T-13 พร้อมทำ (ต้องทำหลัง T-02 และ T-14 ซึ่งเสร็จแล้ว) ยังไม่ได้เริ่มทำ T-13
+- AI เดา: ไม่มี
+
+## #40 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-13 (หน้าจอลูกค้า)
+
+- ไฟล์ที่สร้าง: frontend/src/pages/CustomerTrackingPage.jsx (อ่านตำแหน่งทุก 15 วินาที แสดงบนแผนที่ ป้ายไม่เป็นปัจจุบัน ข้อความตำแหน่งไม่พร้อมใช้งานพร้อมเวลาล่าสุด)
+- ไฟล์ที่แก้: frontend/src/api/trackingMock.js (เพิ่ม getLatest จำลอง และเก็บเวลาที่ระบบรับใน sendPoint)
+- ไฟล์ที่สร้าง: frontend/src/pages/CustomerTrackingPage.test.jsx
+- ผล test: `npm test --prefix frontend` ผ่าน 13/13 (ของ T-13 ห้าตัว และของ T-02, T-12, T-14)
+  - AC_05_01_customer_sees_driver_position_on_map, AC_05_08_customer_sees_stale_badge_and_last_time, AC_05_09_customer_sees_unavailable_text_with_last_time_when_no_maps_key, AC_05_04_customer_page_reads_latest_every_15_seconds, AC_05_07_no_marker_when_api_has_no_position
+- AC-05-07 ฝั่งหน้าจอผ่าน แต่ backend (T-08) ยังคืนตำแหน่งหลังรถถึงปลายทางก่อนยืนยัน ดู xfail ใน test_flow_tracking.py
+- tasks.md: T-13 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) ข้อความ "ตำแหน่งไม่พร้อมใช้งาน" ใช้ตาม spec ส่วนป้ายและเวลาออกแบบเองตาม D-05-26 (ข) ถ้าอ่านตำแหน่งไม่ได้ (รวม 404) แสดงข้อความไม่พร้อมใช้งาน (ค) โหลดแผนที่ไม่สำเร็จถือว่าแผนที่ไม่พร้อมใช้งาน (ง) ไม่ได้ทดสอบ Google Maps จริงเพราะไม่มีคีย์ในเครื่องนี้
+
+## #41 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-15 รออะไร (ตอบคำถาม ยังไม่ได้ทำ)
+
+- ตรวจแล้ว: T-15 รอ Q-23 (ฐานข้อมูลจริง) และ Q-24 (วิธีส่งค่า) ต้องทำหลัง T-08, T-09, T-10, T-12, T-13 ซึ่งทั้งหมดเป็น "เสร็จ รอทีมตรวจ" แล้ว
+- เป้าหมายของ T-15 คือเลิกใช้ mock ซึ่งขัดกับคำสั่งทีมให้ใช้ mock ต่อก่อน AI จึงไม่ได้เริ่มทำและไม่ได้เปลี่ยนสถานะ
+- AI ถาม: ให้ทีมเลือกปรับ T-15 เป็นการต่อกับ API ในเครื่องด้วย mock store หรือคงสถานะรอ Q-23 และ Q-24
+- AI เดา: ไม่มี
+
+## #42 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมอนุมัติ demo แผนที่ OpenStreetMap (นอกโปรเจกต์)
+
+- ทีมอนุมัติให้ทำ demo ด้วย Leaflet กับ OSM tiles และเส้นทางจาก OSRM เซิร์ฟเวอร์ทดลอง
+- ทำใน scratchpad เท่านั้น ไม่ได้แก้ไฟล์ในโปรเจกต์ ไม่ได้เปลี่ยน D-05-01 (ยังคง Google Maps) และไม่ได้เพิ่มไลบรารีเข้า package.json
+- ตรวจการเข้าถึงแล้ว: router.project-osrm.org, tile.openstreetmap.org และ cdnjs ตอบ 200
+- demo ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์ ตรวจได้แค่ Vite คอมไพล์ไฟล์ได้
+- การใช้จริงยังต้องให้ทีมตัดสิน: เปลี่ยนจาก Google Maps ตาม D-05-01 ใหม่ และเซิร์ฟเวอร์ OSRM ที่ใช้จริง
+- AI เดา: ใช้ Leaflet 1.9.4 จาก cdnjs ตามที่ตรวจว่าเข้าถึงได้
