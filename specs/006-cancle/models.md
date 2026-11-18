@@ -1,8 +1,8 @@
 # โมเดลที่ feature นี้ใช้ (Draft MD-CTX-CAN-DRAFT, MD-DOM-CAN-DRAFT, MD-STM-CAN-DRAFT, MD-SEQ-CAN-DRAFT)
 
-เวอร์ชัน 0.1 (Draft) | status: draft | ยังไม่มี Baseline ที่ยืนยันแล้ว
-ที่มา: specs/006-cancle/spec.md และ specs/006-cancle/rules.md ฉบับ Draft
-โมเดลทั้งหมดเป็น Conceptual Draft ไม่ใช่ข้อสรุปโครงสร้างหรือสถานะจริงของระบบ
+เวอร์ชัน 0.3 (Draft) | status: draft | ยังไม่มี Baseline ที่ยืนยันแล้ว
+ที่มา: กฎชุดใหม่ใน specs/006-cancle/spec.md และ specs/006-cancle/rules.md
+โมเดลทั้งหมดเป็น Conceptual Draft ไม่ใช่ข้อสรุปโครงสร้างหรือสถานะจริงนอกเหนือจากชื่อสถานะที่กลุ่มระบุ
 
 ## MD-CTX-CAN-DRAFT Context Diagram (Draft)
 
@@ -10,16 +10,19 @@
 flowchart LR
   Customer[ลูกค้า]
   Driver[คนขับ]
-  Provider[ผู้ให้บริการ]
+  Platform[Platform]
   KhonYaai((ระบบ KhonYaai))
+  RefundNote["คืนมัดจำเต็มจำนวนภายใน 2 ชั่วโมง เมื่อเวลาเหลือ >= 120 นาที; ผู้ดำเนินการและช่องทางรอยืนยัน Q-06-11"]
 
-  Customer -->|คำขอยกเลิกงานด่วน BR-CAN-DRAFT-01| KhonYaai
-  Driver -->|คำขอยกเลิกจากเหตุสุดวิสัย BR-CAN-DRAFT-02| KhonYaai
-  KhonYaai -->|การแจ้งเตือนตามข้อมูล Draft BR-CAN-DRAFT-04| Provider
-  KhonYaai -->|ผลคืนเงินตาม Draft BR-CAN-DRAFT-02 และ BR-CAN-DRAFT-03; กระบวนการยังไม่ยืนยัน Q-06-05| Customer
+  Customer -->|จองรถและชำระมัดจำด้วย PromptPay QR หรือบัตรเครดิต| KhonYaai
+  Customer -->|คำขอยกเลิก| KhonYaai
+  KhonYaai -->|คำเตือนก่อนยกเลิก เมื่อเวลาเหลือ >= 45 นาที และ < 120 นาที| Customer
+  KhonYaai -->|มัดจำเป็นของ Platform เมื่อเวลาเหลือ >= 45 นาที และ < 120 นาที| Platform
+  KhonYaai -.-> RefundNote
+  Customer -->|ชำระส่วนที่เหลือโดยตรงหลังจบงาน| Driver
 ```
 
-ไม่แสดงระบบภายนอก เนื่องจากยังไม่มีหลักฐานยืนยันว่าฟีเจอร์นี้ใช้งานระบบภายนอกใด รายละเอียดช่องทางแจ้งเตือนรอยืนยัน Q-06-07 ส่วนขั้นตอนคืนเงิน (ผู้เริ่มดำเนินการ วิธี/ช่องทาง และจุดเริ่มนับช่วงเวลา) ยังไม่มีข้อมูลยืนยัน โดยจุดเริ่มนับและชนิดวันรอยืนยัน Q-06-05; ความสัมพันธ์ระหว่างคนขับกับผู้ให้บริการรอยืนยัน Q-06-06.
+ไม่แสดงระบบภายนอกหรือ API เพราะไม่มีหลักฐานระบุระบบที่เชื่อมต่อ. การคืนมัดจำยังไม่ทราบวิธี ช่องทาง ผู้ดำเนินการ และจุดเริ่มนับ 2 ชั่วโมง (Q-06-11). กรณี 45 นาทีพอดีอยู่ในช่วง >= 45 นาที และ < 120 นาทีตามคำยืนยันจากกลุ่ม (Q-06-10).
 
 ## MD-DOM-CAN-DRAFT Domain Model (Conceptual Draft)
 
@@ -28,53 +31,75 @@ classDiagram
   class Booking
   class Cancellation
   class Deposit
-  class Refund
-  class Notification
+  class TransportCharge
+  class Payment
+  class JobStatus
+  class Platform
+  class ItemSize
 
-  Booking ..> Cancellation : เกี่ยวข้องกับการยกเลิก
-  Booking ..> Deposit : เกี่ยวข้องกับเงินมัดจำ
-  Cancellation ..> Refund : เกี่ยวข้องกับการคืนเงิน
-  Cancellation ..> Notification : เกี่ยวข้องกับการแจ้งเตือน
+  Booking ..> Cancellation : เงื่อนไขการยกเลิก BR-CAN-DRAFT-09
+  Booking ..> Deposit : มัดจำ 50 เปอร์เซ็นต์ BR-CAN-DRAFT-05
+  Booking ..> TransportCharge : 4 บาทต่อกิโลเมตร BR-CAN-DRAFT-07
+  Booking ..> ItemSize : ขนาด เล็ก / กลาง / ใหญ่ BR-CAN-DRAFT-06
+  Booking ..> Payment : วิธีชำระ BR-CAN-DRAFT-08
+  Booking ..> JobStatus : ลำดับสถานะ BR-CAN-DRAFT-10
+  Cancellation ..> Deposit : ผลคืนหรือไม่คืนมัดจำ BR-CAN-DRAFT-09
+  Deposit ..> Platform : มัดจำเป็นของ Platform ในช่วงที่กำหนด
 ```
 
-Entity ข้างต้นเป็นแนวคิดจาก Draft Requirements และ Draft Business Rules เท่านั้น ไม่ใช่ชื่อตารางหรือ Database Schema และไม่มีการกำหนด Cardinality หรือรายละเอียด attribute
+Entity เป็นแนวคิดเท่านั้น ไม่ใช่ชื่อตารางหรือ Database Schema และไม่มีการกำหนด Cardinality. ฐานคิดมัดจำรอยืนยัน Q-06-12; วิธีหาระยะทางรอยืนยัน Q-06-13; สถานะหลังยกเลิกและการเชื่อมกับ lifecycle รอยืนยัน Q-06-14; วิธีคืนเงินรอยืนยัน Q-06-11.
 
-ข้อมูลที่ยังไม่ยืนยันและยังไม่กำหนดเป็น Entity/attribute: การจองล่วงหน้า 1 วันและความสัมพันธ์กับ 24 ชั่วโมง (Q-06-03), นิยามเหตุสุดวิสัย (Q-06-04), จุดเริ่มนับและชนิดวันของช่วงคืนเงิน 7–15 วัน (Q-06-05), ความสัมพันธ์คนขับกับผู้ให้บริการ (Q-06-06), และรายละเอียดการแจ้งเตือน (Q-06-07).
-
-## MD-STM-CAN-DRAFT วงจรชีวิตการยกเลิก (Draft)
+## MD-STM-CAN-DRAFT วงจรชีวิตสถานะงาน (Draft)
 
 ```mermaid
 stateDiagram-v2
-  [*] --> BookingDraft: มีการจอง/งาน (Draft)
-  BookingDraft --> CustomerCancellationPendingConfirmation: ลูกค้าส่งคำขอยกเลิกงานด่วน (BR-CAN-DRAFT-01)
-  CustomerCancellationPendingConfirmation --> CustomerCancellationOutcomePendingConfirmation: เงื่อนไข 2 ชั่วโมงและผลต่อมัดจำรอยืนยัน Q-06-01, Q-06-02
-  CustomerCancellationOutcomePendingConfirmation --> ProviderNotificationPendingConfirmation: การแจ้งผู้ให้บริการตาม BR-CAN-DRAFT-04; รายละเอียดรอยืนยัน Q-06-07
+  [*] --> BookingSuccessful: ชำระเงินมัดจำแล้ว (BR-CAN-DRAFT-10)
+  BookingSuccessful --> FindingDriver: เริ่มกำลังหาคนขับ (BR-CAN-DRAFT-10)
+  FindingDriver --> DriverAccepted: คนขับรับงาน (BR-CAN-DRAFT-10)
+  DriverAccepted --> JobCompleted: จบงาน (BR-CAN-DRAFT-10)
 
-  BookingDraft --> DriverCancellationPendingConfirmation: คนขับส่งคำขอยกเลิกจากเหตุสุดวิสัย (BR-CAN-DRAFT-02)
-  DriverCancellationPendingConfirmation --> DriverCancellationOutcomePendingConfirmation: การจองล่วงหน้า 1 วันและเงื่อนไข 24 ชั่วโมงรอยืนยัน Q-06-03; เหตุสุดวิสัยรอยืนยัน Q-06-04
-  DriverCancellationOutcomePendingConfirmation --> RefundPendingConfirmation: ผลคืนเงินเต็มจำนวนตาม BR-CAN-DRAFT-02 และ BR-CAN-DRAFT-03; ช่วง 7–15 วันรอยืนยัน Q-06-05
+  note right of BookingSuccessful
+    Cancellation ใช้ BR-CAN-DRAFT-09:
+    >= 120 นาที ยกเลิกได้และคืนมัดจำเต็มจำนวน
+    ภายใน 2 ชั่วโมง
+    >= 45 นาที และ < 120 นาที ยกเลิกได้
+    หลังคำเตือนและยืนยัน; ไม่คืนมัดจำ
+    < 45 นาที ยกเลิกไม่ได้
+    45 นาทีรวมอยู่ในช่วง >= 45 นาที และ < 120 นาที
+    ตามคำยืนยันกลุ่ม (Q-06-10)
+  end note
 ```
 
-ชื่อทุกสถานะเป็น Draft/Pending Confirmation เพื่อสื่อขั้นตอนที่ต้องทบทวน ไม่ใช่ชื่อสถานะจริงของระบบ และแผนภาพนี้ไม่กำหนดว่ากรณีใดอนุญาตหรือปฏิเสธการยกเลิก.
+สถานะในเส้นทางงานใช้คำตามที่กลุ่มให้และเรียงตาม BR-CAN-DRAFT-10. ไม่เพิ่มสถานะ “ยกเลิก” เพราะยังไม่ได้ระบุชื่อ/ผลสถานะหลังยกเลิก; จุดเชื่อมการยกเลิกกับ lifecycle รอยืนยัน Q-06-14.
 
-## MD-SEQ-CAN-DRAFT ลำดับการยกเลิก (Draft)
+## MD-SEQ-CAN-DRAFT ลำดับการจอง การยกเลิก และการชำระส่วนที่เหลือ (Draft)
 
 ```mermaid
 sequenceDiagram
   actor Customer as ลูกค้า
-  actor Driver as คนขับ
   participant KhonYaai as ระบบ KhonYaai
-  participant Provider as ผู้ให้บริการ
+  actor Platform as Platform
+  actor Driver as คนขับ
 
-  Customer->>KhonYaai: ส่งคำขอยกเลิกงานด่วน (BR-CAN-DRAFT-01)
-  Note over Customer,KhonYaai: ความหมายเงื่อนไข 2 ชั่วโมงรอยืนยัน Q-06-01; ผลต่อมัดจำรอยืนยัน Q-06-02
-  Note over Customer,KhonYaai: ข้อมูล Draft ระบุว่าลูกค้าเสียเงินมัดจำเมื่อเป็นกรณีที่กำหนด; เงื่อนไขการใช้รอยืนยัน Q-06-01, Q-06-02
-  KhonYaai-->>Provider: แจ้งเตือนตามข้อมูล Draft (BR-CAN-DRAFT-01, BR-CAN-DRAFT-04)
-  Note over KhonYaai,Provider: เวลา ช่องทาง และรายละเอียดแจ้งเตือนรอยืนยัน Q-06-07; คนขับกับผู้ให้บริการเป็น actor เดียวกันหรือไม่รอยืนยัน Q-06-06
+  Customer->>KhonYaai: จองรถล่วงหน้าอย่างน้อย 4 ชั่วโมง พร้อมวัน เวลา สถานที่ และขนาดสิ่งของ (BR-CAN-DRAFT-05, BR-CAN-DRAFT-06)
+  Customer->>KhonYaai: ชำระมัดจำ 50 เปอร์เซ็นต์ด้วย PromptPay QR หรือบัตรเครดิต (BR-CAN-DRAFT-05, BR-CAN-DRAFT-08)
+  KhonYaai-->>Customer: แสดงสถานะ จองสำเร็จ แล้ว กำลังหาคนขับ ตามลำดับ (BR-CAN-DRAFT-10)
+  Driver-->>KhonYaai: รับงาน
+  KhonYaai-->>Customer: แสดงสถานะ คนขับรับงาน (BR-CAN-DRAFT-10)
 
-  Driver->>KhonYaai: ส่งคำขอยกเลิกโดยระบุเหตุสุดวิสัย (BR-CAN-DRAFT-02)
-  Note over Driver,KhonYaai: ความสัมพันธ์และความหมายของเงื่อนไขรอยืนยัน Q-06-03; นิยามเหตุสุดวิสัยรอยืนยัน Q-06-04
-  Note over Customer,KhonYaai: ข้อมูล Draft ระบุการคืนเงินเต็มจำนวน (BR-CAN-DRAFT-02, BR-CAN-DRAFT-03); กรอบ 7–15 วันคงตามข้อมูล Draft และจุดเริ่มนับ/ชนิดวันรอยืนยัน Q-06-05
+  Customer->>KhonYaai: ส่งคำขอยกเลิก
+  alt เวลาเหลือ >= 120 นาที
+    KhonYaai-->>Customer: แจ้งผลตาม BR-CAN-DRAFT-09
+    Note over Customer,KhonYaai: ต้องคืนมัดจำเต็มจำนวนภายใน 2 ชั่วโมง; ผู้ดำเนินการ ช่องทาง และจุดเริ่มนับรอยืนยัน Q-06-11
+  else เวลาเหลือ >= 45 นาที และ < 120 นาที
+    KhonYaai-->>Customer: แสดงคำเตือนและขอให้ยืนยันก่อนยกเลิก (BR-CAN-DRAFT-09)
+    Customer->>KhonYaai: ยืนยันการยกเลิก
+    KhonYaai-->>Platform: มัดจำเป็นของ Platform (BR-CAN-DRAFT-09)
+    Note over Customer,KhonYaai: รวมกรณีเหลือเวลา 45 นาทีพอดีตามคำยืนยัน Q-06-10
+  else เวลาเหลือ < 45 นาที
+    KhonYaai-->>Customer: แจ้งว่ายกเลิกไม่ได้ (BR-CAN-DRAFT-09)
+  end
+
 ```
 
-ลำดับในแผนภาพเป็นการสรุปข้อมูล Draft ไม่ได้กำหนด API Endpoint, Payment Gateway, Notification Service หรือกลไกภายในอื่น. กระบวนการคืนเงินที่ยังไม่ทราบ ได้แก่ ผู้เริ่มดำเนินการ วิธี/ช่องทางคืนเงิน การส่งต่อไปยังระบบใดหรือไม่ และเหตุการณ์ที่ใช้เริ่มนับช่วง 7–15 วัน; จุดเริ่มนับและชนิดวันรอยืนยัน Q-06-05. Diagram แสดงเฉพาะผลที่ข้อมูล Draft กล่าวถึง ไม่ได้ยืนยันว่าระบบ KhonYaai เป็นผู้คืนเงินหรือว่าการคืนเงินเกิดขึ้นโดยอัตโนมัติ.
+ลำดับนี้ไม่กำหนด API, Database Schema หรือระบบภายนอก. การคืนมัดจำเป็นผลตามกฎ แต่ไม่ได้ยืนยันว่า KhonYaai หรือ Platform เป็นผู้ดำเนินการจริง. การคิดยอดรวมจาก 4 บาทต่อกิโลเมตรขึ้นกับวิธีหาระยะทางที่รอยืนยัน Q-06-13; ฐานคำนวณเงินมัดจำ 50% รอยืนยัน Q-06-12. การคืนมัดจำสำหรับกรณีเหลือเวลา >= 2 ชั่วโมงยังรอยืนยันวิธีและเวลาเริ่มนับ Q-06-11.
