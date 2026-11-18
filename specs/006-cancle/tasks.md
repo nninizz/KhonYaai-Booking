@@ -4,7 +4,7 @@
 - อ้างอิง: [plan.md](plan.md), [spec.md](spec.md) v0.4 (Draft), [rules.md](rules.md), [feature.feature](feature.feature)
 - วันที่: 2026-11-18
 - สรุป: 10 tasks แบ่งงาน Policy/Test ก่อน Merge และงาน Integration/UI หลัง Merge
-- สถานะ: T-01 เสร็จแล้ว; T-02 เสร็จแล้ว; T-07 เสร็จแล้ว; T-10 เสร็จแล้ว; T-03 ถึง T-06, T-08 และ T-09 รอ Dependency/การยืนยันจากทีมตามที่ระบุในแต่ละ task
+- สถานะ: T-01 เสร็จแล้ว; T-02 เสร็จแล้ว; T-07 เสร็จแล้ว; T-10 เสร็จแล้ว; T-06 เสร็จ รอทีมตรวจ; T-03 ถึง T-05, T-08 และ T-09 รอ Dependency/การยืนยันจากทีมตามที่ระบุในแต่ละ task
 
 ## งานเตรียม
 
@@ -64,11 +64,11 @@
 ### T-06 สร้างหน้าจอและขั้นตอนยืนยัน Cancellation
 - รองรับ: REQ-FN-DRAFT-CAN-05
 - ตรวจด้วย: AC-06-DRAFT-05
-- ไฟล์ที่แตะ: `frontend/src/cancellation/` (ภายใน Frontend app ที่มีอยู่), ใช้ `frontend/package.json` และ `frontend/vite.config.js` เดิมเฉพาะเมื่อจำเป็นหลังตรวจไฟล์จริง
-- แบบหน้าจอ: Mockup ชั่วคราวใน `specs/006-cancle/mockups/` ยังไม่มี UI ID/การอนุมัติ; รอทีมกำหนด UI ID และยืนยันส่วนที่ต้องตรง
+- ไฟล์ที่แตะ: `frontend/src/cancellation/` (ภายใน Frontend app ที่มีอยู่), `frontend/src/App.jsx` (เพิ่มทางเข้า Demo โดยคง Payment Demo), ใช้ `frontend/package.json` และ `frontend/vite.config.js` เดิมเฉพาะเมื่อจำเป็นหลังตรวจไฟล์จริง
+- แบบหน้าจอ: ทีมอนุมัติ Mockup สำหรับ Demo และ UI ID แล้ว — UI-06-01 `cancellation-booking-detail.html`, UI-06-02 `cancellation-confirmation-warning.html`, UI-06-03 `cancellation-not-allowed.html`, UI-06-04 `cancellation-refund-result.html`; ใช้ข้อมูลจำลองและแสดงป้าย Demo ทุกหน้า; ปรับข้อความที่สื่อว่าดำเนินการจริงให้เป็นผลตัวอย่าง; ไม่แสดงยอดเงินจริงหรือกำหนดรายละเอียดที่รอ Q-06-11/Q-06-12
 - ต้องทำหลัง: T-01, T-02, T-10
 - เสร็จเมื่อ: หน้าจอแสดงผลยกเลิก/คำเตือน/การยืนยันตรงกับ Requirement และ UI ที่ทีมอนุมัติ โดยไม่มีข้อความหรือ action ที่ spec ไม่รองรับ
-- สถานะ: รอทีมยืนยัน UI ID, Mockup และคำบนหน้าจอ (ยังไม่มี Q-ID ใน spec)
+- สถานะ: เสร็จ รอทีมตรวจ
 
 ## Testing และ Integration
 

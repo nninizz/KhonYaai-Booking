@@ -1,12 +1,15 @@
 // หน้า demo ของ ④ — สร้าง booking mock (แทน ③) แล้วเปิดหน้าจ่ายมัดจำ
 import { useState } from "react";
 import { seedBooking } from "./api.js";
+import CancellationDemo from "./cancellation/CancellationDemo.jsx";
 import PaymentPage from "./payment/PaymentPage.jsx";
 
+// รองรับ REQ-FN-DRAFT-CAN-05 โดยเปิด Demo แยกจาก Payment Demo เดิม
 export default function App() {
   const [bookingId, setBookingId] = useState(null);
   const [distance, setDistance] = useState(30);
   const [error, setError] = useState("");
+  const [activeDemo, setActiveDemo] = useState("payment");
 
   async function create() {
     setError("");
@@ -22,10 +25,31 @@ export default function App() {
     <main className="wrap">
       <header className="top">
         <h1>Khonย้าย</h1>
-        <span className="tag">④ ชำระค่าบริการ</span>
+        <span className="tag">{activeDemo === "payment" ? "④ ชำระค่าบริการ" : "Cancellation Demo"}</span>
       </header>
 
-      {bookingId ? (
+      <nav className="demo-nav" aria-label="เลือก Demo">
+        <button
+          type="button"
+          className={activeDemo === "payment" ? "demo-nav-active" : ""}
+          aria-pressed={activeDemo === "payment"}
+          onClick={() => setActiveDemo("payment")}
+        >
+          Payment Demo
+        </button>
+        <button
+          type="button"
+          className={activeDemo === "cancellation" ? "demo-nav-active" : ""}
+          aria-pressed={activeDemo === "cancellation"}
+          onClick={() => setActiveDemo("cancellation")}
+        >
+          Cancellation Demo
+        </button>
+      </nav>
+
+      {activeDemo === "cancellation" ? (
+        <CancellationDemo />
+      ) : bookingId ? (
         <>
           <PaymentPage bookingId={bookingId} />
           <button className="link" onClick={() => setBookingId(null)}>
