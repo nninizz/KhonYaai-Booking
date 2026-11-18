@@ -1,6 +1,32 @@
 // ทดสอบ API จำลองของข้อมูลทีมงาน (D-05-28, D-05-29)
 import { expect, test } from 'vitest';
-import { confirmDelivery, endJob, getTeamInfo, setStage, setTeamInfo } from './trackingMock.js';
+import { confirmDelivery, endJob, getLatest, getTeamInfo, sendPoint, setBooking, setStage, setTeamInfo } from './trackingMock.js';
+
+const POINT = { lat: 13.75, lng: 100.5, accuracy_m: 5, recorded_at: new Date().toISOString() };
+
+test('D_05_39_position_is_hidden_before_scheduled_time', async () => {
+  // D-05-39: ก่อนถึงวันและเวลานัด ไม่คืนตำแหน่งคนขับ แม้คนขับส่งพิกัดแล้ว
+  setBooking('job-mock-before', {
+    paid: true,
+    pickup: 'A',
+    destination: 'B',
+    scheduled_at: new Date(Date.now() + 3600_000).toISOString(),
+  });
+  await sendPoint('job-mock-before', POINT);
+  await expect(getLatest('job-mock-before')).rejects.toMatchObject({ status: 404 });
+});
+
+test('D_05_39_position_is_shown_after_scheduled_time', async () => {
+  // D-05-39: ถึงวันและเวลานัดแล้วคืนตำแหน่งล่าสุด
+  setBooking('job-mock-after', {
+    paid: true,
+    pickup: 'A',
+    destination: 'B',
+    scheduled_at: new Date(Date.now() - 1000).toISOString(),
+  });
+  await sendPoint('job-mock-after', POINT);
+  await expect(getLatest('job-mock-after')).resolves.toMatchObject({ lat: POINT.lat, lng: POINT.lng });
+});
 
 const INFO = {
   lead_name: 'ชื่อตัวอย่าง',

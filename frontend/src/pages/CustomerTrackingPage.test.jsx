@@ -152,7 +152,6 @@ test('AC_05_07_no_marker_when_api_has_no_position', async () => {
 
 // D-05-27: ป้ายขั้นสถานะ 7 ขั้นตามลำดับที่ทีมกำหนด ยังไม่มี AC รอ REQ-ID (Q-28)
 const STAGE_CASES = [
-  ['searching', 'หาคนขับ'],
   ['driver_found', 'หาคนขับได้แล้ว'],
   ['driver_coming', 'คนขับกำลังมาหาคุณ'],
   ['at_pickup', 'ถึงจุดรับของแล้ว'],
@@ -169,6 +168,16 @@ test.each(STAGE_CASES)('D_05_27_customer_sees_stage_label_%s', async (stage, lab
   });
   await flush();
   expect(container.querySelector('[data-testid="stage"]').textContent).toBe(label);
+});
+
+test('D_05_35_searching_stage_is_not_shown_on_map_page', async () => {
+  // D-05-35: หน้าแผนที่ไม่แสดงขั้น "หาคนขับ" (หน้าภาพรวมจะแสดงแทน)
+  const api = makeApi(async () => POSITION, 'searching');
+  await act(async () => {
+    root.render(<CustomerTrackingPage jobId="job-searching" mapsKey="test-key" api={api} />);
+  });
+  await flush();
+  expect(container.querySelector('[data-testid="stage"]')).toBeNull();
 });
 
 test('D_05_27_stage_is_hidden_when_stage_cannot_be_read', async () => {

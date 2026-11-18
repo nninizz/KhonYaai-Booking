@@ -28,6 +28,40 @@ export async function getStage(jobId) {
   return { stage: stageByJob.get(jobId) ?? 'searching' };
 }
 
+// ข้อมูลการจองของหน้าภาพรวม (D-05-36) เป็นข้อมูลจำลองก่อน: ชำระเงินสำเร็จแล้ว
+const DEFAULT_BOOKING = {
+  paid: true,
+  pickup: 'ที่อยู่ตัวอย่าง A',
+  destination: 'ที่อยู่ตัวอย่าง B',
+  scheduled_at: '2026-11-25T09:00:00+07:00',
+};
+const bookingByJob = new Map();
+
+/**
+ * จำลองการตั้งข้อมูลการจองของงาน (ใช้ใน test และ demo)
+ * @param {string} jobId
+ * @param {{paid: boolean, pickup: string, destination: string, scheduled_at: string}} booking
+ */
+export function setBooking(jobId, booking) {
+  bookingByJob.set(jobId, booking);
+}
+
+/**
+ * จำลองการอ่านข้อมูลการจองสำหรับหน้าภาพรวม (D-05-36)
+ * @param {string} jobId
+ */
+export async function getBooking(jobId) {
+  return { ...(bookingByJob.get(jobId) ?? DEFAULT_BOOKING) };
+}
+
+/**
+ * งานสิ้นสุดแล้วหรือยัง (ยืนยันส่งงานหรือ endJob)
+ * @param {string} jobId
+ */
+export function isJobEnded(jobId) {
+  return endedJobs.has(jobId);
+}
+
 // ข้อมูลทีมงานของแต่ละงาน (D-05-28) แหล่งข้อมูลเป็น mockup ก่อน (D-05-29)
 const teamByJob = new Map();
 
@@ -88,6 +122,13 @@ export async function sendPoint(jobId, point) {
  * @param {string} jobId
  */
 export async function getLatest(jobId) {
+  // ก่อนถึงวันและเวลานัด ไม่คืนตำแหน่งคนขับ (D-05-39)
+  const scheduledMs = new Date((bookingByJob.get(jobId) ?? DEFAULT_BOOKING).scheduled_at).getTime();
+  if (Date.now() < scheduledMs) {
+    const err = new Error('ยังไม่ถึงเวลานัด');
+    err.status = 404;
+    throw err;
+  }
   const points = sentPoints.filter((p) => p.jobId === jobId);
   if (points.length === 0) {
     const err = new Error('ยังไม่มีตำแหน่งของงานนี้');

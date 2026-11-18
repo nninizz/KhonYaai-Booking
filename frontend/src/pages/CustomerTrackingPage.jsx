@@ -159,7 +159,7 @@ export default function CustomerTrackingPage({ jobId, mapsKey = null, api = DEFA
     <div data-testid="customer-page" style={{ position: 'relative', width: '100%', height: '400px', borderRadius: 12, overflow: 'hidden' }}>
       <div data-testid="map" ref={mapRef} style={{ position: 'absolute', inset: 0 }} />
       <div style={{ ...overlay, top: 12 }}>
-        {stage ? <p data-testid="stage" style={{ fontWeight: 700, color: '#115e59' }}>{STAGE_LABELS[stage]}</p> : null}
+        {stage && stage !== 'searching' ? <p data-testid="stage" style={{ fontWeight: 700, color: '#115e59' }}>{STAGE_LABELS[stage]}</p> : null}
         {showUnavailable ? (
           <p data-testid="unavailable">
             ตำแหน่งไม่พร้อมใช้งาน
