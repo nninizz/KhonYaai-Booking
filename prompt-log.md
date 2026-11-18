@@ -6,8 +6,68 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 
 ## #1 | <วันที่> | <เครื่องมือ> | <คำสั่ง>
 
+## #2 | 2026-11-18 | Copilot | สร้าง Static HTML Mockup สำหรับ Cancellation
+- คำสั่ง: สร้าง Mockup 4 หน้าสำหรับรายละเอียดการจอง, ยืนยันยกเลิกพร้อมคำเตือน, ผลการยกเลิก/คืนเงิน และกรณียกเลิกไม่ได้; ครอบคลุม 44, 45, 119 และ 120 นาที; ใช้ HTML/CSS แบบ Static และ data-req; ห้ามสมมติรายละเอียดที่ยังเป็น Open Question.
+- สิ่งที่ AI ถามหรือรายงาน: spec ยังไม่มี UI ID และคู่มือกำหนดให้ชื่อไฟล์ Mockup ใช้ UI ID.
+- คำตอบหรือการตัดสินใจของทีม: จัดทำเฉพาะ HTML ชั่วคราวโดยไม่ใส่ UI ID ในชื่อไฟล์หรือเอกสาร.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี; ข้อมูลการจองและรายละเอียดคืนเงินที่ยังไม่ยืนยันแสดงเป็น "รอทีมยืนยัน".
 
-## #2 | 2026-11-02 | Claude Code (Claude Opus 5.5) | จัดไฟล์ feature ④ ชำระค่าบริการ เข้ารูปแบบ template
+## #3 | 2026-11-18 | Copilot | ปรับสถานะ T-01 และบันทึก tooling ใน Cancellation Prototype
+- คำสั่ง: บันทึก Python 3.11, Vite, pytest และ Vitest ในเอกสาร Cancellation; เปลี่ยน T-01 เป็นพร้อมทำ; คงสถานะ T-02/T-07 และไม่เริ่ม implement โค้ด.
+- สิ่งที่ AI ถามหรือรายงาน: ไม่พบ `specs/000-shared/constraints.md`; กติกาให้ระบุว่าเครื่องมือเป็นการเลือกของทีม ไม่ได้มาจาก spec และเตือนให้พิจารณาบันทึก D-00 เมื่อจัดทำไฟล์กลาง แต่ไม่ได้บังคับให้หยุดรอ D-00 ก่อนอัปเดตเอกสาร feature.
+- คำตอบหรือการตัดสินใจของทีม: ยืนยัน Python 3.11, Vite, pytest และ Vitest; ยังไม่อนุมัติหรือสร้าง D-00.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี; พบว่า plan.md ยังไม่อนุมัติให้เริ่มพัฒนา จึงบันทึก T-01 เป็นรออนุมัติแผน และคง T-02/T-07 ติด Dependency ตามเดิม.
+
+## #4 | 2026-11-18 | Copilot | บันทึกอนุมัติแผน Cancellation Prototype
+- คำสั่ง: บันทึกการอนุมัติ plan.md จากทีม และเปลี่ยน T-01 เป็นพร้อมทำหากเงื่อนไขครบ; ยังไม่ implement, commit หรือ push.
+- สิ่งที่ AI ถามหรือรายงาน: T-01 รออนุมัติเพราะ plan.md ระบุว่ายังไม่อนุมัติ; ไม่พบ constraints กลาง และไม่มีข้อกำหนดให้สร้าง D-00 ก่อนงานนี้.
+- คำตอบหรือการตัดสินใจของทีม: ทีมตรวจและอนุมัติ plan.md สำหรับ Cancellation Prototype แล้ว.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี; บันทึกสถานะแผนเป็นอนุมัติสำหรับ Prototype โดยคง Draft/ไม่ใช่ Baseline และคง dependencies ของ T-02/T-07.
+
+## #5 | 2026-11-18 | Copilot | ปรับแผน Cancellation Prototype ให้แยกจากแอปบน main
+- คำสั่ง: ปรับแนวทางให้พัฒนาบน `feature/cancle` โดยไม่ Merge/Cherry-pick ระหว่างทำงานแยกส่วน, Merge `origin/main` ครั้งเดียวหลัง Policy และ Unit Tests พร้อม, และไม่สร้าง React/FastAPI app ซ้ำ.
+- สิ่งที่ AI ถามหรือรายงาน: T-01 เดิมสร้าง Backend/Frontend manifests และ scaffolding ของแอปซ้ำกับ `main`; เสนอ Policy/pytest ก่อน Merge และ Integration/UI หลัง Merge.
+- คำตอบหรือการตัดสินใจของทีม: ยืนยันแนวทางแยกงานก่อน/หลัง Merge และให้ปรับ `plan.md` กับ `tasks.md`.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี; คง Requirements, Business Rules, Draft IDs, Open Questions และสถานะ Draft เดิม.
+
+## #6 | 2026-11-19 | Copilot | /implement T-01
+- คำสั่ง: สร้างเฉพาะ Cancellation package และ pytest smoke test ด้วย Python 3.11; ห้ามสร้าง application/manifest เพิ่ม, ทำ task อื่น, Merge, Cherry-pick, Commit หรือ Push.
+- ไฟล์ที่สร้าง: `backend/app/cancellation/__init__.py`, `backend/tests/test_cancellation_setup.py`.
+- ผลตรวจ: `python3.11 -m pytest backend/tests/test_cancellation_setup.py -q` ผ่าน 1 test; ติดตั้ง pytest ใน Python 3.11 หลังพบว่า interpreter ยังไม่มี pytest.
+- สิ่งที่ AI เกือบต้องเดาแต่ไม่ได้เดา: ไม่มี; test ตรวจเพียงการ import package ตามเกณฑ์ T-01 ไม่เพิ่มพฤติกรรม Policy.
+
+## #7 | 2026-11-19 | Copilot | ตรวจรับ T-01 และเปิด T-02
+- คำสั่ง: ตรวจ T-01 ตามเกณฑ์ใน tasks.md; หากผ่านให้กำหนด T-01 เป็น “เสร็จแล้ว” และ T-02 เป็น “พร้อมทำ”; หยุดก่อนเริ่ม T-02.
+- ผลตรวจ: Smoke test บน Python 3.11 ผ่าน (1 passed); package และ test file อยู่ในขอบเขต T-01; `git diff --check` ผ่าน.
+- การเปลี่ยนแปลง: อัปเดตสถานะ T-01 และ T-02 ใน `specs/006-cancle/tasks.md` เท่านั้น ไม่แก้ Requirements หรือ Business Rules.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
+
+## #8 | 2026-11-19 | Copilot | /implement T-02
+- คำสั่ง: สร้าง Cancellation Policy แบบอิสระตาม BR-CAN-DRAFT-09 โดยตรวจ 44, 45, 119 และ 120 นาที; ไม่เชื่อม API, DB, Payment, Booking หรือ Tracking และไม่เริ่ม T-07.
+- ไฟล์ที่สร้าง: `backend/app/cancellation/policy.py`.
+- ผลตรวจ: Syntax ผ่าน; import และ assertion สำหรับ 44/45/119/120 นาทีผ่าน; `python3.11 -m pytest -q backend/tests/test_cancellation_setup.py` ผ่าน 1 test.
+- การเปลี่ยนแปลง: กำหนดสถานะ T-02 เป็น “เสร็จ รอทีมตรวจ”; ไม่มีการแก้ Requirements หรือ Business Rules.
+- สิ่งที่ AI เกือบต้องเดาแต่ไม่ได้เดา: ไม่กำหนดจุดเริ่มนับกรอบคืนเงิน 2 ชั่วโมงหรือการคืนเงินจริง เพราะยังรอคำตอบ Q-06-11; ผลมัดจำของกรณี <45 นาทีคงเป็น “ไม่ระบุ” ตามหลักฐานที่มี.
+
+## #9 | 2026-11-19 | Copilot | ตรวจรับ T-02 Cancellation Policy
+- คำสั่ง: ตรวจ T-02 ตาม tasks.md เทียบ spec.md, rules.md, plan.md และ AC-06-DRAFT-05; ตรวจ boundary 44/45/119/120 นาที, input validation, การไม่มี side effects และรัน Python/pytest; หากผ่านให้ปิด T-02 และเปิด T-07 โดยไม่เริ่ม Implement T-07.
+- ผลตรวจ: Python syntax และ import ผ่าน; boundary ทั้ง 4 ค่าและ invalid-input 4 กรณีผ่าน; pytest ที่มีอยู่ผ่าน 1 test; ตรวจโค้ดไม่พบการเรียก API/DB/Payment หรือการเปลี่ยน Booking/Tracking state.
+- การเปลี่ยนแปลง: อัปเดต T-02 เป็น “เสร็จแล้ว” และ T-07 เป็น “พร้อมทำ” ใน `specs/006-cancle/tasks.md`; ไม่แก้ Requirements หรือ Business Rules และไม่ได้เริ่ม T-07.
+- สิ่งที่ AI เกือบต้องเดาแต่ไม่ได้เดา: คงผลมัดจำกรณี <45 นาทีเป็น “ไม่ระบุ” และไม่กำหนดจุดเริ่มนับหรือการทำคืนเงินจริงตาม Q-06-11.
+
+## #10 | 2026-11-19 | Copilot | /implement T-07
+- คำสั่ง: เพิ่ม pytest Unit Tests สำหรับ Cancellation Policy ตาม AC-06-DRAFT-05 โดยทดสอบ 44/45/119/120 นาที, ผลยกเลิก, คำเตือน/การยืนยัน, ผลมัดจำ/กรอบคืนเงิน และ invalid inputs; ไม่เรียก API, Database หรือ Payment จริง.
+- ไฟล์ที่สร้าง: `backend/tests/test_cancellation.py`.
+- ผลตรวจ: Python syntax ผ่าน; `python3.11 -m pytest -q backend/tests` ผ่าน 9 tests (0 failed), รวม boundary 4 กรณีและ invalid-input 4 กรณี; `git diff --check` ผ่าน.
+- การเปลี่ยนแปลง: อัปเดต T-07 เป็น “เสร็จ รอทีมตรวจ” ใน `specs/006-cancle/tasks.md`; ไม่แก้ Policy, Requirements หรือ Business Rules และไม่เริ่ม Task อื่น.
+- สิ่งที่ AI เกือบต้องเดาแต่ไม่ได้เดา: ทดสอบเฉพาะกรอบคืนเงิน 120 นาทีที่ Policy ส่งคืน ไม่ทดสอบธุรกรรมหรือกำหนดจุดเริ่มนับ/ช่องทางคืนเงินจริงซึ่งยังรอ Q-06-11.
+
+## #11 | 2026-11-19 | Copilot | ตรวจรับ T-07 Cancellation Policy Tests
+- คำสั่ง: ตรวจ T-07 เทียบ BR-CAN-DRAFT-09 และ AC-06-DRAFT-05, ตรวจ boundary, warning/confirmation, deposit/refund window และ input validation; รัน pytest ทั้งหมดใน `backend/tests`; หากผ่านให้ปิด T-07 และเปิด T-10 โดยไม่ Merge.
+- ผลตรวจ: `python3.11 -m pytest -q backend/tests` ผ่าน 9 tests (0 failed); พบ test assertions ครบตามขอบเขต; `git diff --check` และตรวจไฟล์ untracked ผ่าน.
+- การเปลี่ยนแปลง: อัปเดต T-07 เป็น “เสร็จแล้ว” และ T-10 เป็น “พร้อมทำ” (ดำเนินการโดยทีม) ใน `specs/006-cancle/tasks.md`; ไม่แก้ Requirements, Business Rules หรือ Policy และไม่ได้เริ่ม T-10/Merge.
+- สิ่งที่ AI เกือบต้องเดาแต่ไม่ได้เดา: ไม่ทดสอบธุรกรรมคืนเงินจริงหรือกำหนดจุดเริ่มนับ/ช่องทางคืนเงิน; ยังคงเป็น Q-06-11.
+## #12 | 2026-11-02 | Claude Code (Claude Opus 5.5) | จัดไฟล์ feature ④ ชำระค่าบริการ เข้ารูปแบบ template
 
 คำสั่ง: "อ่าน CLAUDE.md, AGENTS.md และ docs/ ก่อน แล้วแตกไฟล์ khonyaai-payment.zip (feature ④ ชำระค่าบริการ) ปรับ spec.md / plan.md / task.md ให้ตรงรูปแบบของ specs/002-feature และ template ใน docs/ ถ้ากติกาของ repo กำหนดให้ทำไฟล์อื่นเพิ่ม เช่น mockup ตาม mockup-template.html ให้บอกก่อน รัน pytest ให้ผ่าน แล้วสรุปให้ดูก่อน commit ยังไม่ต้อง commit จนกว่าฉันจะบอก"
 
@@ -36,7 +96,7 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 
 ยังไม่ commit ตามคำสั่ง
 
-## #3 | 2026-11-02 | Claude Code (Claude Opus 5.5) | แก้ก่อน commit: Q-06, F-07, Q-07 แล้ว commit และ push
+## #13 | 2026-11-02 | Claude Code (Claude Opus 5.5) | แก้ก่อน commit: Q-06, F-07, Q-07 แล้ว commit และ push
 
 คำสั่ง: "ก่อน commit ให้แก้ 3 เรื่อง: (1) Q-06 แก้ข้อความ AC ใน spec ให้ตรงกับโค้ดและส่วน API คือ GET ตอบ 200 พร้อม CANCELLED และ POST ตอบ 409 แล้วปิด Q-06 (2) F-07 แก้ test_AC_04_09 ให้ตรวจจริงว่า payment ไม่มี key "cvv" และไม่มีเลขบัตรเต็มหรือค่า CVV อยู่ในข้อมูลที่เก็บ (3) Q-07 แก้ข้อความหน้าจอกับ AC-04-02 ให้ตรงกัน แล้วลบ khonyaai-payment.zip รัน pytest ให้ผ่าน แล้ว commit และ push ลง branch feature/payment"
 
@@ -49,7 +109,7 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 สิ่งที่ AI เดา
 - คำสั่ง (3) ไม่ได้บอกว่าจะแก้ข้างไหน AI แก้หน้าจอให้ตรงกับ AC เพราะ spec เป็นหลัก (AGENTS.md)
 
-## #4 | 2026-11-02 | Claude Code (Claude Opus 5.5) | สร้างภาพ mockup UI-04-01-payment.png
+## #14 | 2026-11-02 | Claude Code (Claude Opus 5.5) | สร้างภาพ mockup UI-04-01-payment.png
 
 คำสั่ง: "แปลง specs/004-payment/mockups/UI-04-01-payment.html เป็นภาพ UI-04-01-payment.png แบบเต็มหน้า ใช้ headless browser เช่น Playwright ติดตั้งไว้นอก repo ไม่ต้องเพิ่มลงใน requirements หรือ package.json บันทึกใน prompt-log ว่า AI สร้างภาพนี้ตามที่ทีมขอ แล้วรอให้ฉันตรวจก่อน commit"
 
@@ -64,7 +124,7 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 - ภาพนี้ AI สร้างจาก mockup ที่ AI ร่าง ยังไม่ใช่ภาพที่ PO ยืนยันแล้ว (Q-08 ยังเปิด) ตาม docs/mockup-guide.md ภาพ .png มีไว้ให้ PO ยืนยัน
 - ยังไม่ commit รอทีมตรวจ
 
-## #5 | 2026-11-02 | Claude Code (Claude Opus 5.5) | ปรับหน้า React ของ ④ ให้ตรงกับ mockup UI-04-01
+## #15 | 2026-11-02 | Claude Code (Claude Opus 5.5) | ปรับหน้า React ของ ④ ให้ตรงกับ mockup UI-04-01
 
 คำสั่ง: "ปรับหน้า React ใน frontend/src/payment/ ให้หน้าตาและข้อความตรงกับ specs/004-payment/mockups/UI-04-01-payment.html ทั้ง 5 สถานะ ใช้สี ฟอนต์ และการจัดวางตาม mockup ห้ามแก้ logic การเรียก API และห้ามแก้ backend เสร็จแล้วรัน npm run build ให้ผ่าน รัน backend กับ frontend ให้ แล้วบอกวิธีเปิดดูหน้าเว็บ ยังไม่ต้อง commit"
 
@@ -80,7 +140,7 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 - แท็บบัตรเครดิตยังแสดงสรุปยอดเต็มและเวลา (mockup แสดงเฉพาะมัดจำ) และสถานะบัตรถูกปฏิเสธยังแสดงสรุปยอด เพราะ AC-04-01 และ AC-04-02 ต้องเห็นยอดในหน้าจ่าย และส่วน 12 ของ spec ให้การจัดวางยืดหยุ่นได้
 - ข้อความสถานะยกเลิกตาม mockup "ไม่ชำระมัดจำภายใน 15 นาที" จะไม่ถูกถ้าการจองถูกยกเลิกด้วยเหตุอื่น (เช่น ⑥) เพราะ API ไม่ได้ส่งเหตุผลการยกเลิกมา
 
-## #6 | 2026-11-02 | Claude Code (Claude Opus 5.5) | ส่ง cancel_reason ให้หน้าจอแสดงข้อความยกเลิกถูกทุกกรณี
+## #16 | 2026-11-02 | Claude Code (Claude Opus 5.5) | ส่ง cancel_reason ให้หน้าจอแสดงข้อความยกเลิกถูกทุกกรณี
 
 คำสั่ง: "แก้ข้อความตอนยกเลิกให้ถูกทุกกรณี: ให้ GET /api/payments/{booking_id} ส่ง cancel_reason กลับมาด้วย เพิ่ม test ใน backend แล้วให้หน้าจอแสดงตาม cancel_reason ถ้าไม่มีให้แสดงแค่ "การจองนี้ถูกยกเลิกแล้ว" อัปเดต spec ส่วน API ให้ตรง รัน pytest และ npm run build ให้ผ่าน แล้ว commit และ push ลง feature/payment"
 
@@ -90,8 +150,16 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 - PaymentPage.jsx: กล่องยกเลิกแสดงหัวข้อ "การจองนี้ถูกยกเลิกแล้ว" แล้วตามด้วย cancel_reason ถ้ามี
 - spec.md v1.3 (Change Log, ตัวอย่าง JSON และคำอธิบาย cancel_reason ในส่วน 5), plan.md ข้อ 4 และ 6, rtm.md
 - pytest 27 passed, npm run build ผ่าน, ตรวจในเบราว์เซอร์ทั้งกรณีมีเหตุผลและไม่มี
-- รวม commit การปรับหน้าจอตาม mockup จาก prompt-log #5 ไปด้วย
+- รวม commit การปรับหน้าจอตาม mockup จาก prompt-log #15 ไปด้วย
 
 สิ่งที่ AI เดา
 - ตั้งชื่อ test ตาม AC-04-12 (หน้าจอแจ้งว่าการจองถูกยกเลิก) เพราะ cancel_reason มีไว้ให้หน้าจอใช้
 - ⑥ ต้องบันทึก `bookings.cancel_reason` เองตอนยกเลิก ถ้าไม่บันทึก หน้าจอจะแสดงแค่หัวข้อ (ควรตกลงกับ ⑥)
+
+## #17 | 2026-11-19 | Copilot | /implement T-10 รวม origin/main เข้า feature/cancle
+
+- คำสั่ง: Merge `origin/main` เข้า `feature/cancle` เพียงครั้งเดียว หลัง T-01, T-02 และ T-07 เสร็จ; แก้เฉพาะ Conflict ที่คาดไว้ใน `prompt-log.md`; ตรวจ Backend, Frontend หาก dependencies พร้อม, ไฟล์ Cancellation และ `git diff --check`; อัปเดตสถานะ T-10.
+- ผล Merge: รวมรายการจากทั้งสอง Branch โดยคง Cancellation entries เดิมไว้ก่อนตามกฎ append-only และต่อ Payment entries จาก `origin/main` ท้ายไฟล์เป็น #12–#16 เพื่อให้เลขไม่ซ้ำ; ปรับ reference เดิมจาก #5 เป็น #15 ให้ตรงกับเลขใหม่. ไม่พบ Conflict อื่น.
+- ผลตรวจ: Backend `PYTHONPATH=. python -m pytest backend/tests -q` ผ่าน 36 tests ด้วย Python 3.11; มี DeprecationWarning จาก Starlette/AnyIO. ติดตั้ง dependencies ตาม `backend/requirements.txt` ใน venv ชั่วคราวนอก repo. Frontend build ไม่ได้รัน เพราะ `frontend/node_modules` ไม่มี; ไม่ติดตั้ง dependencies.
+- สถานะ: T-10 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; ไม่มีการ Push, Cherry-pick หรือเริ่ม T-03 ถึง T-09.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
