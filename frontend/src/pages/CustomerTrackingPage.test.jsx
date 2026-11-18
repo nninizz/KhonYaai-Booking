@@ -55,8 +55,27 @@ const POSITION = {
   is_stale: false,
 };
 
-function makeApi(result) {
-  return { getLatest: vi.fn(result) };
+const TEAM = {
+  lead_name: 'ชื่อตัวอย่าง',
+  phone: '0800000000',
+  photo_url: 'https://example.com/photo.jpg',
+  plate: 'กข 1234',
+  vehicle_type: 'รถ 4 ล้อตู้ทึบ',
+};
+
+function makeApi(result, stage = 'searching', team = TEAM) {
+  return {
+    getLatest: vi.fn(result),
+    getStage: vi.fn(async () => ({ stage })),
+    getTeamInfo: vi.fn(async () => {
+      if (!team) {
+        const err = new Error('ไม่มี');
+        err.status = 404;
+        throw err;
+      }
+      return team;
+    }),
+  };
 }
 
 async function flush() {
@@ -129,4 +148,89 @@ test('AC_05_07_no_marker_when_api_has_no_position', async () => {
   await flush();
   expect(mapsCalls.markers.length).toBe(0);
   expect(container.querySelector('[data-testid="unavailable"]')).not.toBeNull();
+});
+
+// D-05-27: ป้ายขั้นสถานะ 7 ขั้นตามลำดับที่ทีมกำหนด ยังไม่มี AC รอ REQ-ID (Q-28)
+const STAGE_CASES = [
+  ['searching', 'หาคนขับ'],
+  ['driver_found', 'หาคนขับได้แล้ว'],
+  ['driver_coming', 'คนขับกำลังมาหาคุณ'],
+  ['at_pickup', 'ถึงจุดรับของแล้ว'],
+  ['loading', 'กำลังขนของ'],
+  ['in_transit', 'ขนของไปยังปลายทาง'],
+  ['delivered', 'ขนของถึงปลายทางแล้ว'],
+];
+
+test.each(STAGE_CASES)('D_05_27_customer_sees_stage_label_%s', async (stage, label) => {
+  // D-05-27: ลูกค้าเห็นข้อความขั้นสถานะปัจจุบันของงาน
+  const api = makeApi(async () => POSITION, stage);
+  await act(async () => {
+    root.render(<CustomerTrackingPage jobId="job-stage" mapsKey="test-key" api={api} />);
+  });
+  await flush();
+  expect(container.querySelector('[data-testid="stage"]').textContent).toBe(label);
+});
+
+test('D_05_27_stage_is_hidden_when_stage_cannot_be_read', async () => {
+  // D-05-27: อ่านขั้นสถานะไม่ได้ไม่แสดงค่าปลอม
+  const api = {
+    getLatest: vi.fn(async () => POSITION),
+    getStage: vi.fn(async () => {
+      throw new Error('ล้มเหลว');
+    }),
+  };
+  await act(async () => {
+    root.render(<CustomerTrackingPage jobId="job-stage-err" mapsKey="test-key" api={api} />);
+  });
+  await flush();
+  expect(container.querySelector('[data-testid="stage"]')).toBeNull();
+});
+
+test('D_05_28_customer_sees_team_lead_phone_photo_plate_and_vehicle_type', async () => {
+  // D-05-28: ลูกค้าเห็นชื่อหัวหน้าทีม เบอร์โทร รูป ทะเบียนรถ และประเภทรถ
+  const api = makeApi(async () => POSITION, 'driver_coming');
+  await act(async () => {
+    root.render(<CustomerTrackingPage jobId="job-team" mapsKey="test-key" api={api} />);
+  });
+  await flush();
+  expect(container.querySelector('[data-testid="team-lead"]').textContent).toContain('ชื่อตัวอย่าง');
+  expect(container.querySelector('[data-testid="team-phone"]').textContent).toContain('0800000000');
+  expect(container.querySelector('[data-testid="team-plate"]').textContent).toContain('กข 1234');
+  expect(container.querySelector('[data-testid="team-vehicle"]').textContent).toContain('รถ 4 ล้อตู้ทึบ');
+  expect(container.querySelector('[data-testid="team-photo"]').getAttribute('src')).toBe(TEAM.photo_url);
+});
+
+test('D_05_28_team_card_hidden_when_no_team_info', async () => {
+  // D-05-28: ยังไม่มีข้อมูลทีมงาน ไม่แสดงการ์ดและไม่แสดงค่าปลอม
+  const api = makeApi(async () => POSITION, 'searching', null);
+  await act(async () => {
+    root.render(<CustomerTrackingPage jobId="job-no-team" mapsKey="test-key" api={api} />);
+  });
+  await flush();
+  expect(container.querySelector('[data-testid="team-card"]')).toBeNull();
+});
+
+test('D_05_28_team_card_has_no_photo_when_photo_missing', async () => {
+  // D-05-28: ไม่มีรูปพนักงาน ไม่แสดงรูป แต่ยังแสดงข้อมูลอื่น
+  const api = makeApi(async () => POSITION, 'driver_found', { ...TEAM, photo_url: null });
+  await act(async () => {
+    root.render(<CustomerTrackingPage jobId="job-no-photo" mapsKey="test-key" api={api} />);
+  });
+  await flush();
+  expect(container.querySelector('[data-testid="team-photo"]')).toBeNull();
+  expect(container.querySelector('[data-testid="team-phone"]')).not.toBeNull();
+});
+
+test('D_05_27_stage_is_read_again_every_15_seconds', async () => {
+  // D-05-27 ใช้รอบ 15 วินาทีเดียวกับตำแหน่ง (D-05-11)
+  vi.useFakeTimers();
+  const api = makeApi(async () => POSITION, 'driver_coming');
+  await act(async () => {
+    root.render(<CustomerTrackingPage jobId="job-stage-timer" mapsKey="test-key" api={api} />);
+  });
+  expect(api.getStage).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(LATEST_INTERVAL_MS);
+  });
+  expect(api.getStage).toHaveBeenCalledTimes(2);
 });

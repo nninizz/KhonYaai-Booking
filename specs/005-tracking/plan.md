@@ -39,7 +39,7 @@ Constraint กลาง: specs/000-shared/constraints.md (ยังไม่ม�
 | TrackingSession (งานที่ติดตาม) | job_id, driver_id, destination_lat, destination_lng, status (active, arrived, cancelled, closed), started_at, arrived_at, closed_at | REQ-IF-001, REQ-QA-001, D-05-06, D-05-12, AS-02, AS-05 | destination เป็น PII (D-05-13, Q-17) ลบพร้อมพิกัดคนขับตามกติกาการลบ |
 | LocationPoint (พิกัดคนขับ) | session_id, lat, lng, accuracy_m, recorded_at, received_at | REQ-IF-001, REQ-QA-001, AS-08, AS-09 | เป็น PII (D-05-07, Q-07) ลบเมื่อยืนยันส่งงาน ยกเลิก หรือครบ 24 ชั่วโมง (AS-04, D-05-21) |
 
-ข้อจำกัด: ไม่มีฟิลด์เลขบัตรประชาชน ที่อยู่บ้านของคนขับ หรือเบอร์โทร ใน entity ทั้งสองตัวนี้ (ไม่มี Constraint กลางให้ยืนยันเรื่องนี้ ทีมตรวจเอง)
+ข้อจำกัด: ไม่มีฟิลด์เลขบัตรประชาชน หรือที่อยู่บ้านของคนขับ ใน entity ทั้งสองตัวนี้ (ไม่มี Constraint กลางให้ยืนยันเรื่องนี้ ทีมตรวจเอง) เบอร์โทรของหัวหน้าทีมอนุญาตให้แสดงในการติดตามได้ตาม D-05-29 แต่ไม่เก็บเป็นฟิลด์ของ LocationPoint (พิกัดยังไม่มีเบอร์)
 entity Job ของ feature 003-booking ไม่ถูกสร้างในฟีเจอร์นี้ ใช้เพียง job_id อ้างอิง (AS-10)
 
 ## 4. API และหน้าจอ

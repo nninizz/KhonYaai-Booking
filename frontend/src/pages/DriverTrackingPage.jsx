@@ -65,7 +65,7 @@ export default function DriverTrackingPage({
   return (
     <div data-testid="driver-page">
       <button type="button" onClick={onConfirm} disabled={confirmed}>
-        ยืนยันส่งงาน
+        งานสิ้นสุด
       </button>
     </div>
   );

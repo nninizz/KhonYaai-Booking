@@ -2,8 +2,72 @@
 // ใช้ในหน่วยความจำ ยังไม่เชื่อมฐานข้อมูลจริง (Q-23)
 // รองรับ: REQ-QA-001, REQ-IF-001, AS-03, AS-07, Q-07
 
+import { isStage, STAGES } from '../stages.js';
+
 // พิกัดที่ส่งไปแล้ว (ใช้ตรวจว่ามีการส่งจริงใน test) เก็บเวลาที่ระบบรับด้วย
 export const sentPoints = [];
+
+// สถานะการติดตามของแต่ละงาน (D-05-27) ค่าเริ่มต้นคือ "หาคนขับ" ยังไม่มีคนขับรับงาน
+const stageByJob = new Map();
+
+/**
+ * จำลองการตั้งขั้นสถานะของงาน (ใช้ใน test และ demo เท่านั้น ยังไม่มีการตั้งจริงจากหน้าจอคนขับ)
+ * @param {string} jobId
+ * @param {string} stage หนึ่งใน STAGES
+ */
+export function setStage(jobId, stage) {
+  if (!isStage(stage)) throw new Error(`ขั้นสถานะไม่ถูกต้อง: ${stage}`);
+  stageByJob.set(jobId, stage);
+}
+
+/**
+ * จำลอง GET /api/tracking/{job_id}/stage ให้ลูกค้าอ่านขั้นสถานะ (D-05-27)
+ * @param {string} jobId
+ */
+export async function getStage(jobId) {
+  return { stage: stageByJob.get(jobId) ?? 'searching' };
+}
+
+// ข้อมูลทีมงานของแต่ละงาน (D-05-28) แหล่งข้อมูลเป็น mockup ก่อน (D-05-29)
+const teamByJob = new Map();
+
+// งานที่สิ้นสุดแล้ว (session ปิดหรือถูกยกเลิก AS-12) ไม่แสดงข้อมูลทีมงานอีก (D-05-29)
+const endedJobs = new Set();
+
+/**
+ * จำลองการสิ้นสุดงานจากการยกเลิก (AS-12) ใช้ใน test และ demo
+ * @param {string} jobId
+ */
+export function endJob(jobId) {
+  endedJobs.add(jobId);
+}
+
+/**
+ * จำลองการตั้งข้อมูลทีมงานของงาน (ใช้ใน test และ demo เท่านั้น)
+ * @param {string} jobId
+ * @param {{lead_name: string, phone: string, photo_url: string|null, plate: string, vehicle_type: string}} info
+ */
+export function setTeamInfo(jobId, info) {
+  teamByJob.set(jobId, info);
+}
+
+/**
+ * จำลอง GET /api/tracking/{job_id}/team ให้ลูกค้าอ่านข้อมูลทีมงาน (D-05-28)
+ * แสดงเฉพาะตั้งแต่ขั้น "หาคนขับได้แล้ว" จนถึงงานสิ้นสุด (D-05-34) ก่อนหน้านั้นหรือหลังสิ้นสุดให้ throw 404
+ * ยังไม่มีข้อมูลของงานนี้ให้ throw พร้อม status 404 ไม่คืนค่าปลอม
+ * @param {string} jobId
+ */
+export async function getTeamInfo(jobId) {
+  const info = teamByJob.get(jobId);
+  const stage = stageByJob.get(jobId) ?? 'searching';
+  const matched = STAGES.indexOf(stage) >= STAGES.indexOf('driver_found');
+  if (!info || !matched || endedJobs.has(jobId)) {
+    const err = new Error('ยังไม่มีข้อมูลทีมงานของงานนี้');
+    err.status = 404;
+    throw err;
+  }
+  return { ...info };
+}
 
 // ค่าที่ตรงกับ AS-07: ตำแหน่งที่ไม่ได้รับนานเกิน 60 วินาทีถือว่าไม่เป็นปัจจุบัน
 const STALE_AFTER_MS = 60000;
@@ -45,5 +109,6 @@ export async function getLatest(jobId) {
  * @param {string} jobId
  */
 export async function confirmDelivery(jobId) {
+  endedJobs.add(jobId);
   return { job_id: jobId, status: 'closed', points_deleted: 0 };
 }
