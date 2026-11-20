@@ -1,4 +1,4 @@
-// แนบ token ทุก request — ระหว่างรอ ② ใช้ mock-token-1
+// รองรับ REQ-CON-201: Payment คงการแนบ token ค่าเริ่มต้นจาก helper เดิม
 const DEFAULT_TOKEN = "mock-token-1";
 
 function getToken() {
@@ -9,13 +9,16 @@ function getToken() {
   }
 }
 
-export async function api(path, { method = "GET", body } = {}) {
+// รองรับ REQ-FN-201, REQ-FN-203, REQ-FN-205: เลือกไม่แนบ token สำหรับ login/verify
+export async function api(path, { method = "GET", body, auth = true } = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (auth) {
+    headers.Authorization = `Bearer ${getToken()}`;
+  }
+
   const res = await fetch(`/api${path}`, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
@@ -29,6 +32,19 @@ export async function api(path, { method = "GET", body } = {}) {
     throw err;
   }
   return data;
+}
+
+// รองรับ REQ-FN-201, REQ-FN-205: login ไม่ต้องใช้ token ก่อนเรียก
+export const authLogin = (body) =>
+  api("/auth/login", { method: "POST", body, auth: false });
+
+// รองรับ REQ-FN-203, REQ-FN-205: verify OTP ไม่ต้องใช้ token ก่อนเรียก
+export const verifyOtp = (body) =>
+  api("/auth/verify-otp", { method: "POST", body, auth: false });
+
+// รองรับ REQ-FN-203: บันทึก token หลัง flow login สำเร็จ
+export function storeAuthToken(token) {
+  localStorage.setItem("token", token);
 }
 
 export const getPayment = (bookingId) => api(`/payments/${bookingId}`);

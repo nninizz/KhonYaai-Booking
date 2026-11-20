@@ -1,13 +1,14 @@
 # plan.md แผนการสร้าง feature ① ลงทะเบียน (UC-01)
 
-รุ่น: 1.5 (AI ร่าง) | วันที่: 2026-11-20 | อ้าง: spec.md v1.7 | สถานะ: draft | ผู้ตรวจ: (ทีมเติม)
-ร่างโดย AI จาก spec.md v1.7, ตัวอย่าง feature ④ (spec / rules / rtm / mockup) และการรันโค้ดต้นแบบ backend ใน `khonyai/backend/` เมื่อ 2026-11-20 บันทึกใน prompt-log
+รุ่น: 1.13 (AI ร่าง) | วันที่: 2026-11-20 | อ้าง: spec.md v1.16 | สถานะ: draft | ผู้ตรวจ: (ทีมเติม)
+ปรับจากรุ่น 1.12 ให้ใช้ Vite proxy สำหรับ API Register ใน development โดยคง contract และ behavior ตาม spec v1.16
+ร่างเดิมโดย AI จาก spec.md v1.10, ตัวอย่าง feature ④ (spec / rules / rtm / mockup) และการรันโค้ดต้นแบบ backend ใน `khonyai/backend/` เมื่อ 2026-11-20 บันทึกใน prompt-log
 **ช่อง "ทีมตัดสิน" ในข้อ 4 ทีมเขียนเอง AI เว้นว่างไว้**
 ผลทดสอบอ้างจากการรัน `pytest -q` ของต้นแบบ: 6 passed (ต้นแบบยังไม่ใช่โครงสุดท้าย ดูข้อ 4)
 
 ## 1. สรุปแผน
 
-สร้าง `POST /api/auth/register` และหน้าสมัครสมาชิก ให้เพิ่มผู้ใช้ใหม่ (`is_verified = False`) ลงตาราง `users` ใน `mock_db.py` กลางของกลุ่ม แล้วส่งต่อผู้ใช้ไป flow OTP ทางเบอร์โทรของ ② ทันที หลังยืนยันจึง login ด้วย email/password
+สร้าง `POST /api/auth/register` และหน้าสมัครสมาชิกที่ `/register` ให้เพิ่มผู้ใช้ใหม่ (`is_verified = False`) ลงตาราง `users` ใน `mock_db.py` กลางของกลุ่ม แล้วส่งผู้ใช้ไปหน้า `/login` ของ ②; หน้าแรก `/` เป็น Login, มีปุ่มจริง “สมัครสมาชิก” ไป `/register` และหน้า Register มีลิงก์ข้อความ “เข้าสู่ระบบ” กลับ `/login`; ② รับ email/password, เริ่ม OTP สำหรับบัญชีที่ยังไม่ verified และออก token หลัง OTP สำเร็จ
 ลำดับ: ตกลงกับ ② (T-01, T-02) → backend (T-03 ถึง T-09) → frontend (T-10 ถึง T-16) → เอกสารและปิดข้อค้นพบ (T-17 ถึง T-24) รายละเอียดอยู่ใน tasks.md
 สิ่งที่ feature อื่นต้องการจาก ①: แถวใน `users` ที่ฟิลด์ตรงกับที่ ② อ่าน (REQ-IF-101) เท่านั้น ③ ถึง ⑥ ไม่เรียก ① โดยตรง
 
@@ -34,7 +35,7 @@
 | 2 | แปลงค่า: ตัดช่องว่างชื่อ/อีเมล, อีเมลเป็นตัวพิมพ์เล็ก, เบอร์ลบ `-` และช่องว่าง | - | BR-RG-02, 03 |
 | 3 | อีเมลซ้ำกับ `users` | 409 `field = "email"` | BR-RG-05 (REQ-FN-103) |
 | 4 | เบอร์ซ้ำกับ `users` | 409 `field = "phone"` | BR-RG-06 (REQ-FN-103) |
-| 5 | hash password ด้วยวิธีที่ตกลงกับ ② แล้วสร้างผู้ใช้: `id` = สูงสุด + 1, `is_verified = False`, เพิ่มลง `users` | - | BR-RG-04, 07, 08 (REQ-FN-104, REQ-PRV-101) |
+| 5 | เก็บ password ตามค่าที่รับมาใน mock แล้วสร้างผู้ใช้: `id` = สูงสุด + 1, `is_verified = False`, เพิ่มลง `users` | - | BR-RG-04, 07, 08 (REQ-FN-104, REQ-PRV-101, D-01-02) |
 | 6 | ตอบ 201 ด้วยผู้ใช้โดยตัด `password` | - | BR-RG-09 |
 
 FastAPI ตรวจ body ก่อนเข้า handler เสมอ (ขั้น 1 จึงเกิดก่อนขั้น 3 โดยธรรมชาติ ตรงกับ F-08 ของ ④ ที่เจอเรื่องลำดับ 422)
@@ -53,9 +54,10 @@ backend/
     test_register.py        # test_AC_01_nn_... (ข้อ 6)
 frontend/
   src/
-    pages/RegisterPage.jsx  # ฟอร์ม 4 ช่อง สถานะ idle / submitting / error / success
-    lib/validators.js       # BR-RG-01..04 ข้อความตรงทุกตัวอักษร (ทำซ้ำเพื่อ UX)
-    api/register.js         # registerUser(body) เรียก API
+    register/
+      RegisterPage.jsx      # ฟอร์ม 4 ช่อง สถานะ idle / submitting / error / success
+      validators.js         # BR-RG-01..04 ข้อความตรงทุกตัวอักษร (ทำซ้ำเพื่อ UX)
+      register.js           # registerUser(body) เรียก API
 ```
 
 ไม่ใช้ชื่อ `app/auth.py` เพราะ ④ ใช้เป็น stub ของ ② อยู่แล้ว (AS-01 ของ ④) ให้ ② เป็นเจ้าของไฟล์นั้น
@@ -65,10 +67,10 @@ frontend/
 | เรื่อง | ① ทำ | ② ทำ |
 |---|---|---|
 | ตาราง `users` | เพิ่มแถว (`id, name, email, phone, password, is_verified`); ใช้ email เป็น username | อ่านเพื่อส่ง OTP และ login |
-| OTP / `is_verified` | ส่งต่อไปยัง flow OTP ของ ② ทันทีหลังสมัคร | ส่งและตรวจ OTP ทางเบอร์โทร; ตั้ง `True` หลัง OTP ถูก (AS-02) |
+| OTP / `is_verified` | สมัครสำเร็จแล้วส่งไป `/login` ของ ②; ① ไม่เริ่ม OTP เอง | `POST /api/auth/login` เริ่ม OTP สำหรับบัญชี unverified; ② ตรวจและตั้ง `True` หลัง OTP ถูก (AS-02) |
 | login | ไม่ทำ login ใน ① | หลัง OTP ถูก login ด้วย email/password |
 | token | ไม่ออก ไม่เขียน `mock_db.tokens` | เป็นเจ้าของทั้งหมด (D-01-04) |
-| `password` | เก็บ Argon2id hash จาก `argon2-cffi` เท่านั้น; ห้ามเก็บ plaintext (D-01-02) | ② ต้อง verify hash รูปแบบเดียวกันได้; รอยืนยันใน Q-01 |
+| `password` | เก็บค่าตรงตามที่รับมาใน mock ตาม D-01-02; ห้ามส่งกลับหรือ log | Auth ใช้ field เดียวกันตรวจ login ตามโค้ดปัจจุบัน |
 
 ห้ามเขียนทับ `mock_db.py` กลาง ให้เพิ่มเฉพาะที่ขาด: ตรวจว่ามีตาราง `users` และผู้ใช้ตัวอย่างแล้ว (T-02)
 
@@ -76,12 +78,14 @@ frontend/
 
 | ส่วน | ทำอะไร | REQ |
 |---|---|---|
-| `validators.js` | ตรวจ BR-RG-01 ถึง 04 ในหน้าเว็บ ข้อความตรงกับ spec ทุกตัวอักษร | REQ-FN-102, REQ-FN-105 |
-| `register.js` | `POST` ไป `VITE_API_BASE` (ค่าเริ่มต้น `http://localhost:8000`) ไม่ส่ง `Authorization` | REQ-SEC-101 |
-| `RegisterPage.jsx` | ฟอร์ม 4 ช่องเรียงตามลำดับ/ป้ายชื่อใน UI-01-01; state `idle → submitting → error / success` | REQ-FN-101 |
+| `App.jsx` | ให้ `/` และ `/login` แสดง Auth และ `/register` แสดง Register โดยใช้กลไก route ที่มีอยู่ | REQ-FN-106 |
+| `register/validators.js` | ตรวจ BR-RG-01 ถึง 04 ในหน้าเว็บ ข้อความตรงกับ spec ทุกตัวอักษร | REQ-FN-102, REQ-FN-105 |
+| `register/register.js` | `POST /api/auth/register` แบบ same-origin ผ่าน Vite proxy ใน development; `VITE_API_BASE` ใช้ได้เมื่อกำหนด origin แยก; ไม่ส่ง `Authorization` | REQ-SEC-101 |
+| `register/RegisterPage.jsx` | ฟอร์ม 4 ช่องเรียงตามลำดับ/ป้ายชื่อใน UI-01-01; state `idle → submitting → error / success`; ลิงก์ข้อความ “เข้าสู่ระบบ” นำไป `/login` | REQ-FN-101, REQ-FN-106 |
+| `auth/AuthFields.jsx` | ฟอร์ม Login มีปุ่มจริง “สมัครสมาชิก” ไป `/register` เฉพาะขั้น email/password; ไม่แสดงในขั้น OTP | REQ-FN-106; AC-02-01 (เฉพาะ navigation) |
 | วาง error | 422: ใช้ `detail[].loc.at(-1)` เป็นชื่อช่อง · 409: ใช้ `field` · แสดงใต้ช่อง ไม่ล้างช่องอื่น | REQ-FN-105 |
 | ปุ่มสมัคร | ปิดใน state `submitting`; เมื่อ request ล้มเหลว (รวม HTTP 500 หรือเชื่อมต่อไม่ได้) เปิดกลับและแสดง error | REQ-FN-107 |
-| สำเร็จ | ส่งต่อไป flow OTP ของ ② ทันที; ตกลง URL/สัญญาส่งต่อใน T-01 | REQ-FN-106 |
+| สำเร็จ | ส่งต่อไปหน้า `/login` ของ ②; ② ใช้ Auth flow เริ่ม OTP สำหรับบัญชี unverified | REQ-FN-106 |
 
 ## 4. สถานะโค้ดต้นแบบและส่วนต่างจากแผน
 
@@ -112,7 +116,6 @@ Constraint กลางยังไม่มีไฟล์กลาง (Q-03) �
 | REQ-PRV-101 ไม่ส่ง password และค่าที่ส่งมากลับ | ข้อ 3.1 ขั้น 6, ข้อ 4 F-03, T-07 | ตอบแล้ว (รอแก้โค้ด) |
 | REQ-SEC-101 สมัครได้โดยไม่มี token และไม่ออก token | ข้อ 3.3, 3.4 | ตอบแล้ว |
 | REQ-DAT-101 เขียน `users` กลางที่เดียว | ข้อ 3.2, 3.3 | ตอบแล้ว |
-| เก็บ password เป็น Argon2id hash แม้ใน mock; ② verify hash รูปแบบเดียวกันได้ | ข้อ 3.3 | เลือก Argon2id/`argon2-cffi` แล้ว; รอ ② ยืนยันการรองรับก่อนทำ T-05/T-02 |
 | ใช้ framework ชุดเดียวกับ ④ | ข้อ 2 | ตอบแล้ว (รอทีมยืนยัน D-01-01) |
 
 ## 6. แผนทดสอบ
@@ -133,10 +136,12 @@ Constraint กลางยังไม่มีไฟล์กลาง (Q-03) �
 | AC-01-09 | `test_AC_01_09_password_policy_422_and_value_not_echoed` | ต้นแบบ (422) · ส่วนไม่สะท้อนค่ายังไม่มี (F-03) |
 | AC-01-10 | `test_AC_01_10_missing_fields_422_thai_messages` | ต้นแบบ (`test_missing_field`) ตรวจแค่ status |
 | AC-01-11 | `test_AC_01_11_new_user_id_is_max_plus_one` | **ยังไม่มี** (F-06) |
-| AC-01-12 | `test_AC_01_12_user_row_in_shared_mock_db_with_argon2id_hash` (ตรวจ `$argon2id$`, verify รหัสถูก และปฏิเสธรหัสผิด) | **ยังไม่มี** ตรวจได้จากข้อมูลภายในเท่านั้น (Q-10) |
+| AC-01-12 | `test_AC_01_12_user_row_in_shared_mock_db` (stored password เท่ากับค่าที่ส่งและใช้ field เดียวกับ Auth) | **ยังไม่มี** ตรวจได้จากข้อมูลภายในเท่านั้น (Q-10) |
 | AC-01-13 | test หน้าจอ: 422 และ 409 วาง error ใต้ช่องและไม่ล้างค่าช่องอื่น | **ยังไม่มี** รอ Q-07 (ตรวจด้วยตาไปก่อน) |
 | AC-01-14 | test หน้าจอ: ปุ่มปิดระหว่างรอ; request ล้มเหลว (500/เชื่อมต่อไม่ได้) แล้วเปิดปุ่มและแสดง error | **ยังไม่มี** รอ Q-07 |
-| AC-01-15 | test หน้าจอ: 201 แล้วส่งต่อไป flow OTP ทางเบอร์โทรของ ② | **ยังไม่มี** รอ Q-07 และ T-01 |
+| AC-01-15 | test หน้าจอ: 201 แล้วไปหน้า `/login` ของ ②; Auth เริ่ม OTP ระหว่าง login เมื่อบัญชียังไม่ verified | **ยังไม่มี** รอ Q-07 และ T-01 |
+
+การตรวจ navigation ของ UI-01-01 (REQ-FN-106; AC-02-01 เฉพาะ scenario navigation) ใช้ checklist ใน browser: เปิด `/` แล้วเห็น Login, กดปุ่ม “สมัครสมาชิก” แล้วไป `/register`, กดลิงก์ข้อความ “เข้าสู่ระบบ” แล้วกลับ `/login`, และตรวจว่าไม่มีปุ่มสมัครสมาชิกในขั้น OTP. ไม่เพิ่ม test runner ขณะที่ Q-07 ยังเปิด
 
 Test ที่ไม่มี AC รองรับ: ไม่มี (ต้นแบบทุกข้อโยงถึง AC ได้)
 
@@ -144,10 +149,9 @@ Test ที่ไม่มี AC รองรับ: ไม่มี (ต้น�
 
 | ความเสี่ยง | ผล | วิธีรับมือ |
 |---|---|---|
-| ② verify Argon2id hash ที่ `argon2-cffi` สร้างไม่ได้ หรือใช้ field คนละแบบ (Q-01) | login ผู้ใช้ใหม่ไม่ได้ | ยืนยันการรองรับ Argon2id hash และ field ใน T-01 ก่อน T-05; ยังไม่แปลง seed จนกว่าจะยืนยัน |
 | ② ใช้ตัวระบุ login ต่างจาก email ที่ทีมยืนยัน (Q-02) | ผู้ใช้สมัครได้แต่ login ไม่ได้ | ประสานกับ ② ใน T-01 |
-| URL/สัญญาส่งต่อไป flow OTP ของ ② ยังไม่ตกลง (Q-04) | ส่งต่อหลังสมัครไม่ได้ | T-01 ตกลงกับผู้ทำ ② |
-| รูปแบบ error กลางยังไม่ตกลง (Q-05) | หน้าจอของ ① กับ ③ ถึง ⑥ อ่าน error ต่างกัน | T-01 ถามผู้ทำ ④ ซึ่งใช้ 409 / 422 อยู่แล้ว |
+| หลังสมัครส่งไป `/login`; Auth เริ่ม OTP หลังรับ email/password (Q-04) | ถ้า route/UI integration ไม่ตรง ผู้ใช้ไปต่อไม่ได้ | ใช้ contract ที่ยืนยันใน Auth spec และยืนยัน route integration ใน T-01 |
+| PO ของ UI-01-01 ยังไม่ระบุ (Q-08) | ยังอ้างว่า UI ทั้งหมดได้รับอนุมัติไม่ได้ | ทำเฉพาะ navigation ที่ทีมยืนยันให้ตรงกับ mockup; รายละเอียดอื่นคงเป็น Draft จน PO ยืนยัน |
 | BR-RG-01 ถึง 06, BR-RG-10 และ REQ-FN-107 เป็นข้อเสนอ AI (Q-06; ทีมยืนยันนโยบาย password ใน BR-RG-04 แล้ว) | ถ้า PO ไม่เห็นด้วยกับข้อที่ยังไม่ยืนยัน ต้องแก้ validator, UI และ test | ให้ทีมยืนยันก่อนงานที่เกี่ยวข้อง |
 | ไฟล์ภาพรวม 6 Feature ยังเขียน 50% / 4 บาทต่อ กม. (Q-09) | ทีม ③ ④ ใช้ตัวเลขผิด | T-23 |
 

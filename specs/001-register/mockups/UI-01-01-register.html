@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI-01-01 สมัครสมาชิก</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;padding:24px;background:#eef2f4;color:#1e293b;font-family:system-ui,"Segoe UI","Noto Sans Thai",Tahoma,sans-serif;line-height:1.55}
+  h1{max-width:1120px;margin:0 auto 16px;font-size:22px}
+  .note{max-width:1120px;margin:0 auto 20px;padding:10px 14px;border:1px dashed #94a3b8;border-radius:10px;background:#fff;color:#475569;font-size:14px}
+  .states{max-width:1120px;margin:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;align-items:start}
+  .state h2{margin:0 0 8px;font-size:15px;color:#475569}
+  .panel{min-height:100%;padding:20px 18px;background:#fff;border:1px solid #cbd5e1;border-radius:18px;box-shadow:0 5px 16px #0f172a12}
+  .title{margin:0 0 14px;color:#115e59;font-size:19px;font-weight:700}
+  .field{margin:0 0 10px}
+  label{display:block;margin:0 0 4px;color:#334155;font-size:14px}
+  input{width:100%;height:42px;padding:8px 11px;border:1px solid #94a3b8;border-radius:9px;background:#fff;color:#1e293b;font:inherit}
+  input[readonly]{background:#f8fafc}
+  .error{margin:4px 0 0;color:#b91c1c;font-size:13px}
+  .link{display:block;width:max-content;max-width:100%;margin:16px auto 0;color:#0f766e;font-weight:600;text-decoration:none}
+  .link:hover{text-decoration:underline;text-underline-offset:3px}
+  .link:focus-visible{outline:2px solid #0f766e;outline-offset:3px;border-radius:4px}
+  .button{display:block;width:100%;margin-top:16px;padding:11px 14px;border:0;border-radius:10px;background:#0f766e;color:#fff;text-align:center;font:inherit;font-weight:700}
+  .button:disabled{background:#94a3b8;cursor:not-allowed}
+  .variant{padding:14px 0}
+  .variant+.variant{border-top:1px solid #e2e8f0}
+  .variant-title{margin:0 0 10px;color:#64748b;font-size:13px;font-weight:600}
+  .failure-indicator{display:flex;width:44px;height:44px;align-items:center;justify-content:center;margin-top:12px;border:1px solid #fca5a5;border-radius:50%;background:#fef2f2;color:#991b1b;font-size:24px;font-weight:700}
+  .transition{padding:18px;border:1px solid #99f6e4;border-radius:12px;background:#f0fdfa;color:#115e59;text-align:center}
+  .arrow{display:block;margin:8px 0;color:#0f766e;font-size:24px}
+  @media(max-width:480px){body{padding:16px}.states{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>UI-01-01 สมัครสมาชิก</h1>
+<p class="note">Mockup สำหรับตรวจข้อกำหนดเท่านั้น; ข้อมูลในช่องเป็นตัวอย่างและไม่มีการส่งคำขอจริง</p>
+
+<main class="states">
+  <section class="state">
+    <h2>สถานะ 1: ปกติ (AC-01-13)</h2>
+    <div class="panel">
+      <p class="title">สมัครสมาชิก</p>
+      <div class="field">
+        <label for="normal-name">ชื่อ</label>
+        <input id="normal-name" type="text" value="สมชาย ใจดี" readonly data-req="REQ-FN-101">
+      </div>
+      <div class="field">
+        <label for="normal-email">อีเมล</label>
+        <input id="normal-email" type="email" value="somchai@mail.com" readonly data-req="REQ-FN-101">
+      </div>
+      <div class="field">
+        <label for="normal-phone">เบอร์โทร</label>
+        <input id="normal-phone" type="tel" value="0899999999" readonly data-req="REQ-FN-101">
+      </div>
+      <div class="field">
+        <label for="normal-password">รหัสผ่าน</label>
+        <input id="normal-password" type="password" value="Abcd1234" readonly data-req="REQ-FN-101">
+      </div>
+      <button class="button" type="button" data-req="REQ-FN-101">สมัคร</button>
+      <a class="link" href="/login" data-req="REQ-FN-106">เข้าสู่ระบบ</a>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 2: ข้อมูลผิดรูปแบบ (422; AC-01-06 ถึง AC-01-10, AC-01-13)</h2>
+    <div class="panel">
+      <p class="title">สมัครสมาชิก</p>
+      <div class="variant">
+        <p class="variant-title">ตัวอย่างฟิลด์ขาด (AC-01-10)</p>
+        <div class="field">
+          <label for="missing-name">ชื่อ</label>
+          <input id="missing-name" type="text" value="สมชาย" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="missing-email">อีเมล</label>
+          <input id="missing-email" type="email" value="" readonly data-req="REQ-FN-101">
+          <p class="error" data-req="REQ-FN-105">ห้ามเว้นว่าง</p>
+        </div>
+        <div class="field">
+          <label for="missing-phone">เบอร์โทร</label>
+          <input id="missing-phone" type="tel" value="" readonly data-req="REQ-FN-101">
+          <p class="error" data-req="REQ-FN-105">ห้ามเว้นว่าง</p>
+        </div>
+        <div class="field">
+          <label for="missing-password">รหัสผ่าน</label>
+          <input id="missing-password" type="password" value="" readonly data-req="REQ-FN-101">
+          <p class="error" data-req="REQ-FN-105">ห้ามเว้นว่าง</p>
+        </div>
+      </div>
+      <div class="variant">
+        <p class="variant-title">ตัวอย่างข้อมูลผิดรายช่อง (AC-01-06 ถึง AC-01-09)</p>
+        <div class="field">
+          <label for="invalid-name">ชื่อ</label>
+          <input id="invalid-name" type="text" value="" readonly data-req="REQ-FN-101">
+          <p class="error" data-req="REQ-FN-102 REQ-FN-105">ห้ามเว้นว่าง</p>
+        </div>
+        <div class="field">
+          <label for="invalid-email">อีเมล</label>
+          <input id="invalid-email" type="email" value="abc" readonly data-req="REQ-FN-101">
+          <p class="error" data-req="REQ-FN-102 REQ-FN-105">รูปแบบอีเมลไม่ถูกต้อง</p>
+        </div>
+        <div class="field">
+          <label for="invalid-phone">เบอร์โทร</label>
+          <input id="invalid-phone" type="tel" value="123" readonly data-req="REQ-FN-101">
+          <p class="error" data-req="REQ-FN-102 REQ-FN-105">เบอร์โทรต้องเป็นตัวเลข 10 หลัก ขึ้นต้นด้วย 0</p>
+        </div>
+        <div class="field">
+          <label for="invalid-password">รหัสผ่าน</label>
+          <input id="invalid-password" type="password" value="Abc1234" readonly data-req="REQ-FN-101">
+          <p class="error" data-req="REQ-FN-102 REQ-FN-105">รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร และมีทั้งตัวพิมพ์ใหญ่กับตัวพิมพ์เล็ก</p>
+        </div>
+      </div>
+      <button class="button" type="button" data-req="REQ-FN-101">สมัคร</button>
+      <a class="link" href="/login" data-req="REQ-FN-106">เข้าสู่ระบบ</a>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 3: ข้อมูลซ้ำ (409; AC-01-03, AC-01-04, AC-01-13)</h2>
+    <div class="panel">
+      <p class="title">สมัครสมาชิก</p>
+      <div class="variant">
+        <p class="variant-title">อีเมลซ้ำ</p>
+        <div class="field">
+          <label for="email-duplicate-name">ชื่อ</label>
+          <input id="email-duplicate-name" type="text" value="สมชาย ใจดี" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="duplicate-email">อีเมล</label>
+          <input id="duplicate-email" type="email" value="test@mail.com" readonly data-req="REQ-FN-101">
+          <p class="error" data-req="REQ-FN-103 REQ-FN-105">อีเมลนี้ถูกใช้สมัครแล้ว</p>
+        </div>
+        <div class="field">
+          <label for="email-duplicate-phone">เบอร์โทร</label>
+          <input id="email-duplicate-phone" type="tel" value="0899999999" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="email-duplicate-password">รหัสผ่าน</label>
+          <input id="email-duplicate-password" type="password" value="Abcd1234" readonly data-req="REQ-FN-101">
+        </div>
+        <button class="button" type="button" data-req="REQ-FN-101">สมัคร</button>
+        <a class="link" href="/login" data-req="REQ-FN-106">เข้าสู่ระบบ</a>
+      </div>
+      <div class="variant">
+        <p class="variant-title">เบอร์โทรซ้ำ</p>
+        <div class="field">
+          <label for="phone-duplicate-name">ชื่อ</label>
+          <input id="phone-duplicate-name" type="text" value="สมชาย ใจดี" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="phone-duplicate-email">อีเมล</label>
+          <input id="phone-duplicate-email" type="email" value="somchai@mail.com" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="duplicate-phone">เบอร์โทร</label>
+          <input id="duplicate-phone" type="tel" value="0812345678" readonly data-req="REQ-FN-101">
+          <p class="error" data-req="REQ-FN-103 REQ-FN-105">เบอร์โทรนี้ถูกใช้สมัครแล้ว</p>
+        </div>
+        <div class="field">
+          <label for="phone-duplicate-password">รหัสผ่าน</label>
+          <input id="phone-duplicate-password" type="password" value="Abcd1234" readonly data-req="REQ-FN-101">
+        </div>
+        <button class="button" type="button" data-req="REQ-FN-101">สมัคร</button>
+        <a class="link" href="/login" data-req="REQ-FN-106">เข้าสู่ระบบ</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 4: กำลังส่ง/คำขอล้มเหลว (AC-01-14)</h2>
+    <div class="panel">
+      <p class="title">สมัครสมาชิก</p>
+      <div class="variant">
+        <p class="variant-title">กำลังส่ง</p>
+        <div class="field">
+          <label for="submitting-name">ชื่อ</label>
+          <input id="submitting-name" type="text" value="สมชาย ใจดี" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="submitting-email">อีเมล</label>
+          <input id="submitting-email" type="email" value="somchai@mail.com" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="submitting-phone">เบอร์โทร</label>
+          <input id="submitting-phone" type="tel" value="0899999999" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="submitting-password">รหัสผ่าน</label>
+          <input id="submitting-password" type="password" value="Abcd1234" readonly data-req="REQ-FN-101">
+        </div>
+        <button class="button" type="button" disabled data-req="REQ-FN-107">สมัคร</button>
+        <a class="link" href="/login" data-req="REQ-FN-106">เข้าสู่ระบบ</a>
+      </div>
+      <div class="variant">
+        <p class="variant-title">หลัง request ล้มเหลว (AC-01-14)</p>
+        <div class="field">
+          <label for="failed-name">ชื่อ</label>
+          <input id="failed-name" type="text" value="สมชาย ใจดี" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="failed-email">อีเมล</label>
+          <input id="failed-email" type="email" value="somchai@mail.com" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="failed-phone">เบอร์โทร</label>
+          <input id="failed-phone" type="tel" value="0899999999" readonly data-req="REQ-FN-101">
+        </div>
+        <div class="field">
+          <label for="failed-password">รหัสผ่าน</label>
+          <input id="failed-password" type="password" value="Abcd1234" readonly data-req="REQ-FN-101">
+        </div>
+        <button class="button" type="button" data-req="REQ-FN-107">สมัคร</button>
+        <a class="link" href="/login" data-req="REQ-FN-106">เข้าสู่ระบบ</a>
+        <span class="failure-indicator" aria-hidden="true" data-req="REQ-FN-107">!</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 5: สำเร็จ (AC-01-15)</h2>
+    <div class="transition" data-req="REQ-FN-106">
+        ตอบกลับ 201
+        <span class="arrow" aria-hidden="true">↓</span>
+        ส่งต่อไปหน้า /login ของ ②
+    </div>
+  </section>
+</main>
+</body>
+</html>

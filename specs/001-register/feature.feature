@@ -1,4 +1,4 @@
-# feature.feature v1.5 | feature ① ลงทะเบียน (UC-01) | อ้าง spec.md v1.7 ส่วน 6 และ rules.md
+# feature.feature v1.6 | feature ① ลงทะเบียน (UC-01) | อ้าง spec.md v1.10 ส่วน 6 และ rules.md
 # แปลงจากตาราง AC-01-01 ถึง AC-01-15 ทีละข้อ ไม่เปลี่ยนความหมาย (ภาคผนวก ก ของ spec.md ใช้เทียบรหัสเดิม)
 # รหัสทั้งหมด AI เสนอ ทีมยืนยันใน prompt-log | ข้อความ error ต้องตรงทุกตัวอักษรตาม rules.md
 # แท็ก @AC-01-nn / @REQ-xx-1nn ใช้ตามรอยใน rtm.md และตั้งชื่อ test เป็น test_AC_01_nn_...
@@ -11,7 +11,7 @@ Feature: สมัครสมาชิก (ลงทะเบียน)
   ระบบสร้างผู้ใช้ที่ยังไม่ยืนยันตัวตน แล้วส่งต่อให้ ② ยืนยันตัวตน
 
   Background:
-    Given backend เริ่มใหม่ และ users มีผู้ใช้ตัวอย่าง id 1 ชื่อ "ทดสอบ" อีเมล "test@mail.com" เบอร์ "0812345678" โดย password ที่เก็บเป็น hash ของรหัสผ่านทดสอบ is_verified เป็น true
+    Given backend เริ่มใหม่ และ users มีผู้ใช้ตัวอย่าง id 1 ชื่อ "ทดสอบ" อีเมล "test@mail.com" เบอร์ "0812345678" โดย password ที่เก็บตรงตามค่าที่รับมา is_verified เป็น true
 
   # ---------- ทางหลัก (UC-01 main) ----------
 
@@ -144,14 +144,12 @@ Feature: สมัครสมาชิก (ลงทะเบียน)
     And id ใน body เป็น 3
 
   @AC-01-12 @REQ-DAT-101 @REQ-IF-101 @REQ-PRV-101 @internal
-  Scenario: ผู้ใช้ใหม่อยู่ในตาราง users กลางและ password ถูกเก็บเป็น hash
+  Scenario: ผู้ใช้ใหม่อยู่ในตาราง users กลางและ password ถูกเก็บตามค่าที่รับมา
     Given สมัครสำเร็จด้วย name "สมชาย ใจดี" email "somchai@mail.com" phone "0899999999" password "Abcd1234"
     When อ่าน users ใน mock_db.py
     Then พบแถวที่มี id, name, email, phone, password, is_verified ในตารางเดียวกับผู้ใช้ตัวอย่าง
-    And ค่า password ที่เก็บไม่ตรงกับ password ต้นฉบับที่ส่งมา
-    And ค่า password ที่เก็บระบุว่าเป็น Argon2id hash (ขึ้นต้นด้วย "$argon2id$")
-    And PasswordHasher.verify ตรวจ password ต้นฉบับกับ hash ที่เก็บแล้วผ่าน
-    And PasswordHasher.verify ปฏิเสธ password ที่ไม่ตรงกับ hash ที่เก็บ
+    And ค่า password ที่เก็บตรงกับ password ต้นฉบับที่ส่งมา
+    And Auth ใช้ค่า password ใน field เดียวกันตรวจ login ตาม contract ปัจจุบัน
     And is_verified ของแถวนั้นเป็น false
 
   # ---------- หน้าจอ (UI-01-01) ----------
@@ -178,8 +176,8 @@ Feature: สมัครสมาชิก (ลงทะเบียน)
     And เมื่อ request ล้มเหลว (รวม HTTP 500 หรือเชื่อมต่อไม่ได้) ปุ่มกลับมากดได้และแสดง error
 
   @AC-01-15 @REQ-FN-106 @ui
-  Scenario: สมัครสำเร็จแล้วส่งต่อไปยืนยัน OTP กับ ②
+  Scenario: สมัครสำเร็จแล้วส่งต่อไปหน้า Login ของ ②
     Given ผู้ใช้กรอกฟอร์มสมัครครบและถูกรูปแบบ
     When backend ตอบ 201
-    Then หน้าจอส่งต่อผู้ใช้ไป flow ยืนยัน OTP ทางเบอร์โทรของ ② ทันที
-    And ไม่พาไปหน้า login ก่อนยืนยัน OTP
+    Then หน้าจอส่งต่อผู้ใช้ไปหน้า "/login" ของ ②
+    And ② เริ่ม OTP หลังผู้ใช้ส่ง email/password ตาม Auth contract
