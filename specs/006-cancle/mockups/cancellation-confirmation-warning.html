@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancellation - ยืนยันการยกเลิก</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      color: #172b4d;
+      background: #f3f6f8;
+      font: 16px/1.6 system-ui, "Noto Sans Thai", sans-serif;
+    }
+    .note, .states {
+      width: min(100%, 920px);
+      margin: 0 auto 16px;
+    }
+    .note {
+      padding: 12px 16px;
+      border: 1px dashed #b7791f;
+      border-radius: 12px;
+      color: #704b0e;
+      background: #fff8e8;
+      font-size: 14px;
+    }
+    .states { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .state-title { margin: 0 0 8px; color: #526579; font-size: 14px; }
+    .screen {
+      min-height: 360px;
+      padding: 24px;
+      border: 1px solid #d8e0e7;
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 8px 24px #172b4d12;
+    }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    .time { margin: 0 0 20px; color: #526579; }
+    .warning {
+      padding: 16px;
+      border: 1px solid #e6b94f;
+      border-radius: 12px;
+      color: #61450d;
+      background: #fff8e8;
+    }
+    .warning strong { display: block; margin-bottom: 6px; }
+    .button {
+      display: block;
+      margin-top: 20px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: #fff;
+      background: #a33131;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .back {
+      display: block;
+      margin-top: 12px;
+      color: #176b65;
+      text-align: center;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <p class="note">Mockup ชั่วคราว — ยังไม่มี UI ID และยังไม่ผ่านการยืนยันจากทีม</p>
+  <div class="states">
+    <section>
+      <h2 class="state-title">ตัวอย่าง: เหลือ 45 นาที</h2>
+      <main class="screen">
+        <h1>ยืนยันการยกเลิก</h1>
+        <p class="time" data-req="REQ-FN-DRAFT-CAN-05">เวลาคงเหลือก่อนนัดหมาย: 45 นาที</p>
+        <div class="warning" data-req="REQ-FN-DRAFT-CAN-05">
+          <strong>คำเตือนเรื่องเงินมัดจำ</strong>
+          หากยืนยันการยกเลิก เงินมัดจำจะไม่ได้รับคืนและจะเป็นของ Platform
+        </div>
+        <a class="button" href="cancellation-refund-result.html#no-refund" data-req="REQ-FN-DRAFT-CAN-05">ยืนยันการยกเลิก</a>
+        <a class="back" href="cancellation-booking-detail.html">กลับ</a>
+      </main>
+    </section>
+
+    <section>
+      <h2 class="state-title">ตัวอย่าง: เหลือ 119 นาที</h2>
+      <main class="screen">
+        <h1>ยืนยันการยกเลิก</h1>
+        <p class="time" data-req="REQ-FN-DRAFT-CAN-05">เวลาคงเหลือก่อนนัดหมาย: 119 นาที</p>
+        <div class="warning" data-req="REQ-FN-DRAFT-CAN-05">
+          <strong>คำเตือนเรื่องเงินมัดจำ</strong>
+          หากยืนยันการยกเลิก เงินมัดจำจะไม่ได้รับคืนและจะเป็นของ Platform
+        </div>
+        <a class="button" href="cancellation-refund-result.html#no-refund" data-req="REQ-FN-DRAFT-CAN-05">ยืนยันการยกเลิก</a>
+        <a class="back" href="cancellation-booking-detail.html">กลับ</a>
+      </main>
+    </section>
+  </div>
+</body>
+</html>
