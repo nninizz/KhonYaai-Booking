@@ -1,0 +1,87 @@
+.auth-panel {
+  color: #1e293b;
+  font-family: system-ui, "Segoe UI", "Noto Sans Thai", Tahoma, sans-serif;
+}
+
+.auth-fields {
+  color: #475569;
+}
+
+.auth-fields input {
+  border: 1px solid #94a3b8;
+  border-radius: 10px;
+  background: #fff;
+  color: #1e293b;
+  font: inherit;
+  font-size: 16px;
+}
+
+.auth-fields input:focus {
+  outline: 2px solid #0f766e;
+  outline-offset: -1px;
+}
+
+.auth-card {
+  width: 100%;
+}
+
+.auth-card h2 {
+  margin: 0 0 8px;
+}
+
+.auth-card form {
+  margin: 0;
+}
+
+.auth-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-fields input {
+  width: 100%;
+  padding: 10px 12px;
+}
+
+.auth-card .auth-panel {
+  margin-top: 16px;
+}
+
+.auth-resend {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.auth-register {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.register-login-link {
+  display: block;
+  width: fit-content;
+  margin: 16px auto 0;
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.register-login-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.register-login-link:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+.auth-success {
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-line);
+  color: var(--ok-fg);
+}

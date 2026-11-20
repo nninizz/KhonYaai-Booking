@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khonย้าย — ภาพรวมระบบ 6 Feature</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fafaf8; --fg:#1c1c1a; --muted:#6b6b66; --line:#d9d8d2; --card:#ffffff;
+    --f1:#2563eb; --f2:#7c3aed; --f3:#0d9488; --f4:#d97706; --f5:#db2777; --f6:#dc2626;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#171716; --fg:#ecebe6; --muted:#a3a29b; --line:#3a3936; --card:#201f1d;
+      --f1:#60a5fa; --f2:#a78bfa; --f3:#2dd4bf; --f4:#fbbf24; --f5:#f472b6; --f6:#f87171; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans Thai",system-ui,sans-serif;line-height:1.6}
+  main{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:30px;margin:0 0 6px}
+  h2{font-size:21px;margin:48px 0 6px;padding-top:8px;border-top:1px solid var(--line)}
+  .lead{color:var(--muted);margin:0 0 14px;max-width:800px}
+  .scope{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+  .scope span{font-size:13.5px;border:1px solid var(--line);border-radius:8px;padding:4px 10px;background:var(--card)}
+  .scope b{font-weight:600}
+  p.note{color:var(--muted);font-size:14px;margin:4px 0 14px;max-width:840px}
+  figure{margin:16px 0 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+  figure svg{display:block;width:100%;height:auto;color:var(--fg)}
+  figcaption{font-size:13.5px;color:var(--muted);margin-top:10px}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.88em}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 8px;background:var(--card)}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .tbl{overflow-x:auto;margin-top:14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:780px}
+  th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+  th{font-size:12.5px;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.f{font-weight:600;white-space:nowrap;border-left:4px solid var(--c)}
+  td .mono{display:block;white-space:nowrap}
+  .blank{color:var(--muted);border-bottom:1px dashed var(--muted);display:inline-block;min-width:70px}
+  ol.check{padding-left:22px;max-width:880px}
+  ol.check li{margin:6px 0}
+  pre{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow-x:auto;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px;line-height:1.55;margin:14px 0 0}
+</style>
+</head>
+<body>
+<main>
+  <h1>Khonย้าย — ภาพรวมระบบ 6 Feature</h1>
+  <p class="lead">ระบบจองรถขนย้ายของ ทำเฉพาะฝั่งผู้จอง (ลูกค้า) แบ่งงานให้ 6 คน คนละ 1 feature หน้านี้แสดงว่าแต่ละ feature อยู่ตรงไหนในระบบ ส่งข้อมูลต่อกันอย่างไร และอะไรบ้างที่ทุกคนต้องใช้ร่วมกัน เพื่อให้แยกกันทำแล้วนำมาต่อกันได้</p>
+  <div class="scope">
+    <span><b>ผู้ใช้:</b> ผู้จองเท่านั้น</span>
+    <span><b>Frontend:</b> React</span>
+    <span><b>Backend:</b> Python</span>
+    <span><b>ข้อมูล:</b> mock ไม่มี database</span>
+    <span><b>OTP / ชำระเงิน / สถานะคนขับ:</b> จำลองทั้งหมด</span>
+  </div>
+
+  <div class="legend">
+    <span class="chip"><span class="dot" style="background:var(--f1)"></span>① ลงทะเบียน</span>
+    <span class="chip"><span class="dot" style="background:var(--f2)"></span>② ยืนยันตัวตน</span>
+    <span class="chip"><span class="dot" style="background:var(--f3)"></span>③ จองบริการขนส่ง</span>
+    <span class="chip"><span class="dot" style="background:var(--f4)"></span>④ ชำระค่าบริการ</span>
+    <span class="chip"><span class="dot" style="background:var(--f5)"></span>⑤ ติดตามสถานะ</span>
+    <span class="chip"><span class="dot" style="background:var(--f6)"></span>⑥ ยกเลิกบริการขนส่ง</span>
+  </div>
+
+
+  <h2>Business rules</h2>
+  <p class="note">กฎที่กลุ่มกำหนด และ feature ที่ต้องเป็นคนตรวจ/บังคับใช้กฎนั้น</p>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>กฎ</th><th>รับผิดชอบ</th><th>ตรวจที่ไหน</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>จ่ายมัดจำ <b>30%</b> ของค่าบริการเมื่อจองรถ <b>ปัดเป็นบาท</b> (เศษ .50 ขึ้นไปปัดขึ้น) ส่วนที่เหลือ = ค่าบริการ − มัดจำ</td><td>③ คำนวณ · ④ เก็บเงิน</td><td>backend</td></tr>
+      <tr><td>2</td><td>เวลานัดต้องห่างจากตอนกดจอง <b>≥ 4 ชั่วโมง</b> (ให้ระบบมีเวลาหาคนขับในละแวกใกล้เคียง)</td><td>③</td><td>frontend ปิดตัวเลือกเวลา + backend ตรวจซ้ำ</td></tr>
+      <tr><td>3</td><td>ยกเลิก <b>≥ 2 ชม.</b> ก่อนเวลานัด → คืนมัดจำเต็มจำนวนภายใน 2 ชม. · <b>มากกว่า 45 นาที แต่น้อยกว่า 2 ชม.</b> → ริบมัดจำเข้า platform (ต้องมี popup เตือนให้ยืนยันก่อน) · <b>เหลือ ≤ 45 นาที</b> (รวม 45 นาทีพอดี) → ยกเลิกไม่ได้</td><td>⑥ ตัดสิน · ④ คืนเงิน/ริบเงิน</td><td>backend (popup ฝั่ง frontend)</td></tr>
+      <tr><td>4</td><td>การจองต้องระบุ <b>วัน เวลา สถานที่รับ–ส่ง</b> และ <b>ขนาดสิ่งของ เล็ก / กลาง / ใหญ่</b> (ขนาดยังไม่มีผลกับราคา)</td><td>③</td><td>frontend + backend</td></tr>
+      <tr><td>5</td><td>ค่าบริการ = ระยะทาง (กม.) × <b>10 บาท</b> · ผู้จองกรอกต้นทางและปลายทาง ระบบคำนวณระยะทางจากพิกัด GPS ให้เอง (ปัดระยะทางเป็นทศนิยม 1 ตำแหน่ง ราคาจึงเป็นบาทเต็มเสมอ)</td><td>③</td><td>backend (mock พิกัด)</td></tr>
+      <tr><td>6</td><td>จ่ายมัดจำผ่าน <b>QR พร้อมเพย์</b> หรือ <b>บัตรเครดิต</b> ส่วนที่เหลือ 70% จ่ายตรงกับคนขับหลังจบงาน (นอกระบบ)</td><td>④</td><td>backend (mock)</td></tr>
+      <tr><td>7</td><td>สถานะติดตาม: จองสำเร็จ (จ่ายมัดจำแล้ว) → กำลังหาคนขับ → คนขับรับงาน → จบงาน (<b>คนขับเป็นคนกดจบงาน</b> ใช้ mock แทน)</td><td>⑤ แสดง · mock เลื่อน</td><td>backend</td></tr>
+      <tr><td>8</td><td>จองแล้ว <b>ไม่จ่ายมัดจำภายใน 15 นาที</b> → ระบบยกเลิกอัตโนมัติ</td><td>④ (นับถอยหลังบนหน้าจ่ายเงิน)</td><td>backend ตรวจตอนมีคนเรียกดู/จ่าย + frontend แสดงเวลาที่เหลือ</td></tr>
+      <tr><td>9</td><td>Mock ชำระเงิน: บัตรเลขลงท้าย <b>0000</b> = ล้มเหลว นอกนั้นสำเร็จ · QR มีปุ่ม <b>“จำลองว่าจ่ายแล้ว”</b></td><td>④</td><td>backend (mock)</td></tr>
+    </tbody>
+  </table></div>
+  <pre>ตัวอย่างการคำนวณ (กฎข้อ 1, 5, 6)
+ระยะทาง 30 กม. × 10 บาท     = ค่าบริการ 300 บาท
+มัดจำ 30%                   = 90 บาท   → จ่ายในระบบ (QR พร้อมเพย์ / บัตรเครดิต)
+คงเหลือ 70%                 = 210 บาท  → จ่ายคนขับหลังจบงาน
+
+ตัวอย่างปัดเศษ: 12.3 กม. → 123 บาท → มัดจำ 30% = 36.90 → ปัดเป็น 37 บาท → คงเหลือ 86 บาท</pre>
+
+  <!-- 1. Architecture -->
+  <h2>1. โครงสร้างระบบ</h2>
+  <p class="note">ทั้ง 6 feature เป็น module อยู่ใน backend Python ตัวเดียวกัน และอ่าน/เขียน mock data ชุดเดียวกัน ไม่ได้แยกเป็น 6 ระบบ</p>
+  <figure>
+    <svg viewBox="0 0 1000 520" role="img" aria-label="ผู้จองใช้งานผ่าน Frontend React ซึ่งเรียก Backend Python ที่มี 6 module ทุก module ใช้ mock data และ mock service ชุดเดียวกัน">
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+      </defs>
+      <g font-family="IBM Plex Sans Thai, sans-serif" fill="currentColor" font-size="12">
+        <!-- actor -->
+        <rect x="20" y="220" width="130" height="80" rx="10" fill="none" stroke="currentColor"/>
+        <text x="85" y="256" text-anchor="middle" font-weight="700" font-size="14">ผู้จอง</text>
+        <text x="85" y="278" text-anchor="middle" font-size="11" opacity=".7">ลูกค้า</text>
+        <line x1="150" y1="260" x2="198" y2="260" stroke="currentColor" marker-end="url(#a1)"/>
+
+        <!-- frontend -->
+        <rect x="200" y="20" width="130" height="480" rx="12" fill="currentColor" fill-opacity=".05" stroke="currentColor"/>
+        <text x="265" y="246" text-anchor="middle" font-weight="700" font-size="15">Frontend</text>
+        <text x="265" y="268" text-anchor="middle" font-size="12">React</text>
+        <text x="265" y="290" text-anchor="middle" font-size="10.5" opacity=".7">เก็บ token ไว้ฝั่งเว็บ</text>
+        <line x1="330" y1="260" x2="398" y2="260" stroke="currentColor" marker-end="url(#a1)"/>
+        <text x="364" y="250" text-anchor="middle" font-size="10.5">REST + token</text>
+
+        <!-- backend -->
+        <rect x="400" y="20" width="380" height="480" rx="14" fill="currentColor" fill-opacity=".04" stroke="currentColor"/>
+        <text x="590" y="46" text-anchor="middle" font-weight="700" font-size="15">Backend — Python</text>
+        <rect x="420" y="62" width="340" height="34" rx="8" fill="none" stroke="currentColor" stroke-dasharray="4 3"/>
+        <text x="590" y="84" text-anchor="middle" font-size="11.5">ตรวจ token ทุก request (ยกเว้น ① และ login ของ ②)</text>
+
+        <g font-size="13">
+          <rect x="420" y="112" width="160" height="80" rx="10" fill="var(--f1)" fill-opacity=".14" stroke="var(--f1)" stroke-width="1.6"/>
+          <text x="500" y="144" text-anchor="middle" font-weight="700">① ลงทะเบียน</text>
+          <text x="500" y="166" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace">/auth/register</text>
+
+          <rect x="600" y="112" width="160" height="80" rx="10" fill="var(--f2)" fill-opacity=".14" stroke="var(--f2)" stroke-width="1.6"/>
+          <text x="680" y="144" text-anchor="middle" font-weight="700">② ยืนยันตัวตน</text>
+          <text x="680" y="166" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace">/auth/login, /verify-otp</text>
+
+          <rect x="420" y="212" width="160" height="80" rx="10" fill="var(--f3)" fill-opacity=".14" stroke="var(--f3)" stroke-width="1.6"/>
+          <text x="500" y="244" text-anchor="middle" font-weight="700">③ จองบริการขนส่ง</text>
+          <text x="500" y="266" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace">/bookings</text>
+
+          <rect x="600" y="212" width="160" height="80" rx="10" fill="var(--f4)" fill-opacity=".14" stroke="var(--f4)" stroke-width="1.6"/>
+          <text x="680" y="244" text-anchor="middle" font-weight="700">④ ชำระค่าบริการ</text>
+          <text x="680" y="266" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace">/payments</text>
+
+          <rect x="420" y="312" width="160" height="80" rx="10" fill="var(--f5)" fill-opacity=".14" stroke="var(--f5)" stroke-width="1.6"/>
+          <text x="500" y="344" text-anchor="middle" font-weight="700">⑤ ติดตามสถานะ</text>
+          <text x="500" y="366" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace">/bookings/{id}/tracking</text>
+
+          <rect x="600" y="312" width="160" height="80" rx="10" fill="var(--f6)" fill-opacity=".14" stroke="var(--f6)" stroke-width="1.6"/>
+          <text x="680" y="344" text-anchor="middle" font-weight="700">⑥ ยกเลิกบริการ</text>
+          <text x="680" y="366" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace">/bookings/{id}/cancel</text>
+        </g>
+
+        <rect x="420" y="412" width="340" height="70" rx="10" fill="none" stroke="currentColor"/>
+        <text x="590" y="441" text-anchor="middle" font-weight="700" font-size="12.5">ฟังก์ชันกลางที่ทุกคนเรียกใช้</text>
+        <text x="590" y="462" text-anchor="middle" font-size="11" font-family="IBM Plex Mono, monospace">get_current_user() · change_status()</text>
+
+        <!-- mock store -->
+        <rect x="830" y="112" width="150" height="280" rx="12" fill="currentColor" fill-opacity=".05" stroke="currentColor" stroke-dasharray="5 4"/>
+        <text x="905" y="140" text-anchor="middle" font-weight="700" font-size="13.5">Mock data</text>
+        <text x="905" y="160" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace">mock_db.py</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="11.5" text-anchor="middle">
+          <rect x="850" y="182" width="110" height="28" rx="6" fill="none" stroke="currentColor" stroke-opacity=".5"/><text x="905" y="201">users</text>
+          <rect x="850" y="218" width="110" height="28" rx="6" fill="none" stroke="currentColor" stroke-opacity=".5"/><text x="905" y="237">bookings</text>
+          <rect x="850" y="254" width="110" height="28" rx="6" fill="none" stroke="currentColor" stroke-opacity=".5"/><text x="905" y="273">payments</text>
+          <rect x="850" y="290" width="110" height="28" rx="6" fill="none" stroke="currentColor" stroke-opacity=".5"/><text x="905" y="309">status_logs</text>
+        </g>
+        <text x="905" y="350" text-anchor="middle" font-size="10.5" opacity=".75">list / dict ในหน่วยความจำ</text>
+        <text x="905" y="368" text-anchor="middle" font-size="10.5" opacity=".75">รีสตาร์ทแล้วข้อมูลรีเซ็ต</text>
+
+        <!-- mock services -->
+        <rect x="830" y="412" width="150" height="70" rx="12" fill="none" stroke="currentColor" stroke-dasharray="5 4"/>
+        <text x="905" y="440" text-anchor="middle" font-weight="700" font-size="12.5">Mock services</text>
+        <text x="905" y="461" text-anchor="middle" font-size="10.5" opacity=".8">OTP · QR/บัตร · GPS · คนขับ</text>
+
+        <g font-size="10.5">
+          <line x1="780" y1="252" x2="828" y2="252" stroke="currentColor" marker-end="url(#a1)"/>
+          <text x="804" y="244" text-anchor="middle">อ่าน/เขียน</text>
+          <line x1="780" y1="447" x2="828" y2="447" stroke="currentColor" marker-end="url(#a1)"/>
+          <text x="804" y="439" text-anchor="middle">เรียก</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption>เส้นประ = ของจำลอง ไม่ต่อระบบจริง · ⑥ ไม่คืน/ริบเงินเอง แต่เรียกฟังก์ชันของ ④</figcaption>
+  </figure>
+
+  <!-- 2. Journey -->
+  <h2>2. เส้นทางของผู้จอง</h2>
+  <p class="note">ลำดับที่ผู้จองใช้งานจริง ผลลัพธ์ของ feature หนึ่งคือสิ่งที่ feature ถัดไปต้องใช้ ถ้าคนก่อนหน้ายังทำไม่เสร็จ ให้ใช้ข้อมูล mock ที่หน้าตาตรงกับ “ได้:” ในกล่องไปก่อน</p>
+  <figure>
+    <svg viewBox="0 0 1000 300" role="img" aria-label="ลงทะเบียน แล้วยืนยันตัวตน แล้วจอง แล้วชำระ แล้วติดตามสถานะ การยกเลิกทำได้จากการจองหรือระหว่างติดตามก่อนรับของ และสั่งคืนเงินผ่านการชำระ">
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+        <marker id="a2r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--f6)"/></marker>
+      </defs>
+      <g font-family="IBM Plex Sans Thai, sans-serif" fill="currentColor" font-size="13">
+        <text x="300" y="20" text-anchor="middle" font-size="11" opacity=".7">ผู้ใช้เดิมเริ่มที่นี่</text>
+        <rect x="20" y="30" width="160" height="84" rx="10" fill="var(--f1)" fill-opacity=".14" stroke="var(--f1)" stroke-width="1.6"/>
+        <text x="100" y="64" text-anchor="middle" font-weight="700">① ลงทะเบียน</text>
+        <text x="100" y="88" text-anchor="middle" font-size="11.5">ได้: บัญชีผู้ใช้</text>
+        <rect x="220" y="30" width="160" height="84" rx="10" fill="var(--f2)" fill-opacity=".14" stroke="var(--f2)" stroke-width="1.6"/>
+        <text x="300" y="64" text-anchor="middle" font-weight="700">② ยืนยันตัวตน</text>
+        <text x="300" y="88" text-anchor="middle" font-size="11.5">ได้: token</text>
+        <rect x="420" y="30" width="160" height="84" rx="10" fill="var(--f3)" fill-opacity=".14" stroke="var(--f3)" stroke-width="1.6"/>
+        <text x="500" y="64" text-anchor="middle" font-weight="700">③ จองบริการขนส่ง</text>
+        <text x="500" y="88" text-anchor="middle" font-size="11.5">ได้: ราคา + มัดจำ 30%</text>
+        <rect x="620" y="30" width="160" height="84" rx="10" fill="var(--f4)" fill-opacity=".14" stroke="var(--f4)" stroke-width="1.6"/>
+        <text x="700" y="64" text-anchor="middle" font-weight="700">④ ชำระค่าบริการ</text>
+        <text x="700" y="88" text-anchor="middle" font-size="11.5">ได้: จองสำเร็จ</text>
+        <rect x="820" y="30" width="160" height="84" rx="10" fill="var(--f5)" fill-opacity=".14" stroke="var(--f5)" stroke-width="1.6"/>
+        <text x="900" y="64" text-anchor="middle" font-weight="700">⑤ ติดตามสถานะ</text>
+        <text x="900" y="88" text-anchor="middle" font-size="11.5">ดู: timeline สถานะ</text>
+
+        <g stroke="currentColor" stroke-width="1.4">
+          <line x1="180" y1="72" x2="218" y2="72" marker-end="url(#a2)"/>
+          <line x1="380" y1="72" x2="418" y2="72" marker-end="url(#a2)"/>
+          <line x1="580" y1="72" x2="618" y2="72" marker-end="url(#a2)"/>
+          <line x1="780" y1="72" x2="818" y2="72" marker-end="url(#a2)"/>
+        </g>
+
+        <rect x="560" y="200" width="200" height="70" rx="10" fill="var(--f6)" fill-opacity=".14" stroke="var(--f6)" stroke-width="1.6"/>
+        <text x="660" y="230" text-anchor="middle" font-weight="700">⑥ ยกเลิกบริการขนส่ง</text>
+        <text x="660" y="252" text-anchor="middle" font-size="11.5">ได้: status = CANCELLED</text>
+
+        <g stroke="var(--f6)" stroke-width="1.4">
+          <line x1="500" y1="114" x2="596" y2="198" marker-end="url(#a2r)"/>
+          <line x1="900" y1="114" x2="742" y2="198" marker-end="url(#a2r)"/>
+          <line x1="680" y1="200" x2="680" y2="116" stroke-dasharray="5 4" marker-end="url(#a2r)"/>
+        </g>
+        <g font-size="11">
+          <text x="540" y="164" text-anchor="end">ยกเลิกได้</text>
+          <text x="866" y="166">ถ้าเหลือ &gt; 45 นาที</text>
+          <text x="688" y="160">คืน / ริบมัดจำ</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption>⑥ ยกเลิกได้ทั้งตอนเพิ่งจองและระหว่างติดตาม ตราบใดที่เหลือเวลาก่อนนัดมากกว่า 45 นาที ถ้าจ่ายมัดจำแล้ว ⑥ จะสั่ง ④ ให้คืนหรือริบมัดจำตามกฎข้อ 3</figcaption>
+  </figure>
+
+  <!-- 3. State machine -->
+  <h2>3. สถานะของการจอง (ภาษากลางของทั้งกลุ่ม)</h2>
+  <p class="note">③ ④ ⑤ ⑥ ทำงานกับ <code>booking["status"]</code> ตัวเดียวกัน ให้ใช้ค่าภาษาอังกฤษตามนี้ทั้งใน backend และ frontend ตามกฎข้อ 7 การติดตามเริ่มนับเมื่อจ่ายมัดจำแล้ว ส่วนขั้นของคนขับให้ mock เลื่อนเอง เพราะไม่มีฝั่งคนขับ</p>
+  <figure>
+    <svg viewBox="0 0 1000 330" role="img" aria-label="สถานะ PENDING_DEPOSIT ไป CONFIRMED ไป FINDING_DRIVER ไป DRIVER_ACCEPTED ไป COMPLETED ยกเลิกเป็น CANCELLED ได้จากสี่สถานะแรกตามเวลาที่เหลือ">
+      <defs>
+        <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+        <marker id="a3r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--f6)"/></marker>
+      </defs>
+      <g font-family="IBM Plex Sans Thai, sans-serif" fill="currentColor" font-size="13">
+        <path d="M220 34 v-8 h770 v8" fill="none" stroke="var(--f5)" stroke-width="1.4"/>
+        <text x="605" y="18" text-anchor="middle" font-size="11.5" fill="var(--f5)">⑤ ติดตามสถานะ แสดงช่วงนี้ (กฎข้อ 7)</text>
+        <g stroke-width="1.6">
+          <rect x="20"  y="44" width="170" height="62" rx="10" fill="var(--f3)" fill-opacity=".14" stroke="var(--f3)"/>
+          <rect x="220" y="44" width="170" height="62" rx="10" fill="var(--f4)" fill-opacity=".14" stroke="var(--f4)"/>
+          <rect x="420" y="44" width="170" height="62" rx="10" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-dasharray="5 4"/>
+          <rect x="620" y="44" width="170" height="62" rx="10" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-dasharray="5 4"/>
+          <rect x="820" y="44" width="170" height="62" rx="10" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-dasharray="5 4"/>
+        </g>
+        <g text-anchor="middle" font-weight="700">
+          <text x="105" y="70">รอชำระมัดจำ</text><text x="305" y="70">จองสำเร็จ</text><text x="505" y="70">กำลังหาคนขับ</text>
+          <text x="705" y="70">คนขับรับงาน</text><text x="905" y="70">จบงาน</text>
+        </g>
+        <g text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace">
+          <text x="105" y="92">PENDING_DEPOSIT</text><text x="305" y="92">CONFIRMED</text><text x="505" y="92">FINDING_DRIVER</text>
+          <text x="705" y="92">DRIVER_ACCEPTED</text><text x="905" y="92">COMPLETED</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.4">
+          <line x1="190" y1="75" x2="218" y2="75" marker-end="url(#a3)"/>
+          <line x1="390" y1="75" x2="418" y2="75" marker-end="url(#a3)"/>
+          <line x1="590" y1="75" x2="618" y2="75" marker-end="url(#a3)"/>
+          <line x1="790" y1="75" x2="818" y2="75" marker-end="url(#a3)"/>
+        </g>
+        <g text-anchor="middle" font-size="11" opacity=".75">
+          <text x="105" y="126">ตั้งโดย ③ ตอนสร้าง</text><text x="305" y="126">ตั้งโดย ④ เมื่อจ่ายมัดจำ</text>
+          <text x="505" y="126">mock เลื่อนเอง</text><text x="705" y="126">mock (คนขับกดรับ)</text><text x="905" y="126">mock (คนขับกดจบงาน)</text>
+        </g>
+
+        <rect x="300" y="236" width="220" height="60" rx="10" fill="var(--f6)" fill-opacity=".14" stroke="var(--f6)" stroke-width="1.6"/>
+        <text x="410" y="262" text-anchor="middle" font-weight="700">ยกเลิกแล้ว</text>
+        <text x="410" y="282" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace">CANCELLED</text>
+        <text x="410" y="316" text-anchor="middle" font-size="11" opacity=".75">ตั้งโดย ⑥ หรือระบบ (หมดเวลาจ่ายมัดจำ)</text>
+        <g stroke="var(--f6)" stroke-width="1.4" stroke-dasharray="5 4">
+          <line x1="105" y1="136" x2="320" y2="234" marker-end="url(#a3r)"/>
+          <line x1="305" y1="136" x2="380" y2="234" marker-end="url(#a3r)"/>
+          <line x1="505" y1="136" x2="440" y2="234" marker-end="url(#a3r)"/>
+          <line x1="705" y1="136" x2="500" y2="234" marker-end="url(#a3r)"/>
+        </g>
+        <text x="196" y="190" text-anchor="end" font-size="11" fill="var(--f6)">⑥ ยกเลิก หรือ</text><text x="196" y="206" text-anchor="end" font-size="11" fill="var(--f6)">ไม่จ่ายใน 15 นาที</text>
+        <g font-size="12">
+          <text x="600" y="250"><tspan font-weight="700">ยกเลิกได้หรือไม่ ดูจากเวลา ไม่ใช่สถานะ</tspan></text>
+          <text x="600" y="274">ทุกสถานะก่อน COMPLETED ยกเลิกได้</text>
+          <text x="600" y="296">ถ้าเหลือเวลาก่อนนัดมากกว่า 45 นาที (ดูข้อ 4)</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption>กล่องเส้นประ = สถานะที่ mock เลื่อนให้เอง เช่น เลื่อนทีละขั้นทุก 30 วินาที หรือมีปุ่ม “เลื่อนสถานะ (demo)” ไว้ตอนนำเสนอ · ยกเลิกตอน PENDING_DEPOSIT ยังไม่มีเงินให้คืน · ถ้าไม่จ่ายมัดจำภายใน 15 นาที ระบบเปลี่ยนเป็น CANCELLED เอง (changed_by = "system")</figcaption>
+  </figure>
+
+  <!-- 4. Cancel timeline -->
+  <h2>4. ช่วงเวลาจอง–ยกเลิก (กฎข้อ 2 และ 3)</h2>
+  <p class="note">ทุกช่วงนับย้อนจาก <b>เวลานัด (T)</b> ที่ผู้จองเลือก ไม่ได้นับจากเวลาที่กดจอง ⑥ ต้องคำนวณว่าตอนนี้อยู่ช่วงไหนก่อนแสดงปุ่มหรือ popup</p>
+  <figure>
+    <svg viewBox="0 0 1000 240" role="img" aria-label="เวลานัดต้องห่างจากตอนจองอย่างน้อย 4 ชั่วโมง ยกเลิกก่อนนัด 2 ชั่วโมงขึ้นไปได้มัดจำคืนเต็ม ระหว่าง 45 นาทีถึงน้อยกว่า 2 ชั่วโมงริบมัดจำ น้อยกว่า 45 นาทียกเลิกไม่ได้">
+      <g font-family="IBM Plex Sans Thai, sans-serif" fill="currentColor" font-size="12">
+        <path d="M40 58 v-8 h900 v8" fill="none" stroke="var(--f3)" stroke-width="1.4"/>
+        <text x="490" y="40" text-anchor="middle" font-size="12" fill="var(--f3)">③ เวลานัด T ต้องห่างจากตอนกดจอง ≥ 4 ชั่วโมง (กฎข้อ 2)</text>
+
+        <rect x="40"  y="80" width="600" height="44" fill="#16a34a" fill-opacity=".16" stroke="#16a34a"/>
+        <rect x="640" y="80" width="160" height="44" fill="var(--f4)" fill-opacity=".2" stroke="var(--f4)"/>
+        <rect x="800" y="80" width="140" height="44" fill="var(--f6)" fill-opacity=".18" stroke="var(--f6)"/>
+        <g text-anchor="middle" font-weight="700" font-size="13">
+          <text x="340" y="107">ยกเลิกได้ · คืนมัดจำ 100%</text>
+          <text x="720" y="107">ริบมัดจำ</text>
+          <text x="870" y="107">ยกเลิกไม่ได้</text>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.4">
+          <line x1="40" y1="124" x2="40" y2="140"/><line x1="640" y1="124" x2="640" y2="140"/>
+          <line x1="800" y1="124" x2="800" y2="140"/><line x1="940" y1="124" x2="940" y2="140"/>
+        </g>
+        <g text-anchor="middle" font-size="11.5">
+          <text x="40" y="156" text-anchor="start">กดจอง / จ่ายมัดจำ</text>
+          <text x="640" y="156">T − 2 ชม.</text>
+          <text x="800" y="156">T − 45 นาที</text>
+          <text x="940" y="156" text-anchor="end" font-weight="700">T เวลานัด</text>
+        </g>
+        <g text-anchor="middle" font-size="11.5" opacity=".8">
+          <text x="340" y="194">เหลือ ≥ 2 ชม. → ④ คืนมัดจำเต็มจำนวน ภายใน 2 ชม.</text>
+          <text x="720" y="194">45 นาที &lt; เหลือ &lt; 2 ชม.</text>
+          <text x="720" y="214">popup เตือนก่อนยืนยัน</text>
+          <text x="870" y="194">เหลือ ≤ 45 นาที</text>
+          <text x="870" y="214">ปุ่มยกเลิกปิด</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption>ไม่ได้วาดตามสัดส่วนเวลา · มัดจำที่ริบแล้วเข้า platform (payment status = FORFEITED) ส่วนที่คืนแล้วเป็น REFUNDED</figcaption>
+  </figure>
+
+  <!-- 5. Ownership -->
+  <h2>5. ใครทำอะไร และต้องส่งอะไรให้ใคร</h2>
+  <p class="note">endpoint เป็นข้อเสนอเบื้องต้น ปรับชื่อได้ แต่ควรตกลงกันก่อนเริ่มเขียนโค้ด ช่อง “ผู้รับผิดชอบ” เว้นไว้ให้กรอก</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Feature</th><th>ผู้รับผิดชอบ</th><th>หน้าจอ (React)</th><th>API (Python)</th><th>กฎที่ต้องทำ</th><th>ส่งต่อให้</th></tr></thead>
+    <tbody>
+      <tr><td class="f" style="--c:var(--f1)">① ลงทะเบียน</td><td><span class="blank"></span></td>
+        <td>ฟอร์มสมัครสมาชิก</td>
+        <td><span class="mono">POST /api/auth/register</span></td>
+        <td>—</td><td>② ผู้ใช้ใหม่ใน <code>users</code></td></tr>
+      <tr><td class="f" style="--c:var(--f2)">② ยืนยันตัวตน</td><td><span class="blank"></span></td>
+        <td>หน้า login + กรอก OTP</td>
+        <td><span class="mono">POST /api/auth/login</span><span class="mono">POST /api/auth/verify-otp</span><span class="mono">GET /api/auth/me</span></td>
+        <td>—</td><td>ทุก feature: token + <code>get_current_user()</code></td></tr>
+      <tr><td class="f" style="--c:var(--f3)">③ จองบริการขนส่ง</td><td><span class="blank"></span></td>
+        <td>ฟอร์มจอง (วัน เวลา ต้นทาง–ปลายทาง ขนาดของ) + สรุปราคา + “การจองของฉัน”</td>
+        <td><span class="mono">POST /api/bookings/quote</span><span class="mono">POST /api/bookings</span><span class="mono">GET /api/bookings</span><span class="mono">GET /api/bookings/{id}</span></td>
+        <td>2, 4, 5 และคำนวณมัดจำตามข้อ 1</td><td>④ <code>booking_id</code> + <code>deposit_amount</code> · ⑤⑥ ข้อมูล booking</td></tr>
+      <tr><td class="f" style="--c:var(--f4)">④ ชำระค่าบริการ</td><td><span class="blank"></span></td>
+        <td>หน้าจ่ายมัดจำ เลือก QR พร้อมเพย์ / บัตรเครดิต + แสดงยอดที่ต้องจ่ายคนขับ</td>
+        <td><span class="mono">POST /api/payments</span><span class="mono">GET /api/payments/{booking_id}</span></td>
+        <td>1, 6</td><td>เปลี่ยนเป็น CONFIRMED · ฟังก์ชัน <code>refund()</code> และ <code>forfeit()</code> ให้ ⑥ เรียก</td></tr>
+      <tr><td class="f" style="--c:var(--f5)">⑤ ติดตามสถานะ</td><td><span class="blank"></span></td>
+        <td>หน้า timeline 4 ขั้น</td>
+        <td><span class="mono">GET /api/bookings/{id}/tracking</span><span class="mono">POST /api/bookings/{id}/advance (demo)</span></td>
+        <td>7</td><td>ผู้จองเห็นสถานะล่าสุดและประวัติ</td></tr>
+      <tr><td class="f" style="--c:var(--f6)">⑥ ยกเลิกบริการขนส่ง</td><td><span class="blank"></span></td>
+        <td>ปุ่มยกเลิก + popup เตือนริบมัดจำ + ระบุเหตุผล</td>
+        <td><span class="mono">GET /api/bookings/{id}/cancel-preview</span><span class="mono">POST /api/bookings/{id}/cancel</span></td>
+        <td>3</td><td>status = CANCELLED · เรียก <code>refund()</code> หรือ <code>forfeit()</code> ของ ④</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note" style="margin-top:12px">⑥ แยกเป็น 2 ขั้นเพื่อรองรับ popup: <code>cancel-preview</code> ตอบว่าอยู่กรณีไหน (<code>FULL_REFUND</code> / <code>FORFEIT</code> / <code>NOT_ALLOWED</code>) และยอดเงิน แล้ว frontend ค่อยเรียก <code>cancel</code> พร้อม <code>confirm_forfeit: true</code> ถ้าผู้จองกดยืนยันในกรณีริบมัดจำ backend ตรวจเวลาซ้ำตอนกดจริงเสมอ</p>
+
+  <!-- 6. Mock data -->
+  <h2>6. Mock data ที่ใช้ร่วมกัน</h2>
+  <p class="note">ไม่มี database ให้มีไฟล์กลาง <code>mock_db.py</code> ไฟล์เดียวที่ทุก feature import ไปใช้ ห้ามสร้าง list booking แยกของตัวเอง ไม่อย่างนั้นข้อมูลที่ ③ สร้างจะไม่ไปถึง ④ ⑤ ⑥</p>
+  <div class="tbl"><table>
+    <thead><tr><th>ข้อมูล</th><th>ฟิลด์หลัก</th><th>เขียนโดย</th><th>อ่านโดย</th></tr></thead>
+    <tbody>
+      <tr><td><code>users</code></td><td class="mono" style="white-space:normal">id, name, email, phone, password, is_verified</td><td>① ②</td><td>ทุก feature</td></tr>
+      <tr><td><code>bookings</code></td><td class="mono" style="white-space:normal">id, user_id, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, scheduled_at, item_size (SMALL / MEDIUM / LARGE), distance_km, total_price, deposit_amount, remaining_amount, status, cancel_reason, cancelled_at, created_at</td><td>③ สร้าง · ④ ⑤ ⑥ เปลี่ยน status</td><td>③ ④ ⑤ ⑥</td></tr>
+      <tr><td><code>payments</code></td><td class="mono" style="white-space:normal">id, booking_id, amount (= มัดจำ), method (PROMPTPAY_QR / CREDIT_CARD), status (SUCCESS / FAILED / REFUNDED / FORFEITED), paid_at, refunded_at</td><td>④</td><td>④ ⑥</td></tr>
+      <tr><td><code>status_logs</code></td><td class="mono" style="white-space:normal">booking_id, status, changed_by, created_at</td><td>ทุกครั้งที่เรียก <code>change_status()</code></td><td>⑤ แสดง timeline</td></tr>
+    </tbody>
+  </table></div>
+  <pre># mock_db.py — ตัวอย่างโครง (ตกลงฟิลด์กันแล้วค่อยเติม)
+from datetime import datetime
+
+PRICE_PER_KM = 10           # กฎข้อ 5
+DEPOSIT_PERCENT = 30        # กฎข้อ 1
+MIN_ADVANCE_HOURS = 4       # กฎข้อ 2
+FULL_REFUND_MINUTES = 120   # กฎข้อ 3
+NO_CANCEL_MINUTES = 45      # กฎข้อ 3 — เหลือ ≤ 45 นาที ยกเลิกไม่ได้
+DEPOSIT_TIMEOUT_MINUTES = 15  # กฎข้อ 8
+MOCK_OTP = "123456"
+
+users = [
+    {"id": 1, "name": "ทดสอบ", "email": "test@mail.com", "phone": "0812345678",
+     "password": "1234", "is_verified": True},
+]
+def calc_distance_km(lat1, lng1, lat2, lng2):   # กฎข้อ 5 — ระยะทางจากพิกัด GPS
+    from math import radians, sin, cos, asin, sqrt
+    dlat, dlng = radians(lat2 - lat1), radians(lng2 - lng1)
+    a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlng/2)**2
+    return round(6371 * 2 * asin(sqrt(a)), 1)    # เส้นตรง ปัดทศนิยม 1 ตำแหน่ง
+
+def calc_price(distance_km):                      # กฎข้อ 1, 5
+    total = round(distance_km * PRICE_PER_KM)
+    deposit = (total * DEPOSIT_PERCENT + 50) // 100   # ปัดเป็นบาท (.50 ปัดขึ้น) ใช้เลขจำนวนเต็มกันปัญหาทศนิยม float
+    return {"total_price": total, "deposit_amount": deposit, "remaining_amount": total - deposit}
+
+bookings = []      # ③ append, ④⑤⑥ แก้ status ผ่าน change_status()
+payments = []      # ④
+status_logs = []   # change_status() เขียนให้อัตโนมัติ
+
+def change_status(booking, new_status, by):
+    booking["status"] = new_status
+    status_logs.append({"booking_id": booking["id"], "status": new_status,
+                        "changed_by": by, "created_at": datetime.now()})</pre>
+
+  <!-- 7. Decisions -->
+  <h2>7. ข้อตกลงที่กลุ่มสรุปแล้ว</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>เรื่อง</th><th>ข้อสรุป</th></tr></thead>
+    <tbody>
+      <tr><td>เหลือ 45 นาทีพอดี ยกเลิกได้ไหม</td><td><b>ไม่ได้</b> · ยกเลิกได้เมื่อเหลือมากกว่า 45 นาทีเท่านั้น</td></tr>
+      <tr><td>ขนาดสิ่งของมีผลกับราคาไหม</td><td><b>ยังไม่มีผล</b> · ราคา = กม. × 10 บาท</td></tr>
+      <tr><td>ระยะทางได้มาจากไหน</td><td>ผู้จองกรอกต้นทางและปลายทาง <b>ระบบคำนวณจากพิกัด GPS</b> · ในโปรเจกต์นี้ mock พิกัดของที่อยู่ (เช่น ปักหมุดบนแผนที่ หรือรายการสถานที่ที่มีพิกัดไว้แล้ว) แล้วคำนวณด้วย <code>calc_distance_km()</code> ซึ่งได้ระยะเส้นตรง ถ้าอยากได้ระยะตามถนนจริงต้องต่อ API แผนที่</td></tr>
+      <tr><td>ใครกด “จบงาน”</td><td><b>คนขับ</b> · ใช้ mock แทน</td></tr>
+      <tr><td>ปัดเศษมัดจำ</td><td><b>ปัดเป็นบาท</b> (.50 ขึ้นไปปัดขึ้น)</td></tr>
+      <tr><td>จองแล้วไม่จ่ายมัดจำ</td><td><b>เกิน 15 นาที ยกเลิกอัตโนมัติ</b></td></tr>
+      <tr><td>Mock ชำระเงิน</td><td>บัตรลงท้าย 0000 = ล้มเหลว · QR กด “จำลองว่าจ่ายแล้ว”</td></tr>
+      <tr><td>Status, token, error</td><td>ใช้ร่วมกันทุก API · 401 ยังไม่ login · 404 ไม่พบ · 409 สถานะ/เวลาไม่ถูกต้อง</td></tr>
+    </tbody>
+  </table></div>
+</main>
+</body>
+</html>
