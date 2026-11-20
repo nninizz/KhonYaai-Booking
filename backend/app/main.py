@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import dev
+from app.bookings.router import router as bookings_router
 from app.payments.router import router as payments_router
 
 app = FastAPI(title="Khonย้าย API")
@@ -15,3 +16,4 @@ app.add_middleware(
 
 app.include_router(payments_router)
 app.include_router(dev.router)
+app.include_router(bookings_router)

@@ -179,3 +179,161 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 - คำตอบหรือการตัดสินใจของทีม: ยืนยันให้ `/quote` และ `/api/bookings` ตอบ 422 พร้อมข้อความ "ระยะใกล้เกินไป"; ใช้ตัวอย่างพิกัดจริง 0.5 กม. กับราคา 5/2/3; เพิ่มรายการสถานะ 6–8 ในส่วน UI; `/quote` ไม่ตรวจ BR-02; server เดโมตั้งเวลาไทยโดยทีมและไม่ตรวจ timezone ใน runtime; ใช้ booking.feature v1.2 และเพิ่ม AC-03-14 ใน REQ-FN-302
 - สิ่งที่ AI ทำ: อัปเดต spec.md เป็น v1.2 และ feature file เป็น v1.2; แก้ตัวอย่าง response 201 และตาราง traceability; เพิ่ม scenario `/quote` ใน AC-03-14; ปรับรายการ "ต้องตรง" และข้อความสถานะใน mockup; เพิ่มข้อตกลง timezone ใน README
 - สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
+
+## #20 | 2026-11-20 | Copilot | /plan ร่างแผนฟีเจอร์ Booking
+
+- คำสั่ง: ร่าง `specs/003-booking/plan.md` จาก `spec.md`, `rules.md`, `models.md`, `booking.feature` และ mockup UI-03-01 พร้อมตาราง Constraints และแผนทดสอบ AC
+- ผลลัพธ์: สร้าง plan ที่ครอบคลุมเทคโนโลยี โมเดลข้อมูล API/หน้าจอ Constraints ทั้งหมดของ feature, AC-03-01 ถึง AC-03-14 และลำดับงาน 10 ขั้น; ใช้ FastAPI + pytest + React + Vite ตาม REQ-CON-301 และ D-03-01 ที่ซ้ำกับโครงโค้ด/feature อื่น
+- Constraint ที่ feature นี้ใช้จริง: REQ-CON-301, REQ-IF-302, D-03-01 ถึง D-03-16, REQ-SEC-301/AS-01 และ MD-CTX-03/MD-DOM-03/MD-STM-03/MD-SEQ-03
+- Constraint กลาง: ยังไม่มี `specs/000-shared/constraints.md` จึงไม่มีข้อ D-00-xx/REQ กลางให้เพิ่มในตารางนี้
+- สิ่งที่ทดสอบยากหรือทดสอบไม่ได้ในสภาพนักศึกษา: geolocation บราวเซอร์ต้อง mock; การส่งต่อไปหน้าชำระมัดจำจริงต้องรอสัญญากับ feature ④; การตรวจเวลาแบบ 4 ชั่วโมงต้องควบคุมเวลา server
+- สิ่งที่ AI ไม่เดาเพราะติด Open Questions: retention/privacy PII ตาม Q-05; เจ้าของงานและสถานะหลังจองตาม Q-08; ชื่อ PO/mockup approval ตาม Q-10; การย้าย BR และสร้างไฟล์กลางตาม Q-03
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี
+
+## #21 | 2026-11-20 | Copilot | /tasks แตก plan Booking เป็น tasks
+
+- คำสั่ง: ร่าง `specs/003-booking/tasks.md` จาก spec, plan, rules, models, feature และ mockup UI-03-01 โดยไม่เริ่ม implementation
+- ผลลัพธ์: สร้าง 15 task โดยเรียงจาก backend schema/place/validation/quote/booking/auth ไปยัง frontend mock/API integration และ test; มี 0 task ที่มีสถานะรอ Q-xx และมีตารางครบสำหรับ AC-03-01 ถึง AC-03-14 กับ constraint ที่ plan ระบุ
+- Constraint: ยังไม่มี `specs/000-shared/constraints.md` จึงบันทึกแถว “ไม่เกี่ยวกับ feature นี้เพราะไฟล์กลางยังไม่มี” ในตาราง
+- สิ่งที่ทดสอบยาก: geolocation ต้อง mock ใน frontend test และ boundary เวลา 4 ชั่วโมงต้องควบคุม server datetime
+- สิ่งที่ยังไม่ทำ: Q-03, Q-05, Q-08 และ Q-10; AS-01/AS-04/AS-05 ใช้พฤติกรรมชั่วคราวตาม spec เท่านั้น
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี
+
+## #22 | 2026-11-20 | Copilot | /implement T-01 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-01 สร้าง schema และโครง router Booking โดยแก้ไฟล์ที่ task ระบุเท่านั้น ไม่เริ่ม T-02 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/main.py`, `backend/app/bookings/__init__.py`, `backend/app/bookings/schemas.py`, `backend/app/bookings/router.py`
+- ผล test: smoke Python ตรวจ route `/api/places`, `/api/bookings/quote`, `/api/bookings` พบครบ; `PYTHONPATH=backend python -m pytest backend/tests -q` ผ่าน 36 tests
+- Constraint ที่ทำจริง: REQ-CON-301 ใช้ FastAPI/Python/mock app เดิม; REQ-FN-301 และ REQ-FN-304 มี schema/request/response โครง; D-03-09 มี schema response booking ครบตามสัญญา; REQ-DAT-301 รับค่าข้อมูลจองแยกจากยอด
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ไม่มี เปิด router ปลายทางให้ตอบ 501 ชั่วคราวเฉพาะส่วนงาน T-02/T-04/T-06 และยังไม่สร้าง logic หรือข้อมูลอื่น
+- สถานะ: T-01 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #23 | 2026-11-20 | Copilot | /implement T-02 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-02 เพิ่ม endpoint รายการสถานที่ ให้ทีมอนุญาตเพิ่ม test โดยไม่ได้เริ่ม T-03 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/router.py`, `backend/app/bookings/service.py`, `backend/tests/test_booking.py`
+- ผล test: `test_AC_03_11_places_include_address_and_coordinates` และ `test_AC_03_11_places_require_valid_token` ผ่านร่วม regression suite; `38 passed`
+- Constraint ที่ทำจริง: REQ-FN-305/D-03-15 อ่าน places จาก mock_db; REQ-FN-301 แสดง address/lat/lng ให้หน้าเลือกสถานที่; REQ-SEC-301 ใช้ get_current_user และตอบ 401 สำหรับไม่มีหรือ token ผิด
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตให้เพิ่ม `backend/tests/test_booking.py` สำหรับ test AC-03-11 แม้ task ต้นทางระบุไฟล์ที่แตะ router/service
+- สถานะ: T-02 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #24 | 2026-11-20 | Copilot | /implement T-03 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-03 เพิ่ม helper ตรวจข้อมูลจอง ให้ทีมอนุญาตเพิ่ม test AC-03-05 ใน backend/tests/test_booking.py โดยไม่ได้เริ่ม T-04 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/service.py`, `backend/tests/test_booking.py`
+- ผล test: `test_AC_03_05_complete_booking_data_passes_validation` และ parameterized `test_AC_03_05_missing_or_invalid_field_rejected` ผ่านร่วม regression suite; `44 passed`
+- Constraint ที่ทำจริง: REQ-FN-301/BR-04 ตรวจ scheduled_at และข้อมูลครบ; D-03-06 ตรวจ pickup/dropoff address และพิกัด; D-03-13/BR-04 ตรวจ item_size เป็น SMALL/MEDIUM/LARGE; D-03-15 ไม่ส่งพิกัดหรือที่อยู่ใหม่เป็นแหล่งข้อมูลจริง
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตให้เพิ่ม test AC-03-05 ใน `backend/tests/test_booking.py`
+- สถานะ: T-03 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #25 | 2026-11-20 | Copilot | /implement T-04 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-04 เพิ่มการคำนวณ quote ให้ทีมอนุญาตเพิ่ม test AC-03-02 ใน backend/tests/test_booking.py โดยไม่ได้เริ่ม T-05 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/service.py`, `backend/app/bookings/router.py`, `backend/tests/test_booking.py`
+- ผล test: parameterized `test_AC_03_02_quote_returns_backend_calculated_amounts` ครอบคลุม 3.0/12.3/30.0 กม. ผ่านร่วม regression suite; `47 passed`
+- Constraint ที่ทำจริง: REQ-FN-302/BR-01/BR-05 คำนวณด้วย mock_db.calc_distance_km() และ calc_price(); REQ-DAT-301 ไม่รับหรือใช้ยอดหน้าเว็บ; D-03-03/D-03-07 ไม่มีสูตรคำนวณซ้ำ; quote ไม่สร้าง mock_db.bookings
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตให้เพิ่ม test AC-03-02 ใน `backend/tests/test_booking.py`
+- สถานะ: T-04 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #26 | 2026-11-20 | Copilot | /implement T-05 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-05 จัดการระยะ 0.0 และมัดจำ 0 ให้ทีมอนุญาตเพิ่ม test AC-03-10 และ AC-03-14 ใน backend/tests/test_booking.py โดยไม่ได้เริ่ม T-06 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/service.py`, `backend/app/bookings/router.py`, `backend/tests/test_booking.py`
+- ผล test: `test_AC_03_10_same_location_rejected_for_quote_and_booking` และ `test_AC_03_14_zero_deposit_rejected_for_quote_and_booking` ผ่านร่วม regression suite; `49 passed`
+- Constraint ที่ทำจริง: D-03-05/D-03-16 ปฏิเสธระยะ 0.0 และมัดจำ 0 ด้วย 422; quote และ booking guard ใช้ข้อความเดียวกันคือ “ระยะใกล้เกินไป” สำหรับมัดจำ 0 และ “จุดรับและจุดส่งต้องอยู่คนละที่” สำหรับระยะ 0.0
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตให้เพิ่ม test ของ AC-03-10 และ AC-03-14 ใน backend/tests/test_booking.py
+- สถานะ: T-05 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; booking ข้อมูลปกติยังไม่สร้างจนถึง T-06 และ task อื่นยังไม่เปลี่ยน
+
+## #27 | 2026-11-20 | Copilot | /implement T-06 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-06 ตรวจจองล่วงหน้าและสร้าง booking ให้ทีมอนุญาตเพิ่ม test AC-03-01/04/06/08 ใน backend/tests/test_booking.py โดยไม่ได้เริ่ม T-07 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/service.py`, `backend/app/bookings/router.py`, `backend/tests/test_booking.py`
+- ผล test: AC-03-01, AC-03-04 boundary, AC-03-06 created_at และ AC-03-08 backend recalculation ผ่านร่วม regression suite; `56 passed`
+- Constraint ที่ทำจริง: BR-02/D-03-08 ตรวจ scheduled_at กับ server datetime และปฏิเสธต่ำกว่า 4 ชั่วโมง; D-03-04 สร้าง booking ตอน POST; D-03-09 ส่ง booking 201 ครบฟิลด์และ created_at เป็น ISO; REQ-DAT-301 คำนวณยอดใหม่ไม่ใช้ยอดจาก body
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมตัดสิน T-06 ตั้ง status PENDING_DEPOSIT ตอนสร้างแล้วให้ T-07 ต่อ change_status และ status_logs
+- สถานะ: T-06 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #28 | 2026-11-20 | Copilot | /implement T-07 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-07 เชื่อมสถานะ PENDING_DEPOSIT กับ change_status ให้ทีมอนุญาตแตะ router/test เพิ่มเพื่อเชื่อมและทดสอบ status_logs
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/service.py`, `backend/app/bookings/router.py`, `backend/tests/test_booking.py`
+- ผล test: `test_AC_03_01_pending_deposit_uses_change_status_and_status_log` ผ่านร่วม regression suite; `57 passed`
+- Constraint ที่ทำจริง: REQ-IF-302/REQ-FN-304 ตั้ง status ผ่าน mock_db.change_status(); MD-STM-03 ได้ PENDING_DEPOSIT และ status_logs; D-03-10 ตรวจ audit ผ่าน mock_db.status_logs โดยตรง
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตแก้ router และเพิ่ม test ให้ POST booking เรียก change_status() จริง
+- สถานะ: T-07 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #29 | 2026-11-20 | Copilot | /implement T-08 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-08 เพิ่ม auth ให้ทุก endpoint Booking ให้ทีมอนุญาตเพิ่ม test AC-03-09 ใน backend/tests/test_booking.py
+- ไฟล์ที่สร้างหรือแก้: `backend/app/auth.py`, `backend/app/bookings/router.py`, `backend/tests/test_booking.py`
+- ผล test: `test_AC_03_09_booking_endpoints_require_valid_token` และ `test_AC_03_09_booking_owner_comes_from_current_user` ผ่านร่วม regression suite; `60 passed`
+- Constraint ที่ทำจริง: REQ-SEC-301/AS-01 ใช้ get_current_user กับ places, quote, booking; ไม่มี/ผิด token ตอบ 401 และไม่มี booking ถูกสร้าง; booking user_id มาจาก get_current_user
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตเพิ่ม test AC-03-09 ใน backend/tests/test_booking.py
+- สถานะ: T-08 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #30 | 2026-11-20 | Copilot | /implement T-09 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-09 สร้างหน้าจอฟอร์ม Booking แบบ mock API ให้ทีมอนุญาตเพิ่ม test หน้า Booking และไม่เริ่ม T-10 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/App.jsx`, `frontend/src/booking/BookingPage.jsx`, `frontend/src/booking/booking.css`, `frontend/src/api.js`, `frontend/src/booking/BookingPage.test.js`
+- ผล test: node test ผ่าน 3 tests สำหรับ AC-03-11/12/13; `npm ci && npm run build` ผ่านด้วย Vite
+- Constraint ที่ทำจริง: REQ-FN-301/305/306 ใช้ฟอร์มจอง รายการ mock places และ geolocation; D-03-14 ใช้ theme จาก payment.css; D-03-15 ไม่เรียกแผนที่/geocoding จริง; Q-10 mockup ร่างยังไม่ถือว่าได้รับอนุมัติ
+- รายการต้องตรง UI-03-01: ชื่อ “จองรถขนย้าย”; ป้ายวันที่/เวลา, จุดรับ, จุดส่ง, ประเภทสิ่งของ; ข้อความปุ่ม “ดูราคา”, “ใช้ตำแหน่งปัจจุบัน” และข้อความ fallback “อ่านตำแหน่งปัจจุบันไม่ได้ กรุณาเลือกจากรายการ”
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตเพิ่ม test หน้า Booking; mock API ใช้ข้อมูล mock places เท่านั้นและยังไม่ได้เชื่อม endpoint จริง
+- สถานะ: T-09 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #31 | 2026-11-20 | Copilot | /implement T-10 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-10 สร้างหน้าสรุปราคาและ quote freshness ให้ทีมอนุญาตแก้ mock API/test และไม่เริ่ม T-11 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/booking/BookingPage.jsx`, `frontend/src/booking/booking.css`, `frontend/src/api.js`, `frontend/src/booking/BookingPage.test.js`
+- ผล test: `AC-03-02 mock quote returns amounts only` และ `AC-03-03 quote freshness is cleared after form change` ผ่านร่วม node test; รวม 5 tests ผ่าน; `npm run build` ผ่าน
+- Constraint ที่ทำจริง: REQ-FN-302/D-03-07 หน้าแสดงยอดจาก mock quote; REQ-FN-304/AC-03-03 แก้วันเวลา จุดรับ จุดส่ง หรือ item_size แล้วล้าง quote และปิดปุ่มยืนยันจนดูราคาใหม่
+- รายการต้องตรง UI-03-01 สถานะ 2/6: แสดงระยะทาง ค่าบริการ มัดจำ 30% ส่วนที่เหลือ และข้อความ “แก้ข้อมูลแล้ว ผลดูราคาเดิมถูกล้าง กรุณากด ‘ดูราคา’ ใหม่”
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตเพิ่ม mock quote ใน api.js และ test; หน้าจอไม่มีคำนวณยอดเองใน T-10
+- สถานะ: T-10 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #32 | 2026-11-20 | Copilot | /implement T-11 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-11 สร้างหน้าสถานะข้อผิดพลาดและสร้างสำเร็จให้ทีมอนุญาตเพิ่ม mock helper/test และไม่เริ่ม T-12 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/booking/BookingPage.jsx`, `frontend/src/booking/booking.css`, `frontend/src/api.js`, `frontend/src/booking/BookingPage.test.js`
+- ผล test: AC-03-05, AC-03-06 และ AC-03-14 เพิ่มใน node test; รวม 8 tests ผ่าน; `npm run build` ผ่าน
+- Constraint ที่ทำจริง: REQ-FN-301/303/304/IF-301 แสดงข้อมูลไม่ครบ/จองล่วงหน้าไม่พอ/mock booking success พร้อม booking id และปุ่มไปชำระมัดจำ; AC-03-06 retry เก็บ booking เดิม ไม่สร้าง booking ใหม่บนหน้าจอ mock
+- รายการต้องตรง UI-03-01 สถานะ 3/4/7/8: ข้อความข้อมูลไม่ครบ, จองล่วงหน้าไม่ถึง 4 ชั่วโมง, ระยะใกล้เกินไป, การจองหมายเลขและข้อความเปิดหน้าชำระไม่สำเร็จ
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตเพิ่ม mock helper ใน api.js/test; API จริงและ navigation ไปหน้าชำระจะอยู่ T-12 ไม่สร้างตอน T-11
+- สถานะ: T-11 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #33 | 2026-11-20 | Copilot | /implement T-12 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-12 ต่อหน้าจอ Booking กับ API จริง ให้ทีมอนุญาตแก้ App.jsx/test และไม่เริ่ม task ถัดไป
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/api.js`, `frontend/src/booking/BookingPage.jsx`, `frontend/src/App.jsx`, `frontend/src/booking/BookingPage.test.js`
+- ผล test: node test 9 tests ผ่าน; `npm run build` ผ่าน; integration ผ่าน Vite proxy places 6 รายการ/quote 5/2/3/booking id 1 และ payment PENDING_DEPOSIT 2 บาท
+- Constraint ที่ทำจริง: หน้าจอเรียก GET /api/places, POST /api/bookings/quote และ POST /api/bookings จริง; booking request ไม่มียอดหน้าเว็บ; การเปิดชำระเรียก GET /api/payments/{id}; App แสดง PaymentPage ด้วย booking id และกลับหน้าจองซ้ำได้
+- รายการต้องตรง UI-03-01: ข้อความสถานะ/ยอด/ปุ่มคงตาม spec; retry เปิดชำระพลาดจะใช้ booking id เดิมและไม่เรียก POST booking ซ้ำ
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตแก้ App.jsx และ test integration; ไม่เพิ่ม endpoint อ่าน booking ของ feature ③
+- สถานะ: T-12 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #34 | 2026-11-20 | Copilot | /implement T-13 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-13 เติม backend test สำหรับข้อมูล ราคา เวลา และยอด; ไม่เริ่ม T-14 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/tests/test_booking.py`
+- ผล test: suite backend ผ่าน 62 tests; เพิ่ม test response 201 ครบ contract และ test `/quote` เวลาน้อยกว่า 4 ชั่วโมงตอบ 200 โดยไม่สร้าง booking
+- Constraint ที่ทำจริง: T-13 ครอบคลุม AC-03-01/02/04/05/08/10/14 และ BR-01/02/04/05 ผ่าน pytest; ยืนยัน backend recalculates amounts และ quote ไม่สร้าง booking
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ไม่มี
+- สถานะ: T-13 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #35 | 2026-11-20 | Copilot | /implement T-14 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-14 เพิ่ม backend test auth/place/status/สัญญา feature ④ และไม่เริ่ม T-15
+- ไฟล์ที่สร้างหรือแก้: `backend/tests/test_booking.py`
+- ผล test: suite backend ผ่าน 64 tests; เพิ่ม AC-03-07 ยอดตรง payment summary และ AC-03-09 user อื่นอ่าน payment booking ได้ 404
+- Constraint ที่ทำจริง: REQ-SEC-301 AC-03-09; REQ-FN-305 AC-03-11; REQ-IF-301/302 AC-03-07/01; สถานะและ owner ตรวจผ่าน mock_db/payment summary
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: แก้ clock ของ payment test ให้ตรงกับ booking 10:20 เพื่อไม่ให้ timeout ยกเลิก booking ในขณะตรวจยอด
+- สถานะ: T-14 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #36 | 2026-11-20 | Copilot | /implement T-15 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-15 เพิ่ม frontend cross-feature tests สำหรับ quote stale/geolocation/retry และ npm build
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/booking/BookingPage.test.js`, `frontend/src/api.js`
+- ผล test: node test 11 tests ผ่าน; AC-03-03/06/12/13 ครอบคลุมด้วย pure/mock test; `npm run build` ผ่านและเชื่อม App กับ PaymentPage ด้วย booking id
+- Constraint ที่ทำจริง: REQ-FN-306/304/IF-301 และ D-03-14 ตรวจผ่าน frontend mock contract; retry ใช้ booking id เดิม
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: task ต้นทางระบุ .jsx แต่ repo ไม่มี frontend test framework; ใช้ไฟล์ .js + node --test ที่มีอยู่ พร้อมเพิ่ม App อย่างที่ integration T-12 ตรวจแล้ว
+- สถานะ: T-15 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; ไม่มี task ถัดไปให้เริ่ม
