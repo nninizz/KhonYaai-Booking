@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 from app import mock_db
 
 
-# รองรับ REQ-SEC-401 (stub ของ ② ดู AS-01)
+# รองรับ REQ-SEC-301, REQ-SEC-401 (stub ของ ② ดู AS-01)
 def get_current_user(authorization: str | None = Header(default=None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="ยังไม่ได้เข้าสู่ระบบ")
