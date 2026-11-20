@@ -12,9 +12,9 @@ MOCK_OTP = "123456"
 
 users = [
     {"id": 1, "name": "ทดสอบ", "email": "test@mail.com", "phone": "0812345678",
-     "password": "1234", "is_verified": True},
+     "password": "TestUser8", "is_verified": True},
     {"id": 2, "name": "คนอื่น", "email": "other@mail.com", "phone": "0899999999",
-     "password": "1234", "is_verified": True},
+     "password": "TestUser8", "is_verified": True},
 ]
 
 # ชั่วคราวระหว่างรอ ② — token → user_id
