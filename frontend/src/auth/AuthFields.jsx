@@ -1,0 +1,162 @@
+import "./auth.css";
+import { useState } from "react";
+import { authLogin, storeAuthToken, verifyOtp } from "../api.js";
+
+// รองรับ REQ-FN-201, REQ-CON-201
+export function AuthLoginFields({
+  email = "",
+  password = "",
+  onEmailChange,
+  onPasswordChange,
+}) {
+  return (
+    <section className="auth-panel">
+      <div className="auth-fields">
+        <input
+          aria-label="email"
+          autoComplete="email"
+          name="email"
+          onChange={onEmailChange}
+          required
+          type="email"
+          value={email}
+        />
+        <input
+          aria-label="password"
+          autoComplete="current-password"
+          name="password"
+          onChange={onPasswordChange}
+          required
+          type="password"
+          value={password}
+        />
+      </div>
+    </section>
+  );
+}
+
+// รองรับ REQ-FN-201, REQ-FN-205, REQ-CON-201
+export function AuthOtpFields({ otp = "", onOtpChange }) {
+  return (
+    <section className="auth-panel">
+      <div className="auth-fields">
+        <input
+          aria-label="otp"
+          autoComplete="one-time-code"
+          maxLength={6}
+          inputMode="numeric"
+          name="otp"
+          onChange={onOtpChange}
+          pattern="[0-9]{6}"
+          required
+          type="text"
+          value={otp}
+        />
+      </div>
+    </section>
+  );
+}
+
+// รองรับ REQ-FN-201, REQ-FN-203, REQ-FN-205 และ REQ-CON-201: เชื่อม flow login/OTP กับ API
+export function AuthFlow({ onAuthenticated }) {
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const [otpChallengeId, setOtpChallengeId] = useState("");
+  const [otp, setOtp] = useState("");
+  const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function completeLogin(token) {
+    storeAuthToken(token);
+    await onAuthenticated?.(token);
+    setStatus("เข้าสู่ระบบสำเร็จ");
+  }
+
+  async function requestOtp(event) {
+    event.preventDefault();
+    setError("");
+    setStatus("");
+    setSubmitting(true);
+    try {
+      const result = await authLogin(credentials);
+      if (result.token) {
+        await completeLogin(result.token);
+        return;
+      }
+      if (!result.otp_challenge_id) {
+        throw new Error("รูปแบบผลตอบกลับจากระบบไม่ถูกต้อง");
+      }
+      setOtpChallengeId(result.otp_challenge_id);
+      setOtp("");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function submitOtp(event) {
+    event.preventDefault();
+    setError("");
+    setStatus("");
+    setSubmitting(true);
+    try {
+      const result = await verifyOtp({
+        otp_challenge_id: otpChallengeId,
+        otp,
+      });
+      if (!result.token) {
+        throw new Error("รูปแบบผลตอบกลับจากระบบไม่ถูกต้อง");
+      }
+      await completeLogin(result.token);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <section className="card auth-card">
+      {!otpChallengeId ? (
+        <form onSubmit={requestOtp}>
+          <h2>เข้าสู่ระบบ</h2>
+          <AuthLoginFields
+            email={credentials.email}
+            onEmailChange={(event) =>
+              setCredentials({ ...credentials, email: event.target.value })
+            }
+            onPasswordChange={(event) =>
+              setCredentials({ ...credentials, password: event.target.value })
+            }
+            password={credentials.password}
+          />
+          <button className="primary" disabled={submitting} type="submit">
+            เข้าสู่ระบบ
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={submitOtp}>
+          <h2>ยืนยัน OTP</h2>
+          <AuthOtpFields
+            onOtpChange={(event) => setOtp(event.target.value)}
+            otp={otp}
+          />
+          <button className="primary" disabled={submitting} type="submit">
+            ยืนยัน OTP
+          </button>
+          <button
+            className="link auth-resend"
+            disabled={submitting}
+            onClick={requestOtp}
+            type="button"
+          >
+            ขอ OTP ใหม่
+          </button>
+        </form>
+      )}
+      {error && <p className="msg error" role="alert">{error}</p>}
+      {status && <p className="msg auth-success" role="status">{status}</p>}
+    </section>
+  );
+}

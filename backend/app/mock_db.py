@@ -1,6 +1,7 @@
 # mock_db.py — ข้อมูลกลางที่ทุก feature import ไปใช้ (ไม่มี database, รีสตาร์ทแล้วรีเซ็ต)
 from datetime import datetime
 from math import radians, sin, cos, asin, sqrt
+from typing import Literal, TypedDict
 
 PRICE_PER_KM = 10             # กฎข้อ 5
 DEPOSIT_PERCENT = 30          # กฎข้อ 1
@@ -19,6 +20,18 @@ users = [
 
 # ชั่วคราวระหว่างรอ ② — token → user_id
 tokens = {"mock-token-1": 1, "mock-token-2": 2}
+
+# รองรับ REQ-FN-201 และ REQ-FN-205: OTP challenges แบบจำลองอยู่ในหน่วยความจำ
+class OtpChallenge(TypedDict):
+    user_id: int
+    phone: str
+    otp: str
+    created_at: datetime
+    failed_attempts: int
+    status: Literal["active", "verified", "locked", "expired"]
+
+
+otp_challenges: dict[str, OtpChallenge] = {}
 
 
 def calc_distance_km(lat1, lng1, lat2, lng2):   # กฎข้อ 5 — ระยะทางจากพิกัด GPS
