@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { startRegistrationOtp } from "../api.js";
 import { registerUser } from "./register.js";
 import { validateRegisterForm } from "./validators.js";
 
@@ -15,12 +16,15 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [requestError, setRequestError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [otpStartError, setOtpStartError] = useState("");
 
   async function submit(event) {
     event.preventDefault();
     const validationErrors = validateRegisterForm(values);
     setFieldErrors(validationErrors);
     setRequestError("");
+    setOtpStartError("");
     if (Object.keys(validationErrors).length > 0) {
       return;
     }
@@ -29,7 +33,19 @@ export default function RegisterPage() {
     try {
       const result = await registerUser(values);
       if (result.kind === "success") {
-        window.location.assign("/login");
+        setRegistrationComplete(true);
+        try {
+          const registrationProof = result.data?.registration_proof;
+          if (typeof registrationProof !== "string" || !registrationProof) {
+            throw new Error("ไม่พบ registration_proof ในผลสมัครสมาชิก");
+          }
+          await startRegistrationOtp(registrationProof);
+          window.location.assign("/login");
+        } catch (error) {
+          setOtpStartError(
+            error instanceof Error ? error.message : String(error),
+          );
+        }
         return;
       }
 
@@ -128,9 +144,23 @@ export default function RegisterPage() {
           {fieldErrors.password && <span className="err" role="alert">{fieldErrors.password}</span>}
         </label>
 
-        <button className="primary" disabled={submitting} type="submit">สมัคร</button>
+        <button
+          className="primary"
+          disabled={submitting || registrationComplete}
+          type="submit"
+        >
+          {registrationComplete ? "สมัครสำเร็จแล้ว" : "สมัคร"}
+        </button>
       </form>
       {requestError && <p className="err" role="alert">{requestError}</p>}
+      {registrationComplete && (
+        <p className="msg auth-success" role="status">สมัครสมาชิกสำเร็จแล้ว</p>
+      )}
+      {otpStartError && (
+        <p className="err" role="alert">
+          เริ่มยืนยัน OTP ไม่สำเร็จ: {otpStartError} (ไม่ได้ส่งคำขอสมัครซ้ำ)
+        </p>
+      )}
       <a className="register-login-link" href="/login">เข้าสู่ระบบ</a>
     </section>
   );

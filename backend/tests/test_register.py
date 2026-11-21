@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app import mock_db
 from app.auth import router as auth_router
+from app.auth import registration_proofs
 from app.register.router import router as register_router
 
 _INITIAL_USERS = deepcopy(mock_db.users)
@@ -27,17 +28,21 @@ def client() -> Iterator[TestClient]:
 @pytest.fixture(autouse=True)
 def reset_mock_db() -> Iterator[None]:
     # รองรับ AC-01-01 ถึง AC-01-12 และ F-07 โดยคืน mock state ก่อน/หลังทุก test
+    original_proofs = registration_proofs.copy()
     mock_db.users[:] = deepcopy(_INITIAL_USERS)
     mock_db.tokens.clear()
     mock_db.tokens.update(_INITIAL_TOKENS)
     mock_db.otp_challenges.clear()
     mock_db.otp_challenges.update(deepcopy(_INITIAL_OTP_CHALLENGES))
+    registration_proofs.clear()
     yield
     mock_db.users[:] = deepcopy(_INITIAL_USERS)
     mock_db.tokens.clear()
     mock_db.tokens.update(_INITIAL_TOKENS)
     mock_db.otp_challenges.clear()
     mock_db.otp_challenges.update(deepcopy(_INITIAL_OTP_CHALLENGES))
+    registration_proofs.clear()
+    registration_proofs.update(original_proofs)
 
 
 def valid_payload(**overrides: str) -> dict[str, str]:
@@ -62,8 +67,19 @@ def test_AC_01_01_register_success_returns_user_without_password(
 
     assert response.status_code == 201
     body = response.json()
-    assert set(body) == {"id", "name", "email", "phone", "is_verified"}
+    assert set(body) == {
+        "id",
+        "name",
+        "email",
+        "phone",
+        "is_verified",
+        "registration_proof",
+    }
     assert body["is_verified"] is False
+    assert isinstance(body["registration_proof"], str)
+    assert body["registration_proof"]
+    assert body["registration_proof"] != str(body["id"])
+    assert registration_proofs[body["registration_proof"]] == body["id"]
     assert "password" not in body
     assert "token" not in body
     assert len(mock_db.users) == count_before + 1
@@ -264,7 +280,7 @@ def test_AC_01_11_new_user_id_is_max_plus_one(client: TestClient) -> None:
     assert response.json()["id"] == expected_id
 
 
-def test_AC_01_12_user_row_is_shared_and_auth_accepts_password(
+def test_AC_01_12_user_row_is_shared_and_login_requires_otp_verification(
     client: TestClient,
 ) -> None:
     # ตรวจ AC-01-12: เก็บ password ใน users กลางและ Auth ใช้ credential เดียวกัน
@@ -277,6 +293,7 @@ def test_AC_01_12_user_row_is_shared_and_auth_accepts_password(
 
     assert response.status_code == 201
     assert "password" not in response.json()
+    assert "token" not in response.json()
     stored_user = next(
         user for user in mock_db.users if user["email"] == payload["email"]
     )
@@ -291,11 +308,36 @@ def test_AC_01_12_user_row_is_shared_and_auth_accepts_password(
     assert stored_user["password"] == payload["password"]
     assert stored_user["is_verified"] is False
 
+    proof = response.json()["registration_proof"]
+    challenge_response = client.post(
+        "/api/auth/otp-challenges",
+        json={"registration_proof": proof},
+    )
+    assert challenge_response.status_code == 200
+    challenge_id = challenge_response.json()["otp_challenge_id"]
+    assert mock_db.otp_challenges[challenge_id]["user_id"] == stored_user["id"]
+
+    unverified_login = client.post(
+        "/api/auth/login",
+        json={"email": payload["email"], "password": payload["password"]},
+    )
+    assert unverified_login.status_code == 403
+    assert unverified_login.json() == {
+        "detail": "Account verification required",
+    }
+
+    verify_response = client.post(
+        "/api/auth/verify-otp",
+        json={"otp_challenge_id": challenge_id, "otp": mock_db.MOCK_OTP},
+    )
+    assert verify_response.status_code == 200
+    assert verify_response.json() == {"is_verified": True}
+    assert stored_user["is_verified"] is True
+    assert "token" not in verify_response.json()
+
     login_response = client.post(
         "/api/auth/login",
         json={"email": payload["email"], "password": payload["password"]},
     )
-
     assert login_response.status_code == 200
-    challenge_id = login_response.json()["otp_challenge_id"]
-    assert mock_db.otp_challenges[challenge_id]["user_id"] == stored_user["id"]
+    assert set(login_response.json()) == {"token"}

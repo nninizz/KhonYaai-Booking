@@ -75,7 +75,7 @@ class RegisterRequest(BaseModel):
         return value
 
 
-# รองรับ REQ-PRV-101 โดยไม่ประกาศ field password ใน response model
+# รองรับ REQ-FN-106 และ REQ-PRV-101; ไม่มี password ใน response model
 class UserOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -84,3 +84,4 @@ class UserOut(BaseModel):
     email: str
     phone: str
     is_verified: bool
+    registration_proof: str
