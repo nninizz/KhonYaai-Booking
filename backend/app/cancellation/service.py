@@ -19,7 +19,10 @@ def _now():
 
 def minutes_remaining(booking, now=None):
     """นาทีคงเหลือก่อนนัดหมาย ปัดลง (44 นาที 59 วินาที = 44) ตามขอบเขตของ BR-CAN-DRAFT-09"""
-    seconds = (booking["scheduled_at"] - (now or _now())).total_seconds()
+    scheduled = booking["scheduled_at"]
+    if isinstance(scheduled, str):  # ③ เก็บเวลานัดเป็นข้อความ ISO ตอนสร้างการจองจริง
+        scheduled = datetime.fromisoformat(scheduled)
+    seconds = (scheduled - (now or _now())).total_seconds()
     return int(seconds // 60)
 
 

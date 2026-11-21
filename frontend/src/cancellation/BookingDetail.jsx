@@ -21,6 +21,21 @@ function detailsOf(booking) {
   ];
 }
 
+const baht = (n) => `${Number(n).toLocaleString()} บาท`;
+
+// ยอดเงินจริงจาก ③ (คำนวณและเก็บใน booking) ⑥ ไม่คำนวณเอง
+function hasMoney(booking) {
+  return booking && booking.deposit_amount !== undefined && booking.total_price !== undefined;
+}
+
+function moneyRows(booking) {
+  return [
+    ["ค่าบริการทั้งหมด", baht(booking.total_price)],
+    ["เงินมัดจำที่ชำระแล้ว", baht(booking.deposit_amount)],
+    ["ส่วนที่เหลือ (จ่ายกับคนขับหลังจบงาน)", baht(booking.remaining_amount)],
+  ];
+}
+
 export default function BookingDetail({ booking, live = false, minutesRemaining, onRequestCancellation }) {
   return (
     <section className="cancellation-card" data-ui-id="UI-06-01">
@@ -40,7 +55,18 @@ export default function BookingDetail({ booking, live = false, minutesRemaining,
       </dl>
 
       <h3>เงินมัดจำ</h3>
-      <p className="cancellation-placeholder">ไม่แสดงยอดเงินจริงใน Demo</p>
+      {hasMoney(booking) ? (
+        <dl className="cancellation-details">
+          {moneyRows(booking).map(([label, value]) => (
+            <div className="cancellation-detail-row" key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p className="cancellation-placeholder">ไม่แสดงยอดเงินจริงใน Demo</p>
+      )}
 
       <button className="cancellation-button cancellation-button-danger" type="button" onClick={onRequestCancellation}>
         {live ? "ยกเลิกการจอง" : "ทดลองเงื่อนไขการยกเลิก"}

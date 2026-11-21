@@ -101,3 +101,23 @@ def test_cancel_stops_tracking_of_same_job():
     out = cancel(b).json()
     assert out["tracking_status"] == "cancelled"
     assert tracking._SESSIONS[str(b["id"])].status == SessionStatus.CANCELLED
+
+
+def test_AC_06_DRAFT_05_cancel_booking_created_through_real_api(monkeypatch):
+    # การจองจริงจาก POST /api/bookings เก็บ scheduled_at เป็น str (ไม่ใช่ datetime)
+    # ③ ตรวจล่วงหน้าด้วยเวลาจริง จึงใช้เวลาจริงทั้งสองฝั่ง
+    monkeypatch.setattr(cancel_service, "_now", datetime.now)
+    scheduled = (datetime.now() + timedelta(hours=6)).isoformat(timespec="seconds")
+    body = dict(pickup_address="a", pickup_lat=13.75, pickup_lng=100.5,
+                dropoff_address="b", dropoff_lat=13.8, dropoff_lng=100.55,
+                scheduled_at=scheduled, item_size="SMALL")
+    created = client.post("/api/bookings", json=body, headers=AUTH)
+    assert created.status_code == 201, created.text
+    bid = created.json()["id"]
+    pay = client.post("/api/payments", json={"booking_id": bid, "method": "PROMPTPAY_QR"}, headers=AUTH)
+    assert pay.status_code in (200, 201), pay.text
+    r = client.post(f"/api/bookings/{bid}/cancel", json={}, headers=AUTH)
+    assert r.status_code == 200, r.text
+    out = r.json()
+    assert (out["booking_status"], out["deposit_result"]) == ("CANCELLED", "REFUNDED")
+    assert out["minutes_remaining"] in (359, 360)

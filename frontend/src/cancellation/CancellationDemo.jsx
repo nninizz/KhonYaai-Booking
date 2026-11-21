@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { cancelBooking } from "../api.js";
+import { endJob } from "../tracking/api/trackingMock.js";
 import BookingDetail from "./BookingDetail.jsx";
 import ConfirmationWarning from "./ConfirmationWarning.jsx";
 import DemoTimeSelector from "./DemoTimeSelector.jsx";
@@ -34,7 +35,10 @@ export default function CancellationDemo({ booking = null }) {
     requested.current = true;
     setLiveResult({ phase: "loading" });
     cancelBooking(booking.id, state.minutesRemaining < 120)
-      .then((data) => setLiveResult({ phase: "done", data }))
+      .then((data) => {
+        endJob(String(data.booking_id)); // ⑤: งานที่ถูกยกเลิกถือว่าสิ้นสุด (AS-12)
+        setLiveResult({ phase: "done", data });
+      })
       .catch((e) => setLiveResult({ phase: "error", message: e.message }));
   }, [state.screen, live, booking?.id, state.minutesRemaining]);
 
@@ -42,9 +46,9 @@ export default function CancellationDemo({ booking = null }) {
     <section className="cancellation-demo">
       <p className="cancellation-demo-banner">
         {live
-          ? "แสดงข้อมูลการจองจริง การกดยืนยันจะยกเลิกการจองจริงและคืน/ริบมัดจำตามเงื่อนไข"
+          ? "ข้อมูลการจองจริง — ยืนยันแล้วจะยกเลิกจริงและคืน/ริบมัดจำตามเงื่อนไข"
           : booking
-            ? "Demo — เลือกเวลาจำลองอยู่ แสดงข้อมูลการจองจริงแต่การยกเลิกเป็นตัวอย่าง ไม่เรียก Backend"
+            ? "Demo — เลือกเวลาจำลองอยู่ การยกเลิกเป็นตัวอย่าง ไม่เรียก Backend"
             : "Demo — ใช้ข้อมูลจำลอง ไม่มีการเรียก Backend หรือบันทึกข้อมูล"}
       </p>
       <DemoTimeSelector
