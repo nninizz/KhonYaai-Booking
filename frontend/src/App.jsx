@@ -1,74 +1,93 @@
-// หน้า demo ของ ④ — สร้าง booking mock (แทน ③) แล้วเปิดหน้าจ่ายมัดจำ
 import { useState } from "react";
-import { seedBooking } from "./api.js";
+import { AuthFlow } from "./auth/AuthFields.jsx";
+import RegisterPage from "./register/RegisterPage.jsx";
+import BookingPage from "./booking/BookingPage.jsx";
 import CancellationDemo from "./cancellation/CancellationDemo.jsx";
 import PaymentPage from "./payment/PaymentPage.jsx";
 
-// รองรับ REQ-FN-DRAFT-CAN-05 โดยเปิด Demo แยกจาก Payment Demo เดิม
-export default function App() {
+// รองรับ REQ-FN-201, REQ-FN-203, REQ-FN-205: เปิด Auth เป็นหน้าเริ่มต้นและส่ง token ให้ผู้เรียก
+// รองรับ REQ-FN-304, REQ-IF-301 (T-12): หลัง Auth สำเร็จเข้าหน้าจอง แล้วส่ง bookingId ต่อให้หน้าชำระมัดจำ
+// รองรับ REQ-FN-DRAFT-CAN-05 โดยเปิด Cancellation Demo แยกจาก flow หลัก
+export default function App({ onAuthenticated } = {}) {
+  const [token, setToken] = useState(null);
   const [bookingId, setBookingId] = useState(null);
-  const [distance, setDistance] = useState(30);
-  const [error, setError] = useState("");
-  const [activeDemo, setActiveDemo] = useState("payment");
+  const [showCancellation, setShowCancellation] = useState(false);
+  const isRegisterRoute = window.location.pathname === "/register";
 
-  async function create() {
-    setError("");
-    try {
-      const b = await seedBooking(Number(distance));
-      setBookingId(b.id);
-    } catch (e) {
-      setError(e.message);
-    }
+  if (isRegisterRoute) {
+    return (
+      <main className="wrap" data-testid="app-root">
+        <header className="top">
+          <h1>Khonย้าย</h1>
+        </header>
+        <RegisterPage />
+      </main>
+    );
+  }
+
+  if (!token) {
+    return (
+      <main className="wrap" data-testid="app-root">
+        <header className="top">
+          <h1>Khonย้าย</h1>
+        </header>
+        <AuthFlow
+          onAuthenticated={(authenticatedToken) => {
+            setToken(authenticatedToken);
+            onAuthenticated?.(authenticatedToken);
+          }}
+        />
+      </main>
+    );
+  }
+
+  if (showCancellation) {
+    return (
+      <main className="wrap" data-testid="app-root">
+        <header className="top">
+          <h1>Khonย้าย</h1>
+          <span className="tag">Cancellation Demo</span>
+        </header>
+        <CancellationDemo />
+        <button
+          type="button"
+          className="link"
+          onClick={() => setShowCancellation(false)}
+        >
+          กลับไปยัง flow หลัก
+        </button>
+      </main>
+    );
+  }
+
+  if (bookingId) {
+    return (
+      <main className="wrap" data-testid="app-root">
+        <PaymentPage bookingId={bookingId} />
+        <button type="button" className="link" onClick={() => setBookingId(null)}>
+          กลับไปหน้าจองรถขนย้าย
+        </button>
+        <button
+          type="button"
+          className="link"
+          onClick={() => setShowCancellation(true)}
+        >
+          เปิด Cancellation Demo
+        </button>
+      </main>
+    );
   }
 
   return (
-    <main className="wrap">
-      <header className="top">
-        <h1>Khonย้าย</h1>
-        <span className="tag">{activeDemo === "payment" ? "④ ชำระค่าบริการ" : "Cancellation Demo"}</span>
-      </header>
-
-      <nav className="demo-nav" aria-label="เลือก Demo">
-        <button
-          type="button"
-          className={activeDemo === "payment" ? "demo-nav-active" : ""}
-          aria-pressed={activeDemo === "payment"}
-          onClick={() => setActiveDemo("payment")}
-        >
-          Payment Demo
-        </button>
-        <button
-          type="button"
-          className={activeDemo === "cancellation" ? "demo-nav-active" : ""}
-          aria-pressed={activeDemo === "cancellation"}
-          onClick={() => setActiveDemo("cancellation")}
-        >
-          Cancellation Demo
-        </button>
-      </nav>
-
-      {activeDemo === "cancellation" ? (
-        <CancellationDemo />
-      ) : bookingId ? (
-        <>
-          <PaymentPage bookingId={bookingId} />
-          <button className="link" onClick={() => setBookingId(null)}>
-            ← สร้างการจองใหม่ (demo)
-          </button>
-        </>
-      ) : (
-        <section className="card">
-          <h2>จำลองการจอง (แทน feature ③)</h2>
-          <p className="muted">สร้าง booking สถานะ PENDING_DEPOSIT เพื่อทดสอบหน้าจ่ายมัดจำ</p>
-          <label className="field">
-            ระยะทาง (กม.)
-            <input type="number" min="0.1" step="0.1" value={distance}
-              onChange={(e) => setDistance(e.target.value)} />
-          </label>
-          <button className="primary" onClick={create}>สร้างการจองและไปหน้าชำระเงิน</button>
-          {error && <p className="msg error">{error}</p>}
-        </section>
-      )}
-    </main>
+    <div data-testid="app-root">
+      <BookingPage onBooked={(id) => setBookingId(id)} />
+      <button
+        type="button"
+        className="link"
+        onClick={() => setShowCancellation(true)}
+      >
+        เปิด Cancellation Demo
+      </button>
+    </div>
   );
 }

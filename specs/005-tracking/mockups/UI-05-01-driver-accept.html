@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI-05-01 คนขับกดรับงาน</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,"Segoe UI","Noto Sans Thai",Tahoma,sans-serif;background:#eef2f4;color:#1e293b;padding:24px;line-height:1.6}
+  .note{max-width:1100px;margin:0 auto 16px;background:#fff7e6;border:1px dashed #d79a2b;border-radius:10px;padding:10px 14px;font-size:14px;color:#7a5414}
+  .row{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+  .state{width:340px}
+  .state h2{font-size:14px;color:#475569;margin:0 0 8px 4px;font-weight:600}
+  .phone{background:#fff;border:1px solid #cbd5e1;border-radius:22px;padding:18px 16px 22px;box-shadow:0 6px 18px rgba(0,0,0,.06);min-height:480px}
+  .bar{font-weight:700;font-size:18px;margin-bottom:14px;color:#115e59}
+  .btn{display:block;text-align:center;background:#0f766e;color:#fff;border-radius:12px;padding:12px;font-weight:700;margin-top:18px}
+  .btn.done{background:#e2e8f0;color:#475569}
+  .info{border-radius:12px;padding:12px 14px;margin-top:6px;font-size:14px;background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46}
+  .info b{display:block;font-size:16px;margin-bottom:2px}
+  .todo{border:2px dashed #d79a2b;border-radius:12px;padding:14px;text-align:center;color:#7a5414;background:#fffaf0;margin-top:12px;font-size:14px}
+</style>
+</head>
+<body>
+<!-- MOCKUP สำหรับคุยกับผู้ใช้และ PO ไม่ใช่โค้ดจริง ห้ามคัดลอกไฟล์นี้ไปเป็นโค้ดทั้งไฟล์
+     สร้างจาก docs/mockup-template.html
+     ขอบเขต: เฉพาะฝั่งคนขับที่กดรับงาน (ตามคำสั่งทีมรอบ #43) ฝั่งคนขับไม่ต้องทำโค้ดในรอบนี้
+     สถานะ "ยืนยันส่งงาน" ไม่อยู่ในหน้านี้ เพราะเป็นของขั้นส่งงานที่ทำแล้วใน T-12 -->
+<p class="note">MOCKUP UI-05-01 คนขับกดรับงาน | รองรับ REQ-IF-001, REQ-QA-001 | ข้อมูลทั้งหมดเป็นตัวอย่าง | ยังไม่ได้ให้ PO ยืนยัน</p>
+<div class="row">
+  <section class="state">
+    <h2>สถานะ: ยังไม่รับงาน</h2>
+    <div class="phone">
+      <div class="bar">งานใหม่</div>
+      <div class="todo">รายละเอียดงานที่คนขับเห็นก่อนรับ ยังไม่มีใน spec (เสนอเป็นคำถามใหม่ใน Q-28 ไม่แสดงในหน้าจอนี้)</div>
+      <span class="btn" data-req="REQ-IF-001">รับงาน</span>
+    </div>
+  </section>
+  <section class="state">
+    <h2>สถานะ: กดรับงานแล้ว (D-05-16)</h2>
+    <div class="phone">
+      <div class="bar">งานที่รับแล้ว</div>
+      <div class="info" data-req="REQ-IF-001">
+        <b>รับงานแล้ว</b>
+        ระบบเริ่มแสดงตำแหน่งของคุณให้ลูกค้าเห็นบนแผนที่
+      </div>
+      <div class="info" data-req="REQ-QA-001">
+        <b>กำลังส่งตำแหน่ง</b>
+        ส่งพิกัดทุก 15 วินาที
+      </div>
+      <span class="btn done" data-req="REQ-IF-001">รับงานแล้ว</span>
+    </div>
+  </section>
+</div>
+</body>
+</html>

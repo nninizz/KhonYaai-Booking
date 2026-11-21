@@ -6,155 +6,690 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 
 ## #1 | <วันที่> | <เครื่องมือ> | <คำสั่ง>
 
-## #2 | 2026-11-18 | Copilot | สร้าง Static HTML Mockup สำหรับ Cancellation
-- คำสั่ง: สร้าง Mockup 4 หน้าสำหรับรายละเอียดการจอง, ยืนยันยกเลิกพร้อมคำเตือน, ผลการยกเลิก/คืนเงิน และกรณียกเลิกไม่ได้; ครอบคลุม 44, 45, 119 และ 120 นาที; ใช้ HTML/CSS แบบ Static และ data-req; ห้ามสมมติรายละเอียดที่ยังเป็น Open Question.
-- สิ่งที่ AI ถามหรือรายงาน: spec ยังไม่มี UI ID และคู่มือกำหนดให้ชื่อไฟล์ Mockup ใช้ UI ID.
-- คำตอบหรือการตัดสินใจของทีม: จัดทำเฉพาะ HTML ชั่วคราวโดยไม่ใส่ UI ID ในชื่อไฟล์หรือเอกสาร.
-- สิ่งที่ AI เดา (ถ้ามี): ไม่มี; ข้อมูลการจองและรายละเอียดคืนเงินที่ยังไม่ยืนยันแสดงเป็น "รอทีมยืนยัน".
+## #2 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | อ่าน Google Sheet และ Google Drive แล้วทำ plan.md เฉพาะการ tracking คนขับมาหาลูกค้า REQ-IF-001, REQ-QA-001
 
-## #3 | 2026-11-18 | Copilot | ปรับสถานะ T-01 และบันทึก tooling ใน Cancellation Prototype
-- คำสั่ง: บันทึก Python 3.11, Vite, pytest และ Vitest ในเอกสาร Cancellation; เปลี่ยน T-01 เป็นพร้อมทำ; คงสถานะ T-02/T-07 และไม่เริ่ม implement โค้ด.
-- สิ่งที่ AI ถามหรือรายงาน: ไม่พบ `specs/000-shared/constraints.md`; กติกาให้ระบุว่าเครื่องมือเป็นการเลือกของทีม ไม่ได้มาจาก spec และเตือนให้พิจารณาบันทึก D-00 เมื่อจัดทำไฟล์กลาง แต่ไม่ได้บังคับให้หยุดรอ D-00 ก่อนอัปเดตเอกสาร feature.
-- คำตอบหรือการตัดสินใจของทีม: ยืนยัน Python 3.11, Vite, pytest และ Vitest; ยังไม่อนุมัติหรือสร้าง D-00.
-- สิ่งที่ AI เดา (ถ้ามี): ไม่มี; พบว่า plan.md ยังไม่อนุมัติให้เริ่มพัฒนา จึงบันทึก T-01 เป็นรออนุมัติแผน และคง T-02/T-07 ติด Dependency ตามเดิม.
+- AI รายงาน: specs/005-tracking/spec.md, feature.feature, rules.md, models.md เป็นแม่แบบว่าง, ไม่มี specs/000-shared/constraints.md, ไม่มี docs/srs/catalogue.md, ไฟล์ Drive (context_diagram .drawio) ต้อง login จึงเปิดไม่ได้
+- AI ถาม: Q-01 ใช้ผู้ให้บริการแผนที่รายใด, Q-02 15 วินาทีหมายถึงอะไร, Q-03 ลูกค้าเห็นตำแหน่งช่วงไหน, Q-04 ถึง Q-10 (ดู plan.md ส่วน 8)
+- คำตอบของทีม: ดูบันทึก #3
+- AI เดา: ระบุ Intent จาก EV-009 และ EV-017 ซึ่งยัง pending verification, ตั้งชื่อกลุ่มในแผนว่า "ข้อกำหนดขนย้าย" จากชื่อ Sheet
 
-## #4 | 2026-11-18 | Copilot | บันทึกอนุมัติแผน Cancellation Prototype
-- คำสั่ง: บันทึกการอนุมัติ plan.md จากทีม และเปลี่ยน T-01 เป็นพร้อมทำหากเงื่อนไขครบ; ยังไม่ implement, commit หรือ push.
-- สิ่งที่ AI ถามหรือรายงาน: T-01 รออนุมัติเพราะ plan.md ระบุว่ายังไม่อนุมัติ; ไม่พบ constraints กลาง และไม่มีข้อกำหนดให้สร้าง D-00 ก่อนงานนี้.
-- คำตอบหรือการตัดสินใจของทีม: ทีมตรวจและอนุมัติ plan.md สำหรับ Cancellation Prototype แล้ว.
-- สิ่งที่ AI เดา (ถ้ามี): ไม่มี; บันทึกสถานะแผนเป็นอนุมัติสำหรับ Prototype โดยคง Draft/ไม่ใช่ Baseline และคง dependencies ของ T-02/T-07.
+## #3 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-01 ถึง Q-03 ให้อัปเดต plan.md
 
-## #5 | 2026-11-18 | Copilot | ปรับแผน Cancellation Prototype ให้แยกจากแอปบน main
-- คำสั่ง: ปรับแนวทางให้พัฒนาบน `feature/cancle` โดยไม่ Merge/Cherry-pick ระหว่างทำงานแยกส่วน, Merge `origin/main` ครั้งเดียวหลัง Policy และ Unit Tests พร้อม, และไม่สร้าง React/FastAPI app ซ้ำ.
-- สิ่งที่ AI ถามหรือรายงาน: T-01 เดิมสร้าง Backend/Frontend manifests และ scaffolding ของแอปซ้ำกับ `main`; เสนอ Policy/pytest ก่อน Merge และ Integration/UI หลัง Merge.
-- คำตอบหรือการตัดสินใจของทีม: ยืนยันแนวทางแยกงานก่อน/หลัง Merge และให้ปรับ `plan.md` กับ `tasks.md`.
-- สิ่งที่ AI เดา (ถ้ามี): ไม่มี; คง Requirements, Business Rules, Draft IDs, Open Questions และสถานะ Draft เดิม.
+- คำตอบของทีม: Q-01 ใช้ Google Maps, Q-02 รับตำแหน่งจากแอปคนขับ และ 15 วินาทีคือรอบการอัปเดตพิกัดของคนขับ, Q-03 ตั้งแต่คนขับรับงานจนรถถึงปลายทาง และไม่แสดงตำแหน่งหลังจบงาน
+- AI อัปเดต plan.md เป็นเวอร์ชัน 0.2 และบันทึกเป็น D-05-01 ถึง D-05-03
+- AI รายงาน: Google Maps ไม่ได้ให้ตำแหน่งสดของรถโดยตรง พิกัดมาจาก GPS ของมือถือคนขับ จึงเพิ่ม Q-11 และ Q-12
+- AI เดา: ไม่มี
 
-## #6 | 2026-11-19 | Copilot | /implement T-01
-- คำสั่ง: สร้างเฉพาะ Cancellation package และ pytest smoke test ด้วย Python 3.11; ห้ามสร้าง application/manifest เพิ่ม, ทำ task อื่น, Merge, Cherry-pick, Commit หรือ Push.
-- ไฟล์ที่สร้าง: `backend/app/cancellation/__init__.py`, `backend/tests/test_cancellation_setup.py`.
-- ผลตรวจ: `python3.11 -m pytest backend/tests/test_cancellation_setup.py -q` ผ่าน 1 test; ติดตั้ง pytest ใน Python 3.11 หลังพบว่า interpreter ยังไม่มี pytest.
-- สิ่งที่ AI เกือบต้องเดาแต่ไม่ได้เดา: ไม่มี; test ตรวจเพียงการ import package ตามเกณฑ์ T-01 ไม่เพิ่มพฤติกรรม Policy.
+## #4 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทำ spec.md ของ 005-tracking ก่อน
 
-## #7 | 2026-11-19 | Copilot | ตรวจรับ T-01 และเปิด T-02
-- คำสั่ง: ตรวจ T-01 ตามเกณฑ์ใน tasks.md; หากผ่านให้กำหนด T-01 เป็น “เสร็จแล้ว” และ T-02 เป็น “พร้อมทำ”; หยุดก่อนเริ่ม T-02.
-- ผลตรวจ: Smoke test บน Python 3.11 ผ่าน (1 passed); package และ test file อยู่ในขอบเขต T-01; `git diff --check` ผ่าน.
-- การเปลี่ยนแปลง: อัปเดตสถานะ T-01 และ T-02 ใน `specs/006-cancle/tasks.md` เท่านั้น ไม่แก้ Requirements หรือ Business Rules.
-- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
+- AI เขียน spec.md เวอร์ชัน 0.1 สถานะ draft ครบ 12 ส่วน ใช้ ID เดิมจาก Sheet คือ REQ-IF-001 และ REQ-QA-001
+- AI ถาม: Q-13 "รถถึงปลายทาง" นิยามอย่างไร, Q-04, Q-05, Q-11, Q-12 ต้องตอบก่อนเขียน AC
+- AI เดา: ยังไม่มี UC สำหรับการติดตาม จึงเขียนเป็น "ยังไม่ระบุ" ไม่สร้างขึ้นเอง, ส่วน Constraints ใช้แบบ ก เพราะยังไม่มีไฟล์กลาง
 
-## #8 | 2026-11-19 | Copilot | /implement T-02
-- คำสั่ง: สร้าง Cancellation Policy แบบอิสระตาม BR-CAN-DRAFT-09 โดยตรวจ 44, 45, 119 และ 120 นาที; ไม่เชื่อม API, DB, Payment, Booking หรือ Tracking และไม่เริ่ม T-07.
-- ไฟล์ที่สร้าง: `backend/app/cancellation/policy.py`.
-- ผลตรวจ: Syntax ผ่าน; import และ assertion สำหรับ 44/45/119/120 นาทีผ่าน; `python3.11 -m pytest -q backend/tests/test_cancellation_setup.py` ผ่าน 1 test.
-- การเปลี่ยนแปลง: กำหนดสถานะ T-02 เป็น “เสร็จ รอทีมตรวจ”; ไม่มีการแก้ Requirements หรือ Business Rules.
-- สิ่งที่ AI เกือบต้องเดาแต่ไม่ได้เดา: ไม่กำหนดจุดเริ่มนับกรอบคืนเงิน 2 ชั่วโมงหรือการคืนเงินจริง เพราะยังรอคำตอบ Q-06-11; ผลมัดจำของกรณี <45 นาทีคงเป็น “ไม่ระบุ” ตามหลักฐานที่มี.
+## #5 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมสั่งให้เพิ่มบันทึกใน prompt-log.md และข้ามทุกอย่างที่ไม่เกี่ยวกับ tracking
 
-## #9 | 2026-11-19 | Copilot | ตรวจรับ T-02 Cancellation Policy
-- คำสั่ง: ตรวจ T-02 ตาม tasks.md เทียบ spec.md, rules.md, plan.md และ AC-06-DRAFT-05; ตรวจ boundary 44/45/119/120 นาที, input validation, การไม่มี side effects และรัน Python/pytest; หากผ่านให้ปิด T-02 และเปิด T-07 โดยไม่เริ่ม Implement T-07.
-- ผลตรวจ: Python syntax และ import ผ่าน; boundary ทั้ง 4 ค่าและ invalid-input 4 กรณีผ่าน; pytest ที่มีอยู่ผ่าน 1 test; ตรวจโค้ดไม่พบการเรียก API/DB/Payment หรือการเปลี่ยน Booking/Tracking state.
-- การเปลี่ยนแปลง: อัปเดต T-02 เป็น “เสร็จแล้ว” และ T-07 เป็น “พร้อมทำ” ใน `specs/006-cancle/tasks.md`; ไม่แก้ Requirements หรือ Business Rules และไม่ได้เริ่ม T-07.
-- สิ่งที่ AI เกือบต้องเดาแต่ไม่ได้เดา: คงผลมัดจำกรณี <45 นาทีเป็น “ไม่ระบุ” และไม่กำหนดจุดเริ่มนับหรือการทำคืนเงินจริงตาม Q-06-11.
+- คำสั่งของทีม: เพิ่ม prompt-log.md และข้ามเรื่องที่ไม่เกี่ยวกับ tracking
+- AI ทำ: บันทึกเฉพาะงานของ 005-tracking, ไม่แก้หรือเพิ่มข้อมูลของ feature อื่น (001 ถึง 004, 006), ไม่เติม REQ อื่นจาก Sheet เช่น REQ-DAT-001, REQ-OP-001, REQ-FN-001, REQ-PRV-001 (ยกเว้นที่ spec 005 อ้างเพราะเกี่ยวกับพิกัดคนขับ)
+- AI เดา: ไม่มี
 
-## #10 | 2026-11-19 | Copilot | /implement T-07
-- คำสั่ง: เพิ่ม pytest Unit Tests สำหรับ Cancellation Policy ตาม AC-06-DRAFT-05 โดยทดสอบ 44/45/119/120 นาที, ผลยกเลิก, คำเตือน/การยืนยัน, ผลมัดจำ/กรอบคืนเงิน และ invalid inputs; ไม่เรียก API, Database หรือ Payment จริง.
-- ไฟล์ที่สร้าง: `backend/tests/test_cancellation.py`.
-- ผลตรวจ: Python syntax ผ่าน; `python3.11 -m pytest -q backend/tests` ผ่าน 9 tests (0 failed), รวม boundary 4 กรณีและ invalid-input 4 กรณี; `git diff --check` ผ่าน.
-- การเปลี่ยนแปลง: อัปเดต T-07 เป็น “เสร็จ รอทีมตรวจ” ใน `specs/006-cancle/tasks.md`; ไม่แก้ Policy, Requirements หรือ Business Rules และไม่เริ่ม Task อื่น.
-- สิ่งที่ AI เกือบต้องเดาแต่ไม่ได้เดา: ทดสอบเฉพาะกรอบคืนเงิน 120 นาทีที่ Policy ส่งคืน ไม่ทดสอบธุรกรรมหรือกำหนดจุดเริ่มนับ/ช่องทางคืนเงินจริงซึ่งยังรอ Q-06-11.
+## #6 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-04 ถึง Q-13 ให้อัปเดต spec.md และ plan.md
 
-## #11 | 2026-11-19 | Copilot | ตรวจรับ T-07 Cancellation Policy Tests
-- คำสั่ง: ตรวจ T-07 เทียบ BR-CAN-DRAFT-09 และ AC-06-DRAFT-05, ตรวจ boundary, warning/confirmation, deposit/refund window และ input validation; รัน pytest ทั้งหมดใน `backend/tests`; หากผ่านให้ปิด T-07 และเปิด T-10 โดยไม่ Merge.
-- ผลตรวจ: `python3.11 -m pytest -q backend/tests` ผ่าน 9 tests (0 failed); พบ test assertions ครบตามขอบเขต; `git diff --check` และตรวจไฟล์ untracked ผ่าน.
-- การเปลี่ยนแปลง: อัปเดต T-07 เป็น “เสร็จแล้ว” และ T-10 เป็น “พร้อมทำ” (ดำเนินการโดยทีม) ใน `specs/006-cancle/tasks.md`; ไม่แก้ Requirements, Business Rules หรือ Policy และไม่ได้เริ่ม T-10/Merge.
-- สิ่งที่ AI เกือบต้องเดาแต่ไม่ได้เดา: ไม่ทดสอบธุรกรรมคืนเงินจริงหรือกำหนดจุดเริ่มนับ/ช่องทางคืนเงิน; ยังคงเป็น Q-06-11.
-## #12 | 2026-11-02 | Claude Code (Claude Opus 5.5) | จัดไฟล์ feature ④ ชำระค่าบริการ เข้ารูปแบบ template
+- คำตอบของทีม: Q-04 ยืนยัน 15 วินาทีแล้ว, Q-05 ควรเห็นตำแหน่งล่าสุดของคนขับ, Q-06 เป็น REQ ใหม่ได้, Q-07 เป็นข้อมูลส่วนบุคคลตาม PDPA และลบหลังคนขับกดยืนยันส่งงาน, Q-08 ระยะคลาดเคลื่อนไม่เกิน 20 ม., Q-09 แสดงเวลาถึงโดยประมาณ, Q-10 ไม่มี, Q-11 รับพิกัดจากแอปคนขับและใช้ Google Maps ทั้งสองอย่าง, Q-12 ระบบดันเอง 5 วินาที, Q-13 รถถึงปลายทางคือรับจากต้นทางแล้วส่งถึงปลายทางที่ผู้ใช้ปักหมุด
+- AI อัปเดต spec.md เป็นเวอร์ชัน 0.2 และ plan.md เป็นเวอร์ชัน 0.3
+- AI ถาม: Q-14 การดันทุก 5 วินาทีกับการส่งจากคนขับทุก 15 วินาทีใช้ค่าไหนเป็นเกณฑ์, Q-15 ขอ REQ-ID ของ ETA และการแจ้งเตือนสถานะงาน, Q-16 วิธีตรวจว่ารถถึงปลายทาง, Q-17 พิกัดปลายทางเป็น PII หรือไม่, Q-18 ตอนสัญญาณหายแสดงเวลาตำแหน่งล่าสุดหรือไม่
+- AI เดา: ไม่มี ยกเว้นการใช้ 15 วินาทีเป็นเกณฑ์ชั่วคราวจนกว่า Q-14 จะตอบ
 
-คำสั่ง: "อ่าน CLAUDE.md, AGENTS.md และ docs/ ก่อน แล้วแตกไฟล์ khonyaai-payment.zip (feature ④ ชำระค่าบริการ) ปรับ spec.md / plan.md / task.md ให้ตรงรูปแบบของ specs/002-feature และ template ใน docs/ ถ้ากติกาของ repo กำหนดให้ทำไฟล์อื่นเพิ่ม เช่น mockup ตาม mockup-template.html ให้บอกก่อน รัน pytest ให้ผ่าน แล้วสรุปให้ดูก่อน commit ยังไม่ต้อง commit จนกว่าฉันจะบอก"
+## #7 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-14 ถึง Q-18 ให้อัปเดต spec.md และ plan.md
 
-สิ่งที่ AI ถาม และคำตอบของทีม
-1. spec v1.0 ไม่มีรหัส REQ และ AC ใช้ AC-1.1 ถึง AC-6.4 กฎข้อ 5 ห้าม AI สร้าง ID เอง จะทำอย่างไร
-   ทีมตอบ: ถ้าใน docs/srs หรือไฟล์ของกลุ่มมีรหัส UC / REQ / BR ของ feature ชำระค่าบริการอยู่แล้ว ให้ใช้รหัสนั้น ถ้าไม่มีให้ AI เสนอ ติดป้าย "AI เสนอ ทีมยืนยันใน prompt-log" และทำตารางเทียบรหัสเดิมกับรหัสใหม่
-   AI ตรวจแล้ว: docs/srs มีแค่ README และทุก branch (main, auth, register, tracking, cancle, payment) ไม่มีรหัสของ feature นี้ จึงใช้รหัสที่ AI เสนอ: UC-04, REQ-FN-401..405, REQ-SEC-401, REQ-PRV-401, REQ-IF-401..402, REQ-DAT-401, REQ-CON-401, AC-04-01..18, BR-01/03/06/08/09 (ตามเลขกฎเดิม), MD-CTX-04, MD-DOM-04, MD-STM-04a/b, MD-SEQ-04, UI-04-01, D-04-01..03, Q-01..08, AS-01..03, F-01..10 ตารางเทียบอยู่ใน spec.md ภาคผนวก ก **ทีมต้องยืนยันรหัสเหล่านี้**
-2. ไฟล์ที่ต้องทำเพิ่มตามกติกา ให้ร่างไฟล์ไหน
-   ทีมตอบ: payment.feature, rules.md + models.md, mockups/UI-04-01-payment.html, rtm.md (specs/000-shared/constraints.md AI ไม่สร้าง ตามกฎข้อ 9)
-3. จะเปลี่ยนชื่อ test เป็น test_AC_04_nn ไหม
-   ทีมตอบ: แยกและตั้งชื่อตาม AC ไม่เปลี่ยน assert เดิม
+- คำตอบของทีม: Q-14 ใช้ 15 วินาที, Q-15 ตามที่เห็นควร, Q-16 รัศมี 100 เมตร, Q-17 เป็น PII, Q-18 แสดงเวลาของปัจจุบัน
+- AI อัปเดต spec.md เป็นเวอร์ชัน 0.3 และ plan.md เป็นเวอร์ชัน 0.4
+- AI ตัดสินใจ Q-15 ตามที่ทีมมอบหมาย: ไม่สร้าง REQ-ID ใหม่ (กติกาข้อ 5) ETA แสดงตาม Q-09 แต่ไม่มี requirement การแจ้งเตือนสถานะยังไม่อยู่ในขอบเขต (D-05-15)
+- AI ถาม: ขอให้ทีมกำหนด REQ-ID และข้อความของ ETA และการแจ้งเตือนสถานะ
+- AI เดา: (ก) Q-14 ตีความว่า 15 วินาทีใช้ทั้งการส่งจากคนขับและการอัปเดตให้ลูกค้า จึงแทนการดัน 5 วินาทีเดิม (D-05-11) (ข) Q-18 "แสดงเวลาของปัจจุบัน" ตีความว่าเวลาของตำแหน่งล่าสุด ต้องยืนยัน (D-05-14)
 
-สิ่งที่ AI ทำ
-- แตก zip ไว้ที่ scratchpad แล้ววาง backend/ และ frontend/ ที่ราก repo, เพิ่ม `.pytest_cache/` ใน .gitignore (จาก .gitignore.payment ซึ่งไม่ได้คัดลอกมาเป็นไฟล์)
-- สร้าง specs/004-payment/: spec.md (v1.1 โครง 12 ส่วน), plan.md (8 หัวข้อ), tasks.md (เปลี่ยนชื่อจาก task.md, 26 task มีช่อง "เดิม"), payment.feature, rules.md, models.md, mockups/UI-04-01-payment.html, rtm.md
-- แยก test เป็น test_AC_04_nn (assert เดิมไม่เปลี่ยน) เพิ่ม test ใหม่ 2 ตัว: test_AC_04_08_other_card_success_confirms_booking และ test_AC_04_13_non_pending_booking_conflict
-- เพิ่มคอมเมนต์ "รองรับ REQ-xx" ในโค้ด backend (ไม่แตะ logic) ไม่แก้โค้ด frontend
-- เพิ่มแถว 004-payment ใน specs/README.md
-- ผล pytest ก่อนแก้ 18 passed หลังแก้ 25 passed
+## #8 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /plan (ค้าง ยังไม่ได้ทำ) และ /clarify ส่วน A-C (รอบแรก)
 
-สิ่งที่ AI เดา (ทีมต้องตรวจ)
-- เลข UC-04 และโฟลเดอร์ 004-payment ตามลำดับ feature ④ (origin/main ใช้ 003-booking สำหรับ ③)
-- การแบ่ง REQ ตาม US และหมวด (FN / SEC / PRV / IF / DAT / CON) และเลข 4nn
-- ตั้ง D-04-01..03 จากข้อความใน plan เดิม (FastAPI/Vite, lazy timeout, ยอดเป็น int)
-- mockup UI-04-01 วาดจากข้อความ spec และหน้าจอที่มีอยู่ ยังไม่ได้ตกลงกับ PO (Q-08)
+- คำสั่ง /plan: AI หยุดก่อนร่าง เพราะ plan.md มีอยู่แล้ว (v0.4) และยังไม่มีการเลือกเทคโนโลยี ถามทีม 2 เรื่อง (ร่างใหม่ทั้งไฟล์หรือแก้บางหัวข้อ, เทคโนโลยี) ทีมปฏิเสธคำถาม จึงยังไม่ได้ทำ
+- คำสั่ง /clarify: AI อ่าน specs/005-tracking/spec.md v0.3 (ใช้ 005-tracking เพราะเป็นฟีเจอร์ที่ทำอยู่) พบจุดกำกวม 13 แถว และถามทีม 8 ข้อ (Q1 ถึง Q8: จุดเริ่มนับ, ไม่กดยืนยันหรือนอกรัศมี, ยกเลิกงาน, ระบบภายนอกล่ม, ค่าเก่าของตำแหน่ง, วิธีวัด 20 ม., ความยินยอม PDPA, ที่มาของปลายทาง)
+- คำตอบของทีม: "ทำสิ่งที่เห็นตามสมควร ระบบควรมีและสากลใช้"
+- AI แก้ spec.md เป็นเวอร์ชัน 0.4 ตามการตัดสินใจ ดังนี้
+  - จุดเริ่มนับ: กลับไปเป็น "รับงาน" ตามคำตอบ Q-03 เดิม (AS-02, D-05-16) v0.3 เขียนผิดเป็น "รับของจากต้นทาง"
+  - ยกเลิกงาน: หยุดและลบทันที (AS-05, D-05-17)
+  - Google Maps หรือ GPS ใช้ไม่ได้: แสดง "ตำแหน่งไม่พร้อมใช้งาน" และเวลาตำแหน่งล่าสุด (AS-06, D-05-18)
+  - ไม่ได้รับตำแหน่งนานเกิน 60 วินาที: แสดงป้ายไม่เป็นปัจจุบัน (AS-07, D-05-19)
+  - ความคลาดเคลื่อน 20 ม.: เปอร์เซ็นไทล์ที่ 95 (AS-08, D-05-20)
+  - "15 วินาที" ใน REQ-QA-001: ช่วงห่างสูงสุดระหว่างการอัปเดตที่ต่อเนื่องกัน (AS-09)
+  - กดยืนยันนอกรัศมี: ยอมรับ ไม่บล็อก (AS-03, D-05-22)
+  - ไม่กดยืนยัน: ลบเมื่อครบ 24 ชั่วโมง ค่าชั่วคราว (AS-04, D-05-21, Q-19)
+  - ความยินยอม: ยังไม่มีขั้นตอนแยก ส่งให้ที่ปรึกษากฎหมาย (AS-11, Q-20)
+  - ปลายทาง: ใช้พิกัดที่ปักหมุดเป็นแหล่งเดียว ไม่ดึงจากการจอง (AS-10, D-05-23)
+  - เพิ่มคำศัพท์ในส่วน 3 (ลูกค้า คนขับ ระบบ Google Maps) และเปลี่ยน ETA ออกจากหัวข้อ In
+- AI ถาม: Q-21 ต้องการแยก REQ-IF-001 หรือไม่ (ต้องมี ID ใหม่), Q-22 จำนวนรอบทดสอบ
+- AI เดา: AS-02 ถึง AS-11 และ D-05-14, D-05-15, D-05-16 ถึง D-05-23 เป็นการตัดสินใจของ AI ต้องให้ทีมยืนยันก่อน Baseline
+- ยังไม่ได้ทำ: ร่าง plan.md ใหม่ (plan v0.4 ตามสเปกเก่า ต้องร่างใหม่ตาม v0.4 เมื่อทีมตอบเรื่องวิธี) และเลือกเทคโนโลยี (ทีมต้องตัดสิน)
 
-ยังไม่ commit ตามคำสั่ง
+## #9 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement ด้วย React.js หลังบ้านใช้ python (ยังไม่ได้ทำ)
 
-## #13 | 2026-11-02 | Claude Code (Claude Opus 5.5) | แก้ก่อน commit: Q-06, F-07, Q-07 แล้ว commit และ push
+- AI หยุดก่อนเขียนโค้ด เพราะ (1) คำสั่งไม่มี ID ของ task และกติกาห้ามเลือกเอง (2) ยังไม่มี specs/005-tracking/tasks.md (ค้นทั้ง specs/*/tasks.md ไม่พบ) (3) plan.md ยังเป็น v0.4 ที่อ้างสเปกเก่า และยังไม่มี AC ใน feature file จึงไม่มี task ให้ประกบ
+- ทีมระบุเทคโนโลยี React.js (frontend) และ Python (backend) ใน /implement ซึ่งเป็นการตัดสินใจของทีม ยังไม่ได้บันทึกใน plan.md หรือเป็น D-00-xx
 
-คำสั่ง: "ก่อน commit ให้แก้ 3 เรื่อง: (1) Q-06 แก้ข้อความ AC ใน spec ให้ตรงกับโค้ดและส่วน API คือ GET ตอบ 200 พร้อม CANCELLED และ POST ตอบ 409 แล้วปิด Q-06 (2) F-07 แก้ test_AC_04_09 ให้ตรวจจริงว่า payment ไม่มี key "cvv" และไม่มีเลขบัตรเต็มหรือค่า CVV อยู่ในข้อมูลที่เก็บ (3) Q-07 แก้ข้อความหน้าจอกับ AC-04-02 ให้ตรงกัน แล้วลบ khonyaai-payment.zip รัน pytest ให้ผ่าน แล้ว commit และ push ลง branch feature/payment"
+## #10 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /plan ร่าง plan.md ใหม่ทั้งไฟล์ React + Python (ทีมสั่ง)
 
-สิ่งที่ AI ทำ
-- (1) spec.md ขึ้น v1.2 เพิ่ม Change Log, payment.feature v1.1 แก้ตาราง AC-04-11 (GET 200 + CANCELLED, POST 409) ปิด Q-06 ใน spec / plan / tasks และปิด F-04 ใน rtm.md
-- (2) test_AC_04_09 เปลี่ยน assert เป็น: ไม่มี key `cvv` | ไม่มีค่าใดเป็นเลขบัตรเต็ม | ไม่มีค่าใดเท่ากับ CVV "123" ปิด F-07 (ลองจำลองโค้ดที่เก็บ CVV ทั้งใน key `cvv` และ key อื่น test ตกทั้งสองกรณี)
-- (3) PaymentPage.jsx เปลี่ยนข้อความเป็น "ส่วนที่เหลือ X บาท จ่ายกับคนขับหลังจบงาน" ตาม AC-04-02 ปิด Q-07 และ F-05 แล้วแก้ส่วน 12 ของ spec ให้ข้อความนี้เป็นรายการ "ต้องตรง"
-- ลบ khonyaai-payment.zip, pytest 25 passed, commit และ push ลง feature/payment
+- ทีมสั่งให้ร่าง plan.md ใหม่ทั้งไฟล์ และเลือก React.js (frontend) และ Python (backend)
+- AI เขียน plan.md เป็นเวอร์ชัน 0.5 ตามโครง 8 หัวข้อของ /plan
+- AI รายงาน: ไม่มี constraints.md จึงตรวจ Constraint กลางไม่ได้ spec ยังเป็น status draft ไม่ใช่ Draft v1 ยังไม่มี AC-05-nn และ feature file ยังว่าง จึงทำแผนทดสอบจาก REQ เป็นร่างก่อน
+- AI ถาม: Q-23 ฐานข้อมูลที่ใช้, Q-24 วิธีส่งค่าไปแอปลูกค้า (polling หรือ WebSocket) และให้ทีมยืนยันชุดเสนอ FastAPI, React Tailwind, Vite, pytest, Vitest
+- AI เดา: ใช้ FastAPI, Vite, pytest, Vitest เป็นข้อเสนอ (ยังไม่ได้ตัดสิน) และเสนอ polling เป็นการส่งค่าไปแอปลูกค้า (ยังไม่ได้ตัดสิน)
 
-สิ่งที่ AI เดา
-- คำสั่ง (3) ไม่ได้บอกว่าจะแก้ข้างไหน AI แก้หน้าจอให้ตรงกับ AC เพราะ spec เป็นหลัก (AGENTS.md)
+## #11 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /tasks แตก plan.md เป็น tasks.md (specs/005-tracking/tasks.md)
 
-## #14 | 2026-11-02 | Claude Code (Claude Opus 5.5) | สร้างภาพ mockup UI-04-01-payment.png
+- AI สร้าง tasks.md ใหม่ (ยังไม่มีไฟล์เดิม) ทั้งหมด 17 task คือ T-00 ถึง T-16 ตามโครงของ /tasks
+- สถานะ: T-00 รอทีมเขียน AC, T-05 และ T-14 พร้อมทำ (ต้องรอ T-01 หรือ T-02 ก่อน), ที่เหลือรอ Q-23 ถึง Q-26 หรือ AC
+- AI รายงาน: spec ยังเป็น status `draft` ไม่มี AC-05-nn และไม่มี constraints.md จึงตรวจ Constraint กลางไม่ได้ พบว่าไม่มี mockup จึงไม่มี task หน้าจอที่ประกบกับ mockup
+- AI ถาม: Q-25 ยืนยันชุดเครื่องมือ (FastAPI, Vite, pytest, Vitest), Q-26 ข้อความและการจัดวางหน้าจอ (ปุ่ม, ป้าย, ข้อความ)
+- AI เดา: ไม่มีการเดา แต่เสนอสิ่งที่ plan ไม่ระบุไว้ 1 เรื่อง คือ backend `latest` ไม่ส่งสถานะ unavailable และให้หน้าจอลูกค้าตรวจแทน (T-13) ต้องให้ทีมยืนยัน
 
-คำสั่ง: "แปลง specs/004-payment/mockups/UI-04-01-payment.html เป็นภาพ UI-04-01-payment.png แบบเต็มหน้า ใช้ headless browser เช่น Playwright ติดตั้งไว้นอก repo ไม่ต้องเพิ่มลงใน requirements หรือ package.json บันทึกใน prompt-log ว่า AI สร้างภาพนี้ตามที่ทีมขอ แล้วรอให้ฉันตรวจก่อน commit"
+## #12 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ร่าง AC-05 (สั่งหลัง /tasks)
 
-สิ่งที่ AI ทำ
-- **AI สร้างภาพ specs/004-payment/mockups/UI-04-01-payment.png ตามที่ทีมขอ** ด้วย Playwright (Python) และ Chromium แบบ headless ถ่ายเต็มหน้า ขนาดหน้าต่าง 1200 px ความละเอียด 2 เท่า ได้ภาพ 2400 x 2862 px
-- ติดตั้ง Playwright ไว้ใน venv ชั่วคราวนอก repo ไม่ได้แก้ backend/requirements.txt และ frontend/package.json
-- Playwright รุ่นล่าสุดไม่รองรับ Ubuntu 20.04 ของ Codespace จึงใช้รุ่น 1.48.0
-- เครื่องไม่มีฟอนต์ไทย ภาพแรกตัวอักษรไทยกลายเป็นกล่องสี่เหลี่ยม จึงดาวน์โหลดฟอนต์ Noto Sans Thai ไว้นอก repo และใช้เฉพาะตอนถ่ายภาพ แล้วถ่ายใหม่
-- ไม่ได้แก้ไฟล์ HTML ภาพตรงกับ mockup ทุกสถานะ (5 สถานะ)
+- ทีมสั่ง "ร่าง AC-05 เลย" AI เขียน specs/005-tracking/005-tracking.feature (ร่าง v0.1) จำนวน 13 AC คือ AC-05-01 ถึง AC-05-13 ตามรูปแบบ Gherkin และแท็ก @AC @REQ ตามกติกา
+- AI แก้ spec.md ส่วน 4, 6 และ Change Log เป็น v0.5 ให้ชี้ไปยัง AC เหล่านี้
+- AI รายงาน: AC ทุกข้ออ้างอิงจาก spec v0.4 โดยไม่เพิ่ม REQ ใหม่ AC-05-08 และ AC-05-09 ใช้ข้อความบนหน้าจอที่ spec กำหนด ("ตำแหน่งไม่พร้อมใช้งาน") ส่วนที่ไม่มีใน spec คือการจัดวางหน้าจอ ยังไม่มี AC
+- AI ถาม: ไม่มีคำถามใหม่ แต่ AC ที่ตั้งบนค่าชั่วคราว (24 ชั่วโมง, 60 วินาที, 20 ม. เปอร์เซ็นไทล์ 95, Q-22 จำนวนรอบ) ต้องให้ทีมยืนยันก่อน Baseline
+- AI เดา: (ก) ผลลัพธ์ "ยังไม่ถึงปลายทาง" ใน AC-05-06 ตีความจากรัศมี 100 เมตร (ข) AC-05-12 และ AC-05-13 เป็นการลบข้อมูล ทดสอบโดยตรวจว่าเรียกดูไม่ได้ ต้องยืนยันวิธีตรวจกับทีม
 
-ข้อควรรู้
-- ภาพนี้ AI สร้างจาก mockup ที่ AI ร่าง ยังไม่ใช่ภาพที่ PO ยืนยันแล้ว (Q-08 ยังเปิด) ตาม docs/mockup-guide.md ภาพ .png มีไว้ให้ PO ยืนยัน
-- ยังไม่ commit รอทีมตรวจ
+## #13 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมสั่งเปลี่ยนรัศมีถึงปลายทางจาก 100 ม. เป็น 5 ม.
 
-## #15 | 2026-11-02 | Claude Code (Claude Opus 5.5) | ปรับหน้า React ของ ④ ให้ตรงกับ mockup UI-04-01
+- ทีมสั่ง "เปลี่ยนละระยะ 5 ม.ดีกว่า" AI ปรับรัศมีในทุกไฟล์ของ 005-tracking จาก 100 เมตรเป็น 5 เมตร
+  - 005-tracking.feature: AC-05-06 Examples เปลี่ยนเป็น 4, 5, 6 เมตร (เดิม 99, 100, 101)
+  - spec.md เป็นเวอร์ชัน 0.6: เพิ่ม D-05-24 แทน D-05-12, เพิ่ม Q-27, เพิ่มแถว Change Log
+  - plan.md และ tasks.md: เปลี่ยนข้อความรัศมี ทดสอบที่ 4 และ 6 เมตร
+- AI รายงาน: 5 เมตรเล็กกว่าความคลาดเคลื่อนที่ยอมรับได้ 20 เมตร (AS-08) ทำให้การถึงปลายทางอัตโนมัติอาจไม่เกิดขึ้นจริง และ AC-05-06 จะผ่านได้เฉพาะในการทดสอบจำลอง จึงเพิ่มเป็น Q-27
+- AI ถาม: Q-27 ให้ทีมยืนยันว่าคงค่า 5 เมตร เพิ่มรัศมี หรือเปลี่ยนวิธีตรวจ
+- AI เดา: ไม่มี ใช้ค่า 5 เมตรตามคำสั่งและบันทึกเป็น D-05-24 พร้อมระบุว่ายังไม่ยืนยัน Q-27
 
-คำสั่ง: "ปรับหน้า React ใน frontend/src/payment/ ให้หน้าตาและข้อความตรงกับ specs/004-payment/mockups/UI-04-01-payment.html ทั้ง 5 สถานะ ใช้สี ฟอนต์ และการจัดวางตาม mockup ห้ามแก้ logic การเรียก API และห้ามแก้ backend เสร็จแล้วรัน npm run build ให้ผ่าน รัน backend กับ frontend ให้ แล้วบอกวิธีเปิดดูหน้าเว็บ ยังไม่ต้อง commit"
+## #14 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-27 เลือกคงค่ารัศมี 5 เมตร
 
-สิ่งที่ AI ทำ (แก้เฉพาะ frontend/src/payment/ ไม่แตะ api.js, App.jsx และ backend)
-- payment.css: ใช้สี ฟอนต์ ระยะห่าง และกรอบหน้าจอแบบ mockup เอา dark mode ออกเพราะ mockup ไม่มี
-- PaymentPage.jsx: หัวเป็น "ชำระมัดจำ" (ไม่มีเลขการจองและป้ายสถานะ) | กล่อง "ชำระเงินไม่สำเร็จ" อยู่บนสุด | สถานะสำเร็จเป็นกล่อง "จองสำเร็จ" | สถานะยกเลิกเป็นกล่อง "การจองนี้ถูกยกเลิกแล้ว / ไม่ชำระมัดจำภายใน 15 นาที" | สรุปยอดแสดงเฉพาะตอนรอชำระ
-- PromptPayPanel.jsx: เอาหัว "PromptPay · พร้อมเพย์" และข้อความช่วยออก | CardForm.jsx: เอาข้อความ "ทดสอบ: ..." และ placeholder ที่เป็นข้อมูลตัวอย่างออก เหลือ "MM/YY" | Countdown.jsx: ใช้รูปแบบกล่องเวลาแบบ mockup
-- การเรียก API (load, createPayment, getPayment) และ argument ไม่เปลี่ยน
-- npm run build ผ่าน ถ่ายภาพหน้าจริงทั้ง 5 สถานะด้วย Playwright เพื่อตรวจ (ภาพไม่ได้เก็บใน repo)
+- คำตอบของทีม: "งั้นเลือกค่าคงที่ 5 เมตร"
+- AI ปิด Q-27 ใน spec.md และบันทึกเป็น D-05-25 (คงค่า 5 เมตร รับทราบความเสี่ยง) spec.md เป็นเวอร์ชัน 0.7
+- AI แก้ plan.md และ tasks.md ให้ไม่มีงานรอ Q-27 และอัปเดต feature file ให้ระบุว่า Q-27 ตอบแล้ว
+- AI เดา: ไม่มี
 
-สิ่งที่ AI ตัดสินเอง (ทีมต้องตรวจ)
-- กล่อง "รอ Q-05" ใน mockup ไม่ได้สร้างเป็นของจริง ส่วนของเดิมที่เป็นเรื่อง Q-05 (ตารางประวัติการชำระ, ข้อความ "ระบบกำลังหาคนขับ", ปุ่ม "ไปหน้าติดตามสถานะ") ยังคงไว้ตามเดิม ไม่ลบ ไม่เพิ่ม รอทีมตัดสิน
-- แท็บบัตรเครดิตยังแสดงสรุปยอดเต็มและเวลา (mockup แสดงเฉพาะมัดจำ) และสถานะบัตรถูกปฏิเสธยังแสดงสรุปยอด เพราะ AC-04-01 และ AC-04-02 ต้องเห็นยอดในหน้าจ่าย และส่วน 12 ของ spec ให้การจัดวางยืดหยุ่นได้
-- ข้อความสถานะยกเลิกตาม mockup "ไม่ชำระมัดจำภายใน 15 นาที" จะไม่ถูกถ้าการจองถูกยกเลิกด้วยเหตุอื่น (เช่น ⑥) เพราะ API ไม่ได้ส่งเหตุผลการยกเลิกมา
+## #15 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement (ไม่มี ID ของ task) ยังไม่ได้ทำ
 
-## #16 | 2026-11-02 | Claude Code (Claude Opus 5.5) | ส่ง cancel_reason ให้หน้าจอแสดงข้อความยกเลิกถูกทุกกรณี
+- AI หยุดก่อนเขียนโค้ด เพราะคำสั่งไม่ระบุ ID ของ task และกติกาห้ามเลือกเอง
+- AI รายงาน: T-05 และ T-14 พร้อมทำ แต่ต้องรอ T-01 และ T-02 ซึ่งรอ Q-25 (ยืนยันชุดเครื่องมือ) งานอื่นรอ Q-23, Q-24, Q-26 หรือ T-00
+- AI ถาม: ให้ทีมตอบ Q-25 และระบุ ID ของ task ที่ต้องการ
+- AI เดา: ไม่มี
 
-คำสั่ง: "แก้ข้อความตอนยกเลิกให้ถูกทุกกรณี: ให้ GET /api/payments/{booking_id} ส่ง cancel_reason กลับมาด้วย เพิ่ม test ใน backend แล้วให้หน้าจอแสดงตาม cancel_reason ถ้าไม่มีให้แสดงแค่ "การจองนี้ถูกยกเลิกแล้ว" อัปเดต spec ส่วน API ให้ตรง รัน pytest และ npm run build ให้ผ่าน แล้ว commit และ push ลง feature/payment"
+## #16 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมสั่ง "ใช้ mock data ก่อน" และ "ทุก tasks approved" (อัปเดต tasks.md และ plan.md)
 
-สิ่งที่ AI ทำ
-- backend/app/payments/service.py: `summary()` เพิ่ม `cancel_reason` (อ่านจาก `booking.get("cancel_reason")` เป็น null ถ้าไม่มี)
-- test ใหม่ 2 ตัว: test_AC_04_12_view_returns_timeout_cancel_reason (ยังไม่ยกเลิก = null, หมดเวลา = "ไม่ชำระมัดจำภายใน 15 นาที") และ test_AC_04_12_view_returns_cancel_reason_from_other_feature (ยกเลิกด้วยเหตุอื่น = ข้อความที่บันทึกไว้ หรือ null)
-- PaymentPage.jsx: กล่องยกเลิกแสดงหัวข้อ "การจองนี้ถูกยกเลิกแล้ว" แล้วตามด้วย cancel_reason ถ้ามี
-- spec.md v1.3 (Change Log, ตัวอย่าง JSON และคำอธิบาย cancel_reason ในส่วน 5), plan.md ข้อ 4 และ 6, rtm.md
-- pytest 27 passed, npm run build ผ่าน, ตรวจในเบราว์เซอร์ทั้งกรณีมีเหตุผลและไม่มี
-- รวม commit การปรับหน้าจอตาม mockup จาก prompt-log #15 ไปด้วย
+- ทีมอนุมัติทุก task ใน tasks.md และใช้ mock data ก่อน
+- AI อัปเดต tasks.md: ปิด T-00 (เสร็จ), T-01, T-02 และ task ที่ไม่ต้องรอฐานข้อมูลเป็นพร้อมทำ, T-12 และ T-13 ยังรอ Q-26, T-15 รอ Q-23 และ Q-24 เพราะยังไม่เลิกใช้ mock
+- AI อัปเดต AC ที่ตรวจด้วยในแต่ละ task ให้ตรงกับ AC-05-01 ถึง AC-05-13 แทนคำว่ารอ AC-05-nn
+- AI อัปเดต plan.md ในส่วน 2 ให้ระบุว่าใช้ mock store ก่อน
+- AI รายงาน: /implement ต้องระบุ ID ของ task ทีละตัว จึงยังไม่ได้เริ่มเขียนโค้ดในรอบนี้
+- AI ถาม: Q-26 ข้อความและการจัดวางหน้าจอ ยังไม่ได้ตอบ T-12 และ T-13 รอ, ให้ทีมยืนยันว่าการอนุมัติ tasks รวมชุดเครื่องมือที่เสนอด้วย (ปิด Q-25 ตามการอนุมัติ)
+- AI เดา: ตีความ "ทุก tasks approved" รวมการอนุมัติชุดเครื่องมือ Q-25 และการปิด T-00 โดยใช้ AC-05-01 ถึง 13 ที่เป็นร่าง v0.1
 
-สิ่งที่ AI เดา
-- ตั้งชื่อ test ตาม AC-04-12 (หน้าจอแจ้งว่าการจองถูกยกเลิก) เพราะ cancel_reason มีไว้ให้หน้าจอใช้
-- ⑥ ต้องบันทึก `bookings.cancel_reason` เองตอนยกเลิก ถ้าไม่บันทึก หน้าจอจะแสดงแค่หัวข้อ (ควรตกลงกับ ⑥)
+## #17 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมสั่ง "เอาเฉพาะ tracking ก่อน ยืนยันยังไม่ต้องสนใจอะไร" ตอบเรื่อง Q-26
+
+- ทีมสั่งให้ทำเฉพาะ tracking และไม่ต้องสนใจเรื่องอื่น
+- AI เพิ่ม Q-26 ลงใน Open Questions ของ spec.md เป็นเวอร์ชัน 0.8 (เดิมอยู่แค่ใน plan.md และ tasks.md) โดยยังไม่มีคำตอบ
+- AI ไม่ได้แก้ไฟล์ของเรื่องอื่นในระบบ
+- AI เดา: "ยืนยัน" หมายถึงยืนยันให้เพิ่ม Q-26 ลงใน spec เป็นคำถามเปิด และยังไม่ต้องตอบเรื่องข้อความบนหน้าจอในตอนนี้
+
+## #18 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-00 (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนทำ เพราะ T-00 มีสถานะ "เสร็จ" ไม่ใช่ "พร้อมทำ" ตามกติกาข้อ 1 และ T-00 เป็นงานเขียน AC ในเอกสาร ไม่ใช่งานโค้ด
+- AI รายงาน: AC-05-01 ถึง AC-05-13 ยังเป็นร่าง v0.1 ที่ทีมยังไม่ได้ตรวจทีละข้อ สถานะเสร็จใน tasks.md อาจต้องแก้เป็น "รอทีมตรวจ"
+- AI ถาม: ให้ทีมยืนยันว่าต้องการปิด T-00 หรือเปิดกลับให้ตรวจ และระบุ ID ของ task ที่ต้องการทำถัดไป
+- AI เดา: ไม่มี
+
+## #19 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-01 (ตั้งโครง backend)
+
+- ไฟล์ที่สร้าง: backend/requirements.txt (fastapi==0.115.0, pytest==8.3.3), backend/app/__init__.py, backend/tests/test_smoke.py
+- test_smoke.py ใช้ sys.path เพิ่มรากของ backend เพราะไฟล์ที่แตะได้มีแค่ 3 ไฟล์ (ไม่มี conftest.py หรือ __init__.py ใน tests)
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 1/1 (test_backend_package_importable)
+- tasks.md: T-01 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: ไม่มี ใช้เวอร์ชัน fastapi 0.115.0 และ pytest 8.3.3 ที่ไม่ได้ระบุในแผน (ข้อเสนอของแผนไม่ได้ระบุเวอร์ชัน) ต้องให้ทีมตรวจ
+
+## #20 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-02 (ตั้งโครง frontend)
+
+- ไฟล์ที่สร้าง: frontend/package.json (react 18.3.1, react-dom 18.3.1, vite 5.4.11, vitest 2.1.5, jsdom 25.0.1), frontend/src/App.jsx, frontend/src/main.jsx, frontend/src/App.test.jsx
+- ติดตั้งด้วย `npm install --no-package-lock` จึงไม่มี package-lock.json (ไฟล์นี้ไม่อยู่ในไฟล์ที่แตะ) node_modules ถูก .gitignore
+- ไม่ได้สร้าง index.html และ vite.config (ไม่อยู่ในไฟล์ที่แตะ) main.jsx จึงรอ root element ที่ยังไม่มี
+- ผล test: `npm test --prefix frontend` ผ่าน 1/1 (frontend_app_renders_root_element) ไม่มี warning
+- App.jsx ไม่มีข้อความหรือปุ่ม เพราะ Q-26 ยังไม่ตอบ
+- tasks.md: T-02 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: ไม่มี ใช้เวอร์ชันที่ระบุเองและต้องให้ทีมตรวจ ไม่ได้ตัดสินเรื่อง lockfile
+
+## #21 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-03 (โมเดล TrackingSession)
+
+- ไฟล์ที่สร้าง: backend/app/models/tracking_session.py (dataclass TrackingSession และ enum SessionStatus), backend/app/models/__init__.py, backend/tests/test_models_session.py
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 5/5 (4 ของ T-03 และ test_smoke ของ T-01)
+  - test_session_has_required_fields, test_session_status_values_match_spec, test_AC_05_05_session_created_on_accept_is_active_with_start_time, test_AC_05_12_cancelled_is_a_valid_status_for_session
+- AC-05-05 และ AC-05-12 ทดสอบเฉพาะส่วนโมเดล พฤติกรรมเต็มของ AC อยู่ที่ T-06 และ T-10
+- tasks.md: T-03 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: ไม่มี mock store ที่เก็บงานจริงยังไม่ทำ จะทำใน T-06 ตามแผน
+
+## #22 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-04 (โมเดล LocationPoint)
+
+- ไฟล์ที่สร้าง: backend/app/models/location_point.py (dataclass LocationPoint), backend/tests/test_models_point.py
+- ไม่ได้แก้ backend/app/models/__init__.py เพราะไม่อยู่ในไฟล์ที่แตะของ T-04 จึงไม่ export LocationPoint จากแพ็กเกจ test import ตรงจากโมดูล
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 7/7
+  - test_location_point_has_required_fields, test_AC_05_10_location_point_has_no_personal_identifier_fields และ test ของ T-01 และ T-03
+- AC-05-10 ตรวจเฉพาะส่วนโมเดล การลบพิกัดจริงอยู่ที่ T-09 และ T-16
+- tasks.md: T-04 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: ไม่มี ตั้งค่าชุดฟิลด์ต้องห้ามเองจากรายการที่ T-04 ระบุ (เลขบัตร ที่อยู่ เบอร์โทร) ต้องให้ทีมตรวจรายชื่อ
+
+## #23 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-05 (ระยะและรัศมี 5 เมตร)
+
+- ไฟล์ที่สร้าง: backend/app/geo.py (haversine_m, is_within_arrival_radius, ARRIVAL_RADIUS_M = 5.0), backend/tests/test_geo.py
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 12/12 รวม test ของ T-01, T-03, T-04
+  - test_AC_05_06_point_4m_from_destination_is_arrived, test_AC_05_06_point_6m_from_destination_is_not_arrived และ test ของสูตรระยะ
+- เงื่อนไขขอบเขต: ใช้ `<=` ระยะ 5 เมตรพอดีถือว่าถึง ยังไม่มี test ที่ 5 เมตรพอดี เพราะ AC-05-06 ใส่ 5 ใน Examples ซึ่งจะทดสอบใน T-07
+- tasks.md: T-05 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: ไม่มี ค่ารัศมี 5 เมตรมาจาก D-05-24 และ D-05-25 ที่ทีมเลือกแล้ว รัศมีโลก 6,371 กม. เป็นค่าที่ผมเลือกเองสำหรับสูตร haversine ทีมควรตรวจ
+
+## #24 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-06 (API เริ่มติดตาม)
+
+- ไฟล์ที่สร้าง: backend/app/routes/tracking.py (APIRouter, POST /api/tracking/{job_id}/start, mock store _SESSIONS, StartRequest, SessionOut), backend/tests/test_api_start.py
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 14/14 รวม test ของ T-01, T-03, T-04, T-05
+  - test_AC_05_05_start_creates_active_session_on_accept, test_start_same_job_twice_returns_same_session_without_new_row
+- ทดสอบเรียกฟังก์ชัน endpoint ตรง ไม่ผ่าน HTTP เพราะ TestClient ต้องใช้ httpx ซึ่งไม่อยู่ใน requirements.txt และไม่อยู่ในไฟล์ที่แตะได้ของ T-06 ทีมต้องอนุมัติเพิ่ม httpx ก่อนทดสอบผ่าน HTTP
+- ยังไม่ได้ต่อ app หลัก (ไม่มี main.py ในไฟล์ที่แตะ) router ยังไม่ถูก include ที่แอปจริง
+- เมื่อเรียกซ้ำกับ job_id เดิม คืนงานเดิมโดยไม่แก้สถานะ เพราะไม่มีข้อกำหนดว่าจะเปลี่ยนเมื่อไร
+- tasks.md: T-06 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) ให้ start รับ destination จาก body เพราะ AS-10 และ D-05-06 ต้องการปลายทางจากลูกค้าและ spec ไม่ได้กำหนดว่าจะส่งจากที่ไหน (ข) ใช้เวลาจากเซิร์ฟเวอร์เป็น started_at (ค) เก็บ mock store เป็น dict ระดับโมดูล ทีมควรตรวจทั้งสามข้อ
+
+## #25 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-07 (API รับพิกัดและตรวจการถึงปลายทาง)
+
+- ไฟล์ที่แก้: backend/app/routes/tracking.py (เพิ่ม POST /api/tracking/{job_id}/points, PointRequest, PointResponse, _POINTS)
+- ไฟล์ที่สร้าง: backend/tests/test_api_points.py
+- ผล test: `python3 -m pytest backend/tests -v` ผ่าน 19/19
+  - test_AC_05_01_point_is_stored_for_active_session, test_AC_05_06_point_4m_from_destination_marks_arrived, test_AC_05_06_point_5m_from_destination_marks_arrived (ขอบเขตพอดี ผ่าน), test_AC_05_06_point_6m_from_destination_stays_active, test_point_for_unknown_job_returns_404
+- AC-05-02 (คลาดเคลื่อน 20 ม.) และ AC-05-03 (ช่วงห่าง 15 วินาที) ต้องวัดจากอุปกรณ์จริง ยังไม่ได้ทดสอบ
+- tasks.md: T-07 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) งานที่ไม่ active ไม่เก็บพิกัด และคืนสถานะเดิม spec ไม่ได้บอก (ข) received_at ใช้เวลาเซิร์ฟเวอร์ (ค) accuracy_m เก็บไว้แต่ยังไม่ตรวจค่า 20 เมตร (ง) ยังไม่ลบพิกัดเมื่อถึงปลายทาง เพราะเป็นงานของ T-09 และ T-11
+
+## #26 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-08 (API อ่านตำแหน่งล่าสุด)
+
+- ไฟล์ที่แก้: backend/app/routes/tracking.py (เพิ่ม GET /api/tracking/{job_id}/latest, LatestOut, _latest_at, STALE_AFTER_S = 60)
+- ไฟล์ที่สร้าง: backend/tests/test_api_latest.py
+- ผล test: `python3 -m pytest backend/tests -q` ผ่าน 23/23
+  - test_AC_05_04_latest_returns_most_recent_point, test_AC_05_08_latest_is_stale_after_60_seconds, test_AC_05_08_latest_is_fresh_within_60_seconds, test_latest_without_any_point_returns_404
+- AC-05-04 ทดสอบเฉพาะการคืนค่าล่าสุด ช่วงห่าง 15 วินาทีต้องวัดจากการใช้งานจริง
+- ไม่ได้ทดสอบผ่าน HTTP เหมือน T-06 และ T-07
+- tasks.md: T-08 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) ใช้เวลาที่ระบบรับ (received_at) นับ 60 วินาที ไม่ใช้เวลาจากเครื่องคนขับ (ข) ถ้าไม่มีพิกัดเลยตอบ 404 spec ไม่ได้บอก (ค) ตอบเฉพาะ lat, lng, recorded_at, is_stale ตามที่ "เสร็จเมื่อ" กำหนด ไม่รวมสถานะงาน (ง) ไม่ได้ตรวจว่า Google Maps ใช้ไม่ได้ ซึ่งเป็นงานฝั่งหน้าจอ T-13 ตามหมายเหตุในแผน
+
+## #27 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-09 (API ยืนยันส่งงานและลบพิกัด)
+
+- ไฟล์ที่แก้: backend/app/routes/tracking.py (เพิ่ม POST /api/tracking/{job_id}/confirm, ConfirmOut, confirm_delivery)
+- ไฟล์ที่สร้าง: backend/tests/test_api_confirm.py
+- ผล test: `python3 -m pytest backend/tests -q` ผ่าน 26/26
+  - test_AC_05_10_confirm_deletes_all_points_of_the_job, test_AC_05_11_confirm_is_accepted_when_outside_5_meters, test_confirm_for_unknown_job_returns_404
+- ไม่ได้ทดสอบผ่าน HTTP เหมือน task ก่อนหน้า
+- tasks.md: T-09 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) หลังยืนยันตั้งสถานะเป็น closed และบันทึก closed_at เพราะ spec ไม่ได้ระบุชื่อสถานะหลังจบงาน (ข) ยืนยันงานที่ปิดแล้วซ้ำได้โดยลบพิกัดซึ่งว่างอยู่แล้ว (ค) ยังไม่ตรวจว่างานถูกยกเลิกไปแล้วหรือไม่ ซึ่งเป็นงานของ T-10 (ง) ตอบ points_deleted เพิ่มจากที่ "เสร็จเมื่อ" กำหนด เพื่อให้ตรวจการลบได้
+
+## #28 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-10 (API ยกเลิกงานและลบพิกัดทันที)
+
+- ไฟล์ที่แก้: backend/app/routes/tracking.py (เพิ่ม POST /api/tracking/{job_id}/cancel, CancelOut, cancel_tracking)
+- ไฟล์ที่สร้าง: backend/tests/test_api_cancel.py
+- ผล test: `python3 -m pytest backend/tests -q` ผ่าน 28/28
+  - test_AC_05_12_cancel_sets_cancelled_and_deletes_points_immediately, test_cancel_for_unknown_job_returns_404
+- ไม่ได้ทดสอบผ่าน HTTP เหมือน task ก่อนหน้า
+- tasks.md: T-10 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) ยกเลิกได้ทุกสถานะที่มีงาน รวมถึงงานที่ปิดหรือถึงแล้ว spec ไม่ได้ห้าม (ข) ตอบ points_deleted เพิ่มจาก "เสร็จเมื่อ" เพื่อให้ตรวจการลบได้ (ค) ยังไม่ตรวจว่าการยกเลิกทำให้ลูกค้าหยุดเห็นตำแหน่งบนหน้าจอ ซึ่งเป็นงาน T-13
+
+## #29 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-11 (งานลบพิกัดเกิน 24 ชั่วโมง)
+
+- ไฟล์ที่สร้าง: backend/app/jobs/purge_points.py (purge_expired_points, PURGE_AFTER = 24 ชั่วโมง), backend/tests/test_purge_points.py
+- ผล test: `python3 -m pytest backend/tests -q` ผ่าน 31/31
+  - test_AC_05_13_points_are_deleted_after_24_hours_from_arrival, test_AC_05_13_points_are_kept_before_24_hours_from_arrival, test_active_job_points_are_not_purged
+- ไม่ได้ทดสอบผ่าน HTTP เหมือน task ก่อนหน้า
+- tasks.md: T-11 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) นับ 24 ชั่วโมงจาก arrived_at ตาม AS-04 (ข) ฟังก์ชันนี้ยังไม่มีตัวตั้งเวลาหรือ scheduler ให้รันอัตโนมัติ เพราะไม่มีไฟล์ในไฟล์ที่แตะได้ ต้องให้ทีมตัดสินวิธีรัน (ค) ค่า 24 ชั่วโมงเป็นค่าชั่วคราวรอ Q-19
+
+## #30 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-12 (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนเขียนโค้ด เพราะ T-12 มีสถานะ "รอ Q-26" ตามกติกาข้อ 1 ต้องปิด Q-26 ก่อน
+- Q-26 ยังไม่ได้ตอบ จึงยังไม่มีข้อความบนปุ่มยืนยันส่งงานและการจัดวางหน้าจอคนขับ
+- AI ถาม: ให้ทีมตอบ Q-26 หรือระบุข้อความและการจัดวางที่ต้องการ
+- AI เดา: ไม่มี
+
+## #31 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-13 (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนเขียนโค้ด เพราะ T-13 มีสถานะ "รอ Q-26" ตามกติกาข้อ 1 ต้องปิด Q-26 ก่อน
+- Q-26 ยังไม่ได้ตอบ จึงยังไม่มีข้อความและการจัดวางหน้าจอลูกค้า (ป้ายไม่เป็นปัจจุบัน รูปแบบเวลา การจัดวางแผนที่) และไม่มี mockup
+- AI ถาม: ให้ทีมตอบ Q-26 หรือระบุข้อความและการจัดวางที่ต้องการ
+- AI เดา: ไม่มี
+
+## #32 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-14 (เชื่อม Google Maps ผ่านตัวแปรสภาพแวดล้อม) บางส่วน
+
+- ไฟล์ที่สร้าง: frontend/src/maps.js (MAPS_KEY_ENV_NAME, getMapsApiKey, buildMapsScriptUrl), frontend/.env.example (ค่าว่าง), frontend/src/maps.test.js
+- ผล test: `npm test --prefix frontend` ผ่าน 5/5 (maps.test.js 4 ตัว และ App.test.jsx 1 ตัว)
+- ค้างที่ "เสร็จเมื่อ": .env ยังไม่อยู่ใน .gitignore และไฟล์นั้นไม่อยู่ในไฟล์ที่แตะได้ของ T-14 จึงหยุดถามทีมก่อนแก้
+- tasks.md: T-14 เปลี่ยนเป็น "ค้าง รอทีมอนุญาตแตะ .gitignore"
+- AI เดา: ใช้ชื่อตัวแปร VITE_GOOGLE_MAPS_API_KEY เพราะ Vite ส่งเฉพาะตัวแปรที่ขึ้นต้นด้วย VITE_ ให้ frontend ซึ่ง plan ไม่ได้ระบุชื่อ ต้องให้ทีมยืนยัน
+
+## #33 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-15 (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนเขียนโค้ด เพราะ T-15 มีสถานะ "รอ Q-23 และ Q-24" และยังไม่ทำจนกว่าทีมจะสั่งเลิกใช้ mock
+- ต้องทำหลัง T-12 และ T-13 ซึ่งยังรอ Q-26 ทั้งสองตัว จึงยังไม่เสร็จ
+- AI ถาม: ให้ทีมตอบ Q-23 (ฐานข้อมูลจริง) และ Q-24 (วิธีส่งค่า) และสั่งเลิกใช้ mock พร้อมปิด Q-26
+- AI เดา: ไม่มี
+
+## #34 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-16 (ทดสอบวงจรงานทั้งหมด)
+
+- ไฟล์ที่สร้าง: backend/tests/test_flow_tracking.py
+- ผล test: `python3 -m pytest backend/tests -q -rxX` ผ่าน 32 และ xfail 1
+  - test_flow_start_to_confirm_hides_latest_and_deletes_points ผ่าน (วงจรเต็มจนยืนยันส่งงาน)
+  - test_AC_05_07_latest_hidden_after_arrival_before_confirm เป็น xfail (strict) เพราะ _latest_at ยังคืนตำแหน่งหลังรถถึงปลายทางก่อนยืนยัน
+- พบข้อบกพร่องใน T-08 (tracking.py): ตามสเปก Behaviour ส่วน 5 และ AC-05-07 หลังรถถึงปลายทางลูกค้าต้องไม่เห็นตำแหน่ง แต่ latest ยังคืนค่า แก้ได้ใน tracking.py ซึ่งไม่อยู่ในไฟล์ที่แตะของ T-16 จึงไม่แก้เองและรอทีมอนุญาต
+- tasks.md: T-16 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ" พร้อมบันทึกข้อบกพร่องของ T-08
+- AI เดา: ไม่มี ใช้ xfail แทนการแก้โค้ดนอกไฟล์ที่แตะ เพื่อให้ชัดว่า AC-05-07 ยังไม่ผ่าน
+
+## #35 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-15 (ยังไม่ได้ทำ) และคำสั่งทีม "T-15 ยังไม่มีฐานข้อมูลจริง ใช้การ mockup ข้อมูลไปก่อน"
+
+- AI หยุดก่อนเขียนโค้ด เพราะ T-15 มีสถานะ "รอ Q-23 และ Q-24" และต้องทำหลัง T-12 กับ T-13 ซึ่งยังรอ Q-26
+- คำสั่งทีมให้ใช้ mock data ต่อ แต่ T-15 มีเป้าหมาย "เลิกใช้ mock" จึงขัดกับคำสั่งนี้ AI ไม่ได้แก้สถานะ T-15 เอง
+- AI ถาม: (ก) ให้ปรับ T-15 เป็นการต่อหน้าจอกับ API ที่รันในเครื่องด้วย mock store แล้วแยกงานฐานข้อมูลจริงเป็น task ใหม่ที่รอ Q-23 หรือ (ข) คงสถานะเดิม และขอให้ตอบ Q-26 เพื่อปลด T-12 กับ T-13 ก่อน
+- AI เดา: ไม่มี
+
+## #36 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-26 "ออกแบบอย่างไรก็ได้"
+
+- คำตอบของทีม: ข้อความบนปุ่มและการจัดวางหน้าจอออกแบบอย่างไรก็ได้
+- AI ปิด Q-26 ใน spec.md เป็น D-05-26 (ยกเว้นข้อความ "ตำแหน่งไม่พร้อมใช้งาน" ที่ spec กำหนดไว้แล้ว)
+- AI ปลด T-12 และ T-13 ใน tasks.md เป็น "พร้อมทำ"
+- AI เดา: "ออกแบบอย่างไรก็ได้" หมายถึงให้ผู้พัฒนาเลือกข้อความและการจัดวางเองได้ ยกเว้นข้อความที่ spec กำหนด ไม่ได้หมายถึงให้เพิ่มฟีเจอร์ใหม่
+
+## #37 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-12 (หน้าจอคนขับ)
+
+- ไฟล์ที่สร้าง: frontend/src/pages/DriverTrackingPage.jsx (ส่งพิกัดทุก 15 วินาที ปุ่มยืนยันส่งงาน), frontend/src/api/trackingMock.js (API จำลอง sendPoint และ confirmDelivery), frontend/src/pages/DriverTrackingPage.test.jsx
+- ผล test: `npm test --prefix frontend` ผ่าน 8/8 รวม T-02 และ T-14
+  - AC_05_03_driver_page_sends_position_every_15_seconds, AC_05_11_confirm_button_calls_api_even_outside_radius, driver_page_stops_sending_after_confirm
+- ไม่มี mockup จึงออกแบบข้อความและการจัดวางเองตาม D-05-26 ข้อความปุ่มคือ "ยืนยันส่งงาน"
+- ไม่ได้ทดสอบบนเบราว์เซอร์จริง และไม่มี index.html ใน task นี้
+- tasks.md: T-12 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) ข้ามรอบส่งพิกัดถ้าอ่าน GPS ไม่ได้ ไม่ส่งค่าปลอม (ข) ปุ่มถูกปิดหลังยืนยันแล้วหยุดส่งพิกัด (ค) ใช้ navigator.geolocation ของเบราว์เซอร์เป็นแหล่งพิกัด (ง) ข้อความปุ่มเป็นการออกแบบเองตาม D-05-26
+
+## #38 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-13 (ยังไม่ได้ทำ)
+
+- AI หยุดก่อนเขียนโค้ด เพราะ T-13 ต้องทำหลัง T-14 แต่ T-14 มีสถานะ "ค้าง รอทีมอนุญาตแตะ .gitignore" ยังไม่ใช่ "เสร็จ" ตามกติกาข้อ 2
+- T-13 มีสถานะ "พร้อมทำ" และ T-02 เสร็จแล้ว ส่วนที่บล็อกคือ T-14 เท่านั้น
+- AI ถาม: ให้ทีมอนุญาตให้เพิ่ม .env ลงใน .gitignore เพื่อปิด T-14 หรือยอมรับ T-14 ตามสถานะปัจจุบันเพื่อให้ T-13 ทำต่อได้
+- AI เดา: ไม่มี
+
+## #39 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมอนุญาต "อนุญาตเพิ่ม .env ใน .gitignore" และปิด T-14
+
+- ทีมอนุญาตให้แตะ .gitignore เพื่อปิดข้อ "เสร็จเมื่อ" ของ T-14
+- AI เพิ่มบรรทัด `.env` ที่ท้าย .gitignore (ตัวเดียว ไม่แตะบรรทัดเดิม)
+- ตรวจด้วย git check-ignore: frontend/.env ถูกเพิ่มเป็น ignored ส่วน frontend/.env.example ยังไม่ถูกเพิ่ม (ใช้ commit ได้)
+- tasks.md: T-14 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ" ทำให้ T-13 พร้อมทำ (ต้องทำหลัง T-02 และ T-14 ซึ่งเสร็จแล้ว) ยังไม่ได้เริ่มทำ T-13
+- AI เดา: ไม่มี
+
+## #40 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-13 (หน้าจอลูกค้า)
+
+- ไฟล์ที่สร้าง: frontend/src/pages/CustomerTrackingPage.jsx (อ่านตำแหน่งทุก 15 วินาที แสดงบนแผนที่ ป้ายไม่เป็นปัจจุบัน ข้อความตำแหน่งไม่พร้อมใช้งานพร้อมเวลาล่าสุด)
+- ไฟล์ที่แก้: frontend/src/api/trackingMock.js (เพิ่ม getLatest จำลอง และเก็บเวลาที่ระบบรับใน sendPoint)
+- ไฟล์ที่สร้าง: frontend/src/pages/CustomerTrackingPage.test.jsx
+- ผล test: `npm test --prefix frontend` ผ่าน 13/13 (ของ T-13 ห้าตัว และของ T-02, T-12, T-14)
+  - AC_05_01_customer_sees_driver_position_on_map, AC_05_08_customer_sees_stale_badge_and_last_time, AC_05_09_customer_sees_unavailable_text_with_last_time_when_no_maps_key, AC_05_04_customer_page_reads_latest_every_15_seconds, AC_05_07_no_marker_when_api_has_no_position
+- AC-05-07 ฝั่งหน้าจอผ่าน แต่ backend (T-08) ยังคืนตำแหน่งหลังรถถึงปลายทางก่อนยืนยัน ดู xfail ใน test_flow_tracking.py
+- tasks.md: T-13 เปลี่ยนเป็น "เสร็จ รอทีมตรวจ"
+- AI เดา: (ก) ข้อความ "ตำแหน่งไม่พร้อมใช้งาน" ใช้ตาม spec ส่วนป้ายและเวลาออกแบบเองตาม D-05-26 (ข) ถ้าอ่านตำแหน่งไม่ได้ (รวม 404) แสดงข้อความไม่พร้อมใช้งาน (ค) โหลดแผนที่ไม่สำเร็จถือว่าแผนที่ไม่พร้อมใช้งาน (ง) ไม่ได้ทดสอบ Google Maps จริงเพราะไม่มีคีย์ในเครื่องนี้
+
+## #41 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | /implement T-15 รออะไร (ตอบคำถาม ยังไม่ได้ทำ)
+
+- ตรวจแล้ว: T-15 รอ Q-23 (ฐานข้อมูลจริง) และ Q-24 (วิธีส่งค่า) ต้องทำหลัง T-08, T-09, T-10, T-12, T-13 ซึ่งทั้งหมดเป็น "เสร็จ รอทีมตรวจ" แล้ว
+- เป้าหมายของ T-15 คือเลิกใช้ mock ซึ่งขัดกับคำสั่งทีมให้ใช้ mock ต่อก่อน AI จึงไม่ได้เริ่มทำและไม่ได้เปลี่ยนสถานะ
+- AI ถาม: ให้ทีมเลือกปรับ T-15 เป็นการต่อกับ API ในเครื่องด้วย mock store หรือคงสถานะรอ Q-23 และ Q-24
+- AI เดา: ไม่มี
+
+## #42 | 2026-11-17 | Claude Code (Claude Haiku 5.5) | ทีมอนุมัติ demo แผนที่ OpenStreetMap (นอกโปรเจกต์)
+
+- ทีมอนุมัติให้ทำ demo ด้วย Leaflet กับ OSM tiles และเส้นทางจาก OSRM เซิร์ฟเวอร์ทดลอง
+- ทำใน scratchpad เท่านั้น ไม่ได้แก้ไฟล์ในโปรเจกต์ ไม่ได้เปลี่ยน D-05-01 (ยังคง Google Maps) และไม่ได้เพิ่มไลบรารีเข้า package.json
+- ตรวจการเข้าถึงแล้ว: router.project-osrm.org, tile.openstreetmap.org และ cdnjs ตอบ 200
+- demo ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์ ตรวจได้แค่ Vite คอมไพล์ไฟล์ได้
+- การใช้จริงยังต้องให้ทีมตัดสิน: เปลี่ยนจาก Google Maps ตาม D-05-01 ใหม่ และเซิร์ฟเวอร์ OSRM ที่ใช้จริง
+- AI เดา: ใช้ Leaflet 1.9.4 จาก cdnjs ตามที่ตรวจว่าเข้าถึงได้
+
+## #43 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมสั่งเพิ่มขั้นสถานะการติดตามให้ลูกค้า 7 ขั้น และ mockup ฝั่งคนขับกดรับงาน
+
+- คำสั่งทีม: ลำดับสถานะ "หาคนขับ > หาคนขับได้แล้ว > คนขับกำลังมาหาคุณ > ถึงจุดรับของแล้ว > กำลังขนของ > ขนของไปยังปลายทาง > ขนของถึงปลายทางแล้ว" ทำเฉพาะฝั่งลูกค้า ฝั่งคนขับไม่ต้องทำ ให้ฝั่งคนขับทำ mockup ว่ากดรับงานแล้ว
+- spec.md v0.8 เป็น v0.9: เพิ่ม D-05-27 (ขั้นสถานะ 7 ขั้น ข้อความตามทีม ใช้เฉพาะหน้าจอลูกค้า), เพิ่ม Q-28 (เงื่อนไขการเปลี่ยนขั้น ฝั่งที่ตั้งขั้น จุดรับ การแสดงแผนที่ และ REQ-ID), เพิ่มหัวข้อ In และ Non-goals, เพิ่มข้อความในส่วน 5 และ 12
+- ไม่สร้าง REQ-ID หรือ AC ใหม่ ตามกติกาข้อ 5 และแนวทางเดียวกับ ETA (Q-15) จึงยังไม่มี AC สำหรับขั้นสถานะ
+- โค้ดฝั่งลูกค้า: frontend/src/stages.js (ลำดับและข้อความ), frontend/src/api/trackingMock.js (เพิ่ม getStage และ setStage), frontend/src/pages/CustomerTrackingPage.jsx (แสดงป้าย data-testid="stage" อ่านทุก 15 วินาที ซ่อนเมื่ออ่านไม่ได้)
+- test: frontend/src/pages/CustomerTrackingPage.test.jsx เพิ่ม 9 รายการ (ทั้ง 7 ขั้น ค่าอ่านไม่ได้ และรอบ 15 วินาที) ผล `npm test --prefix frontend` 22/22 ผ่าน
+- mockup: specs/005-tracking/mockups/UI-05-01-driver-accept.html (สร้างจาก docs/mockup-template.html มี 2 สถานะ: ยังไม่รับงาน และกดรับงานแล้ว) ยังไม่ได้ให้ PO ยืนยัน
+- tasks.md: เพิ่มหมายเหตุใน T-13 ไม่ได้สร้าง task ใหม่
+- ไม่ได้แก้ backend และไม่ได้แก้หน้าจอคนขับ (DriverTrackingPage.jsx) ตามคำสั่ง
+- AI เดา: (ก) ค่าเริ่มต้นของขั้นคือ "หาคนขับ" เมื่อยังไม่มีการตั้งขั้น (ข) ตำแหน่งบนแผนที่ยังแสดงตามกฎเดิมทุกขั้น เพราะยังไม่มีคำตอบ Q-28 (ค) ไม่ได้เพิ่มปุ่มในหน้าจอคนขับ เพราะรายละเอียดงานยังไม่มีใน spec
+- ถามทีม: ตอบ Q-28 ข้อ (ก) ถึง (ง) ก่อนทำ backend และ AC ของขั้นสถานะ
+
+## #44 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมสั่งเพิ่มข้อมูลทีมงานและประเภทรถให้ลูกค้า
+
+- คำสั่งทีม: แสดงชื่อหัวหน้าทีม เบอร์โทรติดต่อ รูปพนักงาน ทะเบียนรถ และประเภทรถ (เช่น รถ 4 ล้อตู้ทึบ, รถ 6 ล้อ)
+- AI ถามทีมก่อนลงมือ (ไม่เดา) ตอบ: (ก) หัวหน้าทีมคือคนขับเอง (ข) แสดงทั้งเบอร์และรูปให้ลูกค้าเห็น (ค) แสดงทั้งทะเบียนรถและประเภทรถ
+- ข้อสังเกตที่ AI เสนอ: เบอร์และรูปเป็น PII ขัดกับข้อจำกัด "ไม่มีเบอร์โทรใน entity ของการติดตาม" ใน plan.md ข้อ 3 และ test ของ LocationPoint จึงเปิด Q-29 ไม่ได้แก้ plan.md หรือ backend
+- ทีมยังไม่ได้ให้รายการประเภทรถทั้งหมด AI จึงไม่ตั้ง enum ประเภทรถเอง แสดงค่าที่ได้รับตรงๆ
+- spec.md v0.9 เป็น v0.10: เพิ่ม D-05-28, Q-29, หัวข้อ In, ส่วน 5 และ 7 (ติดป้าย PII)
+- โค้ดฝั่งลูกค้า: trackingMock.js (เพิ่ม getTeamInfo, setTeamInfo), CustomerTrackingPage.jsx (การ์ด data-testid="team-card", ซ่อนรูปเมื่อไม่มี, ซ่อนการ์ดเมื่อไม่มีข้อมูล)
+- test: CustomerTrackingPage.test.jsx เพิ่ม 3 รายการ (ข้อมูลครบ, ไม่มีข้อมูล, ไม่มีรูป) ผล `npm test --prefix frontend` 25/25 ผ่าน
+- ไม่ได้แก้ backend และไม่ได้แก้หน้าจอคนขับ ไม่มี mockup ใหม่ เพราะคำสั่งนี้ให้แสดงฝั่งลูกค้า
+- AI เดา: ข้อความป้ายหัวข้อ (หัวหน้าทีม, เบอร์โทร, ทะเบียนรถ, ประเภทรถ) และขนาดรูป 64 px เป็นการออกแบบตาม D-05-26
+- ถามทีม: ตอบ Q-29 (ก) ถึง (จ) ก่อนทำแหล่งข้อมูลจริงและ AC
+
+## #45 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-29 และสั่งทำ mockup ประเภทรถ
+
+- คำตอบทีมต่อ Q-29: (ก) แหล่งข้อมูลเป็น mockup ก่อน (ข) เบอร์และรูปเป็น PII จริง แสดงเฉพาะตั้งแต่จับคู่งานจนงานสิ้นสุด และไม่แสดงหลังงานสิ้นสุด (ค) ระยะเวลาเก็บ ข้ามไปก่อน (ง) รายการประเภทรถทำ mockup ขึ้นมาก่อน (จ) ให้แสดงเบอร์ในการติดตาม จึงแก้ข้อจำกัดใน plan.md ข้อ 3
+- AI ตีความเอง (ต้องยืนยัน จึงเขียนเป็น AS-12): "จับคู่งาน" = คนขับรับงาน, "งานสิ้นสุด" = session ปิด (ยืนยันส่งงาน) หรือถูกยกเลิก
+- ไม่มีคำตอบเรื่องขั้นยินยอมแยก จึงไม่เพิ่ม และคง Q-20 ไว้
+- spec.md v0.10 เป็น v0.11: เพิ่ม D-05-29, D-05-30, AS-12, ปรับ Q-29 เหลือ (ค) และ (ง), อัปเดตส่วน 2, 5, 7, 12
+- plan.md ข้อ 3: อนุญาตให้แสดงเบอร์ในการติดตาม แต่ไม่เก็บเบอร์เป็นฟิลด์ของ LocationPoint
+- mockup: specs/005-tracking/mockups/UI-05-02-team-card.html (การ์ดทีมงาน, สถานะงานสิ้นสุด, สถานะยังไม่จับคู่ และรายการประเภทรถเริ่มต้น 2 รายการ รอทีมยืนยันที่เหลือ)
+- โค้ดฝั่งลูกค้า: trackingMock.js เพิ่ม endJob และให้ confirmDelivery ปิดงาน getTeamInfo คืน 404 หลังงานสิ้นสุด
+- test: เพิ่ม trackingMock.test.js 4 รายการ ผล `npm test --prefix frontend` 29/29 ผ่าน
+- ยังไม่ได้ทำ: ไม่มี enum ประเภทรถในโค้ด (D-05-30) ไม่มี backend ของข้อมูลทีม ไม่มีการยกเลิกใน mock ฝั่งหน้าจอ (มีแค่ endJob) ระยะเวลาเก็บยังไม่กำหนด
+
+## #46 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมแจ้งว่า Q-20 ไม่ต้องให้กฎหมายตรวจ
+
+- AI อธิบาย Q-20 ว่าเป็นคำถามเรื่องการยินยอมแยกของคนขับและลูกค้า เจ้าของคือที่ปรึกษากฎหมาย และเสนอร่างข้อคำถามให้ส่งต่อ
+- คำตอบทีม: ไม่จำเป็นต้องมีทีมกฎหมาย ใช้สำหรับโปรเจกต์ส่งงานเท่านั้น ไม่มีการใช้งานจริง
+- AI บันทึกเป็น spec.md v0.12: ปิด Q-20 และใช้ AS-11 เป็นการตัดสินใจ D-05-31 อัปเดตส่วน 8 และแก้ AS-12 ที่อ้าง Q-20
+- ยังไม่ได้แก้โค้ด เพราะโค้ดไม่มีขั้นยินยอมอยู่แล้ว
+
+## #47 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมยืนยันความหมายของ AS-12
+
+- คำตอบทีม: จับคู่งาน = คนขับรับงานแล้ว, งานสิ้นสุด = คนขับกดงานสิ้นสุด
+- AI บันทึกใน spec.md v0.13: ยืนยัน AS-12 ข้อจับคู่งาน, ถือ "งานสิ้นสุด" เป็นการยืนยันส่งงานตามโค้ดปัจจุบัน และเพิ่ม Q-30 เรื่องชื่อปุ่มที่ทีมเรียกว่า "งานสิ้นสุด" แต่โค้ดเรียกว่า "ยืนยันส่งงาน"
+- AI ตัดสินเอง (ยังไม่ได้ยืนยัน): การยกเลิกงานตาม AS-05 ถือเป็นงานสิ้นสุดด้วย
+- ยังไม่ได้แก้โค้ดหรือชื่อปุ่ม รอทีมตอบ Q-30
+
+## #48 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมยืนยัน Q-30: ปุ่มงานสิ้นสุดคือปุ่มเดียวกับยืนยันส่งงาน
+
+- คำตอบทีม: เป็นปุ่มเดียวกัน
+- AI เปลี่ยนข้อความปุ่มในหน้าคนขับ (frontend/src/pages/DriverTrackingPage.jsx) จาก "ยืนยันส่งงาน" เป็น "งานสิ้นสุด" คงชื่อฟังก์ชันและ API confirm เดิม
+- spec.md v0.14: ปิด Q-30 เพิ่ม D-05-32 อัปเดต AS-12
+- ยังไม่ได้แก้ mockup UI-05-01 ซึ่งกล่าวถึงปุ่มนี้ในหมายเหตุของไฟล์ และยังไม่ได้แก้ข้อความในไฟล์ feature และ backend เพราะเป็นชื่อ AC/API เดิม
+
+## #49 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมสั่งให้ทุกอย่างอัตโนมัติ และแสดงข้อมูลคนขับตั้งแต่หาคนขับได้แล้ว
+
+- คำสั่งทีม: ไม่ต้องมีฝั่งคนขับแล้ว ทุกอย่างเป็น auto ข้อมูลคนขับแสดงเฉพาะตั้งแต่ "หาคนขับได้แล้ว" จนถึงงานสิ้นสุด
+- spec.md v0.15: เพิ่ม D-05-33 (อัตโนมัติ) และ D-05-34 (ช่วงแสดงข้อมูลทีม) ยกเลิก D-05-32 และ Q-30 เพิ่ม AS-13 (งานสิ้นสุดเมื่อถึงขั้นสุดท้าย, AI ตัดสิน) และ Q-31 (AC-05-10, AC-05-11, D-05-07 ยังอ้างการกดของคนขับ / ตำแหน่งงานสิ้นสุด / ชะตาของ DriverTrackingPage)
+- frontend/src/api/trackingMock.js: getTeamInfo คืนข้อมูลเฉพาะขั้น driver_found ขึ้นไปและยังไม่สิ้นสุด
+- frontend/src/api/trackingMock.test.js: 5 รายการ ผล `npm test --prefix frontend` 30/30 ผ่าน
+- เดโม (นอก repo, scratchpad) ปรับเป็นอัตโนมัติ ไม่มีหน้าจอคนขับ
+- ยังไม่ได้แก้ DriverTrackingPage.jsx และ AC/ไฟล์ feature รอ Q-31
+- AI เดา: งานสิ้นสุดอัตโนมัติหลังขั้นสุดท้าย และเวลาต่อขั้นในเดโม 4 วินาที (ไม่ใช่ค่าตาม spec)
+
+## #50 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | รวมป้ายสถานะและการ์ดทีมเข้ากับแผนที่
+
+- คำถามทีม: รวมขั้นสถานะและข้อมูลทีมเข้ากับแผนที่ได้หรือไม่ AI ตอบว่าได้ตาม D-05-26 (การจัดวางแผนที่กับป้ายออกแบบเองได้)
+- frontend/src/pages/CustomerTrackingPage.jsx: แผนที่เต็มกรอบ ป้ายสถานะและข้อความตำแหน่งซ้อนด้านบน การ์ดทีมซ้อนด้านล่าง ไม่เปลี่ยน data-testid และข้อมูลที่แสดง
+- ผล `npm test --prefix frontend` 30/30 ผ่าน ยังไม่ได้ดูผลบนหน้าจอจริง
+
+## #51 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | เดโม Leaflet + OSRM: คนขับ -> จุดรับ -> ปลายทาง
+
+- คำสั่งทีม: ใช้ฟรีไปก่อน และเพิ่มเส้นทางจากคนขับไปจุดรับของและไปปลายทาง
+- ทำในเดโมนอก repo (scratchpad) ตามที่ทีมอนุมัติใน #42 ไม่ได้แก้ frontend/src
+- ใช้ OSRM สาธารณะ (router.project-osrm.org) ถ้าเรียกไม่สำเร็จจะวาดเส้นตรงแทนและบันทึกไว้ ใช้ Leaflet 1.9.4 จาก cdnjs
+- ค่าจุดรับและปลายทางเป็นค่าตัวอย่างในเดโม ไม่ใช่ข้อมูลใน spec
+- การแสดงเส้นทางในหน้าจอจริงยังไม่อยู่ใน spec และ D-05-01 กำหนด Google Maps จึงยังไม่ทำในโค้ดโปรเจกต์ ต้องให้ทีมเพิ่มเป็น requirement ก่อน
+- ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์ ตรวจได้แค่เซิร์ฟเวอร์ตอบ 200 และ OSRM ตอบ 200
+
+## #52 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | เดโมเส้นนำทางตามขั้น
+
+- คำสั่งทีม: แสดงเส้นฟ้าไปจุดรับก่อน เส้นเขียวยังไม่แสดง เส้นส่วนที่ผ่านไปแล้วให้ลบออก เมื่อคนขับถึงจุดรับจึงแสดงเส้นจุดรับไปปลายทาง
+- เดโมนอก repo (scratchpad) แก้ main.jsx เพิ่ม sliceFrom และ updateLines ไม่ได้แก้ frontend/src
+- ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์ ตรวจได้แค่ไฟล์ถูกเสิร์ฟ
+
+## #53 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | เดโมซ่อนจุดรับของเมื่อรับของแล้ว
+
+- คำสั่งทีม: เมื่อรับของแล้ว ให้ซ่อนจุดสีส้ม (จุดรับของ)
+- AI ถือว่ารับของแล้วคือขั้น "กำลังขนของ" (loading) ตามลำดับ 7 ขั้น
+- เดโมนอก repo (scratchpad) ไม่ได้แก้ frontend/src
+
+## #54 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมสั่งหน้าภาพรวมสถานะการจอง และเอา "หาคนขับ" ออกจากหน้าแผนที่
+
+- คำสั่งทีม: (1) หน้าภาพรวม 4 สถานะ: ต้องชำระเงิน, กำลังจัดหารถและทีมช่าง, รอกำหนดการตามนัด (นับถอยหลังวัน ชั่วโมง นาที และวันที่เดือนปี), สิ้นสุดงาน (2) แถวถัดมาแสดงที่อยู่รับของและปลายทาง (3) เมื่ออยู่ในสถานะที่ต้องได้รับ มีข้อความติดตามสถานะคนขับรถ (4) เอาขั้น "หาคนขับ" ออกจากหน้าแผนที่
+- AI ตรวจแล้ว: 003-booking, 004-payment, 006-cancle ยังเป็นแม่แบบว่าง ไม่มีสถานะการจองในสเปกใด หน้าภาพรวมจึงเป็นความต้องการใหม่ที่ยังไม่มี feature เจ้าของ
+- ทำแล้ว: spec.md v0.16 เพิ่ม D-05-35 (ไม่แสดงขั้นหาคนขับบนแผนที่) และ Q-32 (ที่อยู่ feature, นิยามสถานะ, ข้อความติดตามคนขับ, แหล่งข้อมูลวันนัดและการชำระเงิน, ที่มาของที่อยู่)
+- ทำแล้ว: CustomerTrackingPage.jsx ซ่อนป้ายเมื่อ searching, test เพิ่ม D_05_35 รวม 30/30 ผ่าน
+- ยังไม่ทำ: หน้าภาพรวม รอ Q-32 ข้อ ก และ ค
+- AI เดา: "ที่ต้องได้รับ" ในคำสั่ง ยังไม่แน่ใจความหมาย ถามทีมแล้ว
+
+## #55 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมตอบความหมาย "ที่ต้องได้รับ" และบอกว่าเป็นฟีเจอร์เดิม
+
+- คำตอบทีม: "ที่ต้องได้รับ" = ถึงวันและเวลานัดขนย้ายแล้ว และกำลังไปส่งที่ปลายทาง ข้อความติดตามคนขับเป็นลิงก์ไปหน้าแผนที่
+- ทีมบอกว่าหน้าภาพรวมเป็นฟีเจอร์เดิมที่ลืม แต่ยังไม่ระบุชื่อ AI ค้นใน repo แล้วไม่พบ
+- AI เสนอชื่อสถานะที่เข้าใจง่ายกว่า: "ถึงเวลานัด กำลังขนย้าย" (รอทีมยืนยัน)
+- บันทึกใน spec.md Q-32 แล้ว ยังไม่ได้ทำหน้าภาพรวม
+
+## #56 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | mockup ภาพรวมสถานะการจอง (ข้อมูลทั้งหมดเป็นตัวอย่าง)
+
+- ทีมยืนยันว่าไม่มีฟีเจอร์เดิม ทำเป็น mockup สถานะเพื่อดูภาพรวมเท่านั้น
+- AI ตีความ "ที่ต้องได้รับ" เป็นสถานะย่อยของขั้นรอกำหนดการ เมื่อนับถอยหลังถึงวันและเวลานัดและกำลังไปส่ง จึงยังเป็น 4 ขั้นตามที่ทีมบอก (รอทีมยืนยัน)
+- ไฟล์: specs/005-tracking/mockups/UI-05-03-booking-overview.html มี 5 สถานะ (ต้องชำระเงิน, กำลังจัดหารถและทีมช่าง, รอกำหนดการ นับถอยหลัง, ที่ต้องได้รับ พร้อมลิงก์ไปแผนที่, สิ้นสุดงาน)
+- ยังไม่ได้ทำโค้ด และยังไม่ได้ระบุว่าเป็นของ feature ไหน (Q-32)
+
+## #57 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-32 รอบล่าสุด: การชำระเงินจำลอง และปุ่มติดตามสถานะ
+
+- คำตอบทีม: ข้อมูลการชำระเงินใช้ mock ว่าสำเร็จไปก่อน ขั้น "รอกำหนดการ" ให้เป็นหน้าติดตามสถานะแทน ยังไม่ถึงเวลาให้นับถอยหลัง ถึงเวลาแล้วให้แสดงปุ่ม "ติดตามสถานะ" ลิงก์ไปหน้าแผนที่
+- mockup UI-05-03 ปรับแล้ว: สถานะชำระเงินแสดงว่าสำเร็จ (ข้อมูลจำลอง) และปุ่มเป็น "ติดตามสถานะ"
+- spec.md Q-32 บันทึกแล้ว ยังไม่ได้ทำโค้ดหน้าภาพรวม และยังไม่ได้ระบุ feature เจ้าของ
+
+## #58 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมยืนยันว่าหน้าภาพรวมอยู่ใน 005-tracking
+
+- คำตอบทีม: เป็นของฟีเจอร์ tracking
+- spec.md v0.17: เพิ่ม D-05-36 (หน้าภาพรวม 4 ขั้น ข้อมูลชำระเงินและวันนัดเป็น mock) ปิดข้อ ก ของ Q-32
+- ขั้นต่อไป: ทำหน้าภาพรวมตาม UI-05-03 พร้อมการนับถอยหลัง และปุ่มติดตามสถานะ
+- ทำแล้ว (รอบ #58): frontend/src/overview.js (ขั้น นับถอยหลัง เงื่อนไขปุ่ม), frontend/src/pages/BookingOverviewPage.jsx (ตาม UI-05-03), trackingMock.js เพิ่ม getBooking, setBooking, isJobEnded (ชำระเงินสำเร็จเป็นค่าเริ่มต้น mock), test BookingOverviewPage.test.jsx 7 รายการ ผล `npm test --prefix frontend` 37/37 ผ่าน
+- ยังไม่ได้ต่อเข้าแอปหรือ route: ไม่มี router ในโปรเจกต์ ปุ่มติดตามสถานะใช้ onTrack ที่ผู้เรียกกำหนดเอง
+- ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์
+
+## #59 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมตอบ Q-32 ข้อ ข: ระบบกำหนดสถานะเอง
+
+- คำตอบทีม: สถานะแต่ละขั้นระบบกำหนดเองอัตโนมัติ
+- spec.md v0.18: เพิ่ม D-05-37 และปิด Q-32 ข้อ ข ข้อ ง ยังค้างเป็นแหล่งข้อมูลจริง
+- โค้ดไม่เปลี่ยน เพราะ BookingOverviewPage คำนวณขั้นจากค่าของระบบอยู่แล้ว
+
+## #60 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | เดโมลิงก์จากภาพรวมไปหน้าแผนที่
+
+- คำถามทีม: กดปุ่มติดตามสถานะในเดโมแล้วไปหน้าแผนที่หรือไม่ ตอบ: เดิมไม่ได้ต่อกัน
+- เดโมนอก repo (scratchpad) เพิ่มหน้าภาพรวม (BookingOverviewPage จริง) เป็นหน้าแรก ปุ่มติดตามสถานะจะสลับไปหน้าแผนที่ และมีปุ่มกลับหน้าภาพรวม
+- เวลานัดในเดโมตั้งไว้ 15 วินาทีหลังเปิดหน้า (ค่าของเดโม) ข้อมูลยังเป็นข้อมูลจำลองทั้งหมด
+- ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์
+
+## #61 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | เดโม: คนขับวิ่งไปจุดรับตั้งแต่ขั้นแรก
+
+- คำขอทีม: ให้มีเส้นฟ้า (คนขับไปรับของ) ตั้งแต่คนขับกำลังไปรับของ
+- เดโมนอก repo (scratchpad) ให้คนขับเคลื่อนไปจุดรับตั้งแต่ขั้นหาคนขับ ผ่านขั้นหาคนขับได้แล้วและคนขับกำลังมาหาคุณ ส่วนที่ผ่านไปแล้วจะถูกลบ
+- หมายเหตุ: ใน spec ตำแหน่งคนขับแสดงตั้งแต่รับงาน (D-05-02, D-05-16) เดโมนี้ถือว่ารับงานตั้งแต่ต้นเพื่อการสาธิต ยังไม่ได้เปลี่ยน spec
+- ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์
+
+## #62 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | คนขับรับงานก่อนวันนัด และหน้าภาพรวมไปรอกำหนดการทันที
+
+- คำสั่งทีม: คนขับรับงานก่อนวันนัดได้ เมื่อหาทีมได้แล้วให้ไปขั้น "รอกำหนดการตามนัด" ทันที พร้อมนับถอยหลังถ้ายังไม่ถึงเวลา
+- โค้ด BookingOverviewPage ทำตามนี้อยู่แล้ว (มีคนขับรับงาน = ขั้นรอกำหนดการ และนับถอยหลังก่อนถึงเวลา) ยืนยันด้วย test D_05_36 ผ่านทั้งหมด
+- spec.md v0.19: เพิ่ม D-05-38 ระบุว่าตำแหน่งแสดงตั้งแต่รับงาน แต่ลูกค้าเปิดแผนที่ได้จากปุ่มหลังถึงเวลานัด
+- ข้อที่ AI ตีความ: "รับงาน" ใน D-05-16 หมายถึงคนขับกดรับงาน (ขั้นหาทีมได้แล้ว) ยังไม่ได้ยืนยันกับทีม
+
+## #63 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ทีมสั่งให้ตำแหน่งคนขับแสดงเฉพาะเมื่อถึงเวลานัด
+
+- คำสั่งทีม: ตำแหน่งคนขับแสดงเมื่อถึงวันและเวลาที่นัดแล้วเท่านั้น
+- spec.md v0.20: เพิ่ม D-05-39 ยกเลิกส่วนตำแหน่งของ D-05-16 และ D-05-38 และแก้ข้อ "เริ่ม" ในส่วน 5
+- frontend/src/api/trackingMock.js: getLatest ไม่คืนตำแหน่งก่อนเวลานัด (404) และ test เพิ่ม 2 รายการ
+- ผล test ผ่านตามที่รันไว้ ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์
+- หมายเหตุ: หน้าแผนที่เข้าได้จากปุ่มหลังถึงเวลานัดเท่านั้น จึงไม่ควรเห็นข้อความไม่พร้อมใช้งานก่อนนัดตามปกติ
+
+## #64 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ยืนยันว่ารอกำหนดการใช้ได้หลังหาทีมสำเร็จเท่านั้น
+
+- คำสั่งทีม: ระหว่างกำลังจัดหารถและทีมช่าง กดหรือดูขั้นรอกำหนดการตามนัดไม่ได้ เมื่อหาสำเร็จจึงดูได้
+- โค้ดเดิมทำตามนี้อยู่แล้ว (ขั้น arranging ไม่มีนับถอยหลังและปุ่ม ขั้นรอกำหนดการไม่ active) เพิ่ม test D_05_36 ยืนยันเพิ่ม
+
+## #65 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | หน้าภาพรวมอ่านสถานะทุก 1 วินาที
+
+- ผู้ใช้แจ้งว่ายังรอ 15 วินาทีก่อนสถานะเปลี่ยน แล้วจึงกดดูติดตามคนขับได้
+- AI ตีความว่าเกิดจากการอ่านสถานะทุก 15 วินาที จึงลดเป็น 1 วินาทีในหน้าภาพรวม (BookingOverviewPage.jsx) รอบตำแหน่ง 15 วินาทียังคงเดิม
+- spec.md v0.21: เพิ่ม D-05-40 (ระบุว่าเป็นการตีความ ต้องยืนยันกับทีม)
+- test ผ่าน 41/41 รวม test ใหม่ที่ยืนยันการเปลี่ยนขั้นภายใน 1 วินาที
+
+## #66 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | เพิ่มวินาทีในการนับถอยหลังของหน้าภาพรวม
+
+- ผู้ใช้ชี้ว่าที่รอคือช่วง countdown ใกล้เวลานัด ซึ่งเดิมแสดงถึงนาทีจึงดูค้างที่ 00 นาที
+- AI เพิ่มช่องวินาทีในการนับถอยหลัง (overview.js, BookingOverviewPage.jsx) ซึ่งเป็นการออกแบบการแสดงผลตาม D-05-26 ไม่ได้เพิ่ม requirement ใหม่ ปุ่มติดตามสถานะขึ้นทันทีเมื่อครบศูนย์
+- test เพิ่ม 1 รายการยืนยันวินาทีและการขึ้นปุ่มตอนครบศูนย์
+- ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์
+
+## #67 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ไม่มีขั้นหาคนขับบนแผนที่และในบันทึก
+
+- ทีมแจ้งว่าไม่ได้หาคนขับทันที แต่จองคนขับไว้แล้ว สถานะหาคนขับบนแผนที่ไม่จำเป็น
+- spec.md v0.22: เพิ่ม D-05-41 (ไม่มีขั้นหาคนขับบนแผนที่และบันทึก ขั้นกำลังจัดหารถอยู่ในหน้าภาพรวมเท่านั้น)
+- เดโม (scratchpad) ไม่บันทึก "ขั้น: หาคนขับ" และแสดงข้อมูลทีมตั้งแต่ต้น
+- frontend ไม่เปลี่ยน: หน้าแผนที่ซ่อนขั้น searching อยู่แล้ว (D-05-35)
+- ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์
+
+## #68 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | เดโม: ขั้นก่อนนัดอยู่ในหน้าภาพรวม ไทม์ไลน์แผนที่เริ่มเมื่อกดติดตาม
+
+- ทีมชี้ว่าบันทึกของหน้าแผนที่แสดง "หาคนขับได้แล้ว" และ "คนขับกำลังมาหาคุณ" ตั้งแต่ก่อนถึงเวลานัด ซึ่งขัดกับ D-05-39 และ D-05-41
+- เดโม (scratchpad) แก้: ขั้นหาทีมได้บันทึกในหน้าภาพรวม ไทม์ไลน์ของแผนที่ (คนขับกำลังมาหาคุณ เป็นต้นไป) เริ่มเมื่อกดติดตามสถานะหลังถึงเวลานัด
+- ตัวโค้ดจริง (frontend) ไม่เปลี่ยน เพราะหน้าภาพรวมและหน้าแผนที่แยกกันอยู่แล้ว
+- ยังไม่ได้ตรวจด้วยตาในเบราว์เซอร์
+
+## #69 | 2026-11-18 | Claude Code (Claude Haiku 5.5) | ย้ายเดโมจาก scratchpad เข้า frontend/demo
+
+- คำสั่งทีม: ย้ายเดโมไป demo
+- ย้ายไป frontend/demo/ (index.html, main.jsx, vite.config.mjs) เปลี่ยน import เป็นแบบสัมพัทธ์ไปยัง ../src และลบสำเนาใน scratchpad แล้ว
+- รันด้วย `node node_modules/vite/bin/vite.js --config demo/vite.config.mjs` จากโฟลเดอร์ frontend ที่พอร์ต 5180
+- ยังไม่ได้ commit เดโมนี้ และ frontend/src ไม่เปลี่ยน
+## #2 | 2026-11-20 | Copilot | ปรับเอกสาร Feature 002 Auth ตามผลตรวจและคำยืนยันทีม
+
+- **คำสั่ง:** ปรับ `spec.md`, `auth.feature`, `rules.md`, `models.md` และ `plan.md` ให้สอดคล้องกับคำยืนยันใหม่ โดยคงสถานะ Draft, ไม่แก้โค้ด/ไม่รันทดสอบ/ไม่ commit/push และบันทึกต่อท้าย prompt-log
+- **สิ่งที่ AI ถามหรือรายงาน:** ถามทีมทีละข้อเกี่ยวกับจุดเริ่มอายุ OTP, method/path endpoint, token mapping/lifecycle, scope ของ `/me`, แนวทาง UI, ขอบเขตการยืม theme จาก Payment, request/response และ error/status
+- **คำตอบหรือการตัดสินใจของทีม:** เริ่มนับ OTP 15 นาทีเมื่อ mock SMS/OTP แสดงผล; ยืนยัน `POST /api/auth/login`, `POST /api/auth/verify-otp`, `GET /api/auth/me` และให้ `/me` อยู่ใน scope; ใช้ mapping ปัจจุบัน `token → user_id`; token expiry/lifecycle ยังเปิด; UI ใช้เฉพาะ visual theme ของ Payment ห้ามยืมองค์ประกอบหรือพฤติกรรม; schema/validation/error response/HTTP status ยังไม่กำหนด
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มีการเพิ่มพฤติกรรมหรือ ID ใหม่; เสนอให้ตรวจ AC-02-05 ด้วยหลักฐาน config/dependency และ mock data นอก Gherkin เนื่องจากเป็น constraint เชิงเทคนิค/ข้อมูล ไม่ใช่พฤติกรรมที่ผู้ใช้สังเกตได้
+
+## #3 | 2026-11-20 | Copilot | บันทึกคำยืนยัน Q-02-07
+
+- **คำสั่ง:** บันทึกคำยืนยันว่า OTP ต้องยืนยันเฉพาะครั้งแรกของบัญชี; เมื่อ OTP ถูกต้องให้ตั้ง `users.is_verified=true`; login ครั้งถัดไปใช้ email/password ตามปกติเมื่อ `is_verified=true`
+- **สิ่งที่ AI ถามหรือรายงาน:** ไม่มีคำถามเพิ่มเติม; Q-02-07 เป็นประเด็นที่ทีมยืนยัน
+- **คำตอบหรือการตัดสินใจของทีม:** ปิด Q-02-07 ตามกติกาข้างต้น; คง Q-02-08 เรื่อง fixture และรายละเอียดอื่นที่ยังเปิดไว้
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #4 | 2026-11-20 | Copilot | ปรับเอกสาร Auth ตามผล /clarify ล่าสุด
+
+- **คำสั่ง:** ปรับเอกสาร Feature 002 Auth ให้สะท้อนคำตอบเรื่อง `/me`, `is_verified`, mock user fixtures, token และ traceability AC-02-05; คงคำถามที่ยังเปิดและสถานะ Draft; ไม่แก้โค้ดหรือรันทดสอบ
+- **สิ่งที่ AI ถามหรือรายงาน:** ไม่มีคำถามเพิ่ม; รายงานว่าคำตอบ Q-02-06, Q-02-07, Q-02-08 และวิธี traceability AC-02-05 ได้รับการยืนยัน ส่วน token lifecycle, API contract และการแยก OTP หลายคำขอยังเปิด
+- **คำตอบหรือการตัดสินใจของทีม:** `/api/auth/me` ส่งเฉพาะ `id`, `name`, `email` และไม่ส่ง `phone`, `password`, OTP, token หรือ `is_verified`; `is_verified` หมายถึงเบอร์ผ่าน OTP mock ตั้ง `true` หลังยืนยันครั้งแรกและ login ครั้งต่อไปข้าม OTP; อนุมัติ mock users ทั้งหมดใน `backend/app/mock_db.py` เป็น fixtures; AC-02-05 ตรวจหลักฐาน config/dependency และ mock data ใน RTM โดยไม่มี Gherkin Scenario; token ผูกกับ `user_id` และออกเมื่อ flow login สำเร็จ ส่วนอายุ/หมดอายุ ต่ออายุ เพิกถอน และ `is_verified` หลัง backend restart ยังเปิด
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มีการเพิ่ม Requirement/AC/Q/BR/MD ID หรือกำหนด contract, validation, status, error, token lifecycle หรือ persistence ที่ทีมยังไม่ยืนยัน
+- **สิ่งที่แก้:** ปรับ `spec.md`, `auth.feature`, `rules.md`, `models.md`, `plan.md` และ `tasks.md`; สร้าง `rtm.md` เพื่อบันทึกหลักฐาน AC-02-05; คง BR/MD เป็นข้อเสนอ AI, คงเอกสาร Draft และไม่แก้โค้ด/ไม่รันทดสอบ
+
+## #5 | 2026-11-20 | Copilot | /clarify งาน Blocked ของ Feature 002 Auth
+
+- **คำสั่ง:** อ่านเอกสาร Auth และตรวจสถานะก่อนถามทีละข้อเกี่ยวกับ Q-02-04, Q-02-03, Q-02-05, Q-02-09, Q-02-10, Q-02-01 และพฤติกรรม `is_verified` หลัง backend restart; ห้ามเดาหรือถือข้อเสนอเป็น contract
+- **สิ่งที่ AI ถามหรือรายงาน:** ถาม Q-02-04 เรื่องการแยก OTP issuance; Q-02-03 เรื่อง API contract; Q-02-05 เรื่อง token lifecycle; Q-02-09 เรื่อง status/error; Q-02-10 เรื่อง UI; Q-02-01 เรื่องแหล่ง Requirement; และถามประเด็น restart โดยไม่สร้าง Q-ID ใหม่
+- **คำตอบหรือการตัดสินใจของทีม:**
+  - Q-02-04: แต่ละคำขอ OTP มี ID ประจำชุด เพื่อแยกการยืนยันและนับความผิดแยกชุด; วิธีส่ง/ตรวจ ID ยังต้องระบุใน API contract
+  - Q-02-03: login ใช้ email/password; verify อ้าง ID ของ OTP issuance; การยืนยันครั้งแรกที่สำเร็จตั้ง `is_verified=true` และให้ token เมื่อ flow login สำเร็จ; `/me` ส่ง `id`, `name`, `email`. ชื่อ/ชนิด field, schema และ validation ยังไม่ยืนยัน
+  - Q-02-05: คง mapping `token → user_id`; บัญชีที่ยังไม่ verified ได้ token หลัง OTP ครั้งแรกสำเร็จ; บัญชี verified ได้ token หลัง email/password login สำเร็จโดยข้าม OTP. อายุ/หมดอายุ, ต่ออายุ และเพิกถอนยังเปิด
+  - Q-02-09: มี status mapping ที่เสนอแต่ทีมระบุชัดว่ายังไม่อนุมัติ; คงเป็นข้อเสนอและ Q-02-09/งานที่เกี่ยวข้องเป็น Blocked
+  - Q-02-10: ยืนยัน flow ขั้นต่ำของ Login/OTP และ visual theme only ของ Payment; labels, layout, destination, error display, UI ID และ mockup ยังเปิด
+  - Q-02-01: ทีมยังตรวจสอบแหล่ง Requirement ต้นฉบับอื่นไม่ได้; คง T-01 Blocked
+  - คำถามทางเทคนิคไม่มี Q-ID ใหม่: `is_verified` คงอยู่ระหว่าง backend ทำงาน แต่หลัง restart กลับเป็นค่าเริ่มต้นของ mock fixture โดยไม่เพิ่ม persistence; หากค่าเริ่มต้นเป็น `false` ต้องยืนยัน OTP อีกครั้ง
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ไม่รับข้อเสนอ Q-02-09 เป็น contract และไม่กำหนด schema, validation, status, error body, token lifecycle หรือ UI detail เอง
+- **สิ่งที่แก้:** บันทึกคำตอบและคำถามที่ยังเปิดใน `specs/002-auth/spec.md`, เพิ่ม AS-02-01 สำหรับพฤติกรรมหลัง restart และเพิ่มบันทึกนี้ต่อท้าย. ไม่แก้ `plan.md`, `tasks.md`, โค้ด หรือสถานะ Done/Baseline
+
+## #6 | 2026-11-20 | Copilot | /implement T-07 เตรียมโครง UI Auth
+
+- **คำสั่ง:** ทำ T-07 ใน `specs/002-auth/tasks.md` โดยใช้เฉพาะ visual theme ของ Payment; ห้ามเดารายละเอียด UI ที่ยังเปิดใน Q-02-10
+- **สิ่งที่ AI ถามหรือรายงาน:** ถามว่าควรสร้าง neutral scaffold ที่มีช่อง email/password และส่วน OTP แสดง `123456` โดยไม่มี visible labels, ปุ่ม, error หรือ navigation หรือไม่
+- **คำตอบหรือการตัดสินใจของทีม:** อนุมัติให้สร้าง neutral scaffold ตามขอบเขตดังกล่าว; รายละเอียด UI อื่นยังรอ Q-02-10
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ไม่เพิ่มข้อความ UI ที่มองเห็นได้, ปุ่ม, error, navigation, validation หรือการเชื่อม API
+- **สิ่งที่แก้:** เพิ่ม `frontend/src/auth/AuthFields.jsx`, `auth.css` และ `AuthFields.test.js`; อัปเดตสถานะ T-07 และสรุปจำนวนงานใน `tasks.md`. ทดสอบ 2/2 ผ่าน และ `npm run build` ผ่าน; ติดตั้ง dependencies ด้วย `npm ci` ตาม lockfile หลังการทดสอบครั้งแรกพบว่า React ยังไม่มีใน environment. ไม่แก้ `App.jsx` หรือไฟล์ Payment
+
+## #7 | 2026-11-20 | Copilot | /implement T-08 ลงทะเบียน Auth Routes
+
+- **คำสั่ง:** ลงทะเบียนและตรวจ method/path ของ Auth routes ตามที่ทีมยืนยัน โดยไม่กำหนด handler contract, request/response schema, validation หรือ HTTP status
+- **สิ่งที่ AI ถามหรือรายงาน:** ไม่มีคำถามเพิ่ม; แยกการทดสอบ route table ออกจากการเรียก handler เพื่อไม่สร้างพฤติกรรมที่ยังไม่ยืนยัน
+- **คำตอบหรือการตัดสินใจของทีม:** ไม่มีคำตอบใหม่; ใช้ method/path ที่ยืนยันแล้วใน spec และ AC-02-02
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; placeholder ของ handler แสดงข้อจำกัดว่ายังไม่มี contract และ test ตรวจเฉพาะ method/path ไม่ได้ตรวจ response/status
+- **สิ่งที่แก้:** เพิ่ม router ใน `backend/app/auth.py`, ลงทะเบียนใน `backend/app/main.py`, เพิ่ม `test_AC_02_02_auth_endpoint_methods_and_paths_registered` ใน `backend/tests/test_auth.py`; อัปเดตสถานะ T-08 และสรุปจำนวนงานใน `tasks.md`. ไม่แก้ handler เดิม `get_current_user()` หรือ routes ของ Feature อื่น
+
+## #8 | 2026-11-20 | Copilot | ปรับเอกสาร Feature 002 Auth ตามคำยืนยัน /clarify
+
+- **คำสั่ง:** อัปเดต `spec.md`, `plan.md` และ `tasks.md` ตามคำตอบที่ยืนยันแล้ว; คง Draft, ไม่แก้โค้ด และเพิ่มบันทึกต่อท้าย
+- **สิ่งที่ AI ถามหรือรายงาน:** รายงาน Q-02-01 ยังไม่มีแหล่ง Requirement ต้นฉบับ Auth ที่ยืนยันได้; ยืนยันจากโค้ดเดิมว่า `/me` ใช้ Authorization Bearer header และขอการตัดสินใจวิธีส่ง token
+- **คำตอบหรือการตัดสินใจของทีม:** ยืนยันใช้ `Authorization: Bearer <token>`; Q-02-03 กำหนด request/response และ validation ของ login/verify; Q-02-04 ใช้ `otp_challenge_id` แยกชุดและปิดเฉพาะชุดที่กรอกผิดครบ 3 ครั้ง; Q-02-05 token ใช้ได้ตลอดอายุ process ไม่มี refresh/revoke และใช้ไม่ได้หลัง restart; Q-02-09 ยืนยันตาราง HTTP status/error body; Q-02-10 ยืนยันหน้า Login เริ่มต้น, ส่งด้วย Enter, แสดง API `detail` ในฟอร์ม และ success ไปจุดเริ่ม Feature 003-Booking
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; คง Q-02-01 เปิด, คงรายละเอียด labels/layout/UI ID/mockup ที่ยังไม่ยืนยัน และคง AS-02-01 ตามคำตอบเดิม
+- **สิ่งที่แก้:** ปรับ API contract, token/OTP lifecycle, UI flow และสถานะ Q ใน `specs/002-auth/spec.md` กับ `plan.md`; เปลี่ยน T-02 ถึง T-05 เป็น Done, คำนวณ dependency ของ T-09 ถึง T-16 ใหม่ และอัปเดตยอดรวมเป็น Blocked 6 / Ready 2 / Done 6 / รอตรวจรับ 2 ใน `tasks.md`; คง T-01 Blocked, T-07/T-08 รอตรวจรับ และทุกเอกสารเป็น Draft. แก้เอกสารเท่านั้น ไม่รันทดสอบ
+
+## #9 | 2026-11-20 | Copilot | /implement T-09 Login และ Mock SMS Sender
+
+- **คำสั่ง:** ทำ T-09 ใน `specs/002-auth/tasks.md` ให้ login ตรวจ credential, บัญชี verified ได้ token, บัญชี unverified เริ่ม OTP mock ไป `users.phone`; ไม่เชื่อม SMS provider จริง
+- **สิ่งที่ AI ถามหรือรายงาน:** ถามวิธีสร้าง token และรูปแบบ `otp_challenge_id` ซึ่ง spec/plan ไม่ได้กำหนด
+- **คำตอบหรือการตัดสินใจของทีม:** สร้าง opaque token ใหม่ทุก login สำหรับบัญชี verified; ใช้ UUID string แบบ opaque เป็น `otp_challenge_id`
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่เดารูปแบบ token หรือ challenge ID; ไม่เพิ่ม OTP expiry/attempt behavior ซึ่งอยู่ใน T-10
+- **สิ่งที่แก้:** แก้ `backend/app/auth.py`, `backend/app/mock_db.py`, `backend/tests/test_auth.py`; login ตรวจ request/credential และ status ตาม contract, บันทึก OTP challenge พร้อม user/phone/code ใน memory โดยไม่เรียก provider. Tests: Auth เฉพาะไฟล์ 4 passed; backend suite 40 passed. การรัน suite จาก `backend/` ครั้งแรก collection ล้มเหลวเพราะ `backend` package ไม่อยู่ใน import path; รันซ้ำจาก root ด้วย `PYTHONPATH=backend` ผ่าน. เปลี่ยน T-09 เป็นเสร็จรอทีมตรวจและปรับยอดงาน; ไม่แก้ `main.py` เพราะ route Auth ได้ลงทะเบียนไว้แล้ว
+
+## #10 | 2026-11-20 | Copilot | /implement T-10 OTP Lifecycle
+
+- **คำสั่ง:** ทำ T-10 โดยใช้ `otp_challenge_id` แยกชุด, ตรวจอายุ 15 นาที, จำกัดการกรอกผิด 3 ครั้งต่อชุด, คงชุดเก่าจนหมดอายุเมื่อขอใหม่ และใช้ status/error ตาม contract
+- **สิ่งที่ AI ถามหรือรายงาน:** ถามวิธี resend เนื่องจาก spec ไม่มี endpoint resend แยก
+- **คำตอบหรือการตัดสินใจของทีม:** การเรียก `POST /api/auth/login` ซ้ำด้วย credentials เดิมใช้สร้าง OTP challenge ชุดใหม่ได้; ชุดเก่ายังคงมีผลจนหมดอายุ
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่เพิ่ม endpoint resend; เวลานับเริ่มเมื่อ challenge ถูกสร้างก่อนส่งผล login; status/error ของ OTP ที่ผิด/หมดอายุ/ใช้ไม่ได้ใช้ 400 และ `{"detail":"OTP verification failed"}` ตาม contract
+- **สิ่งที่แก้:** เพิ่ม typed in-memory OTP challenge state และ helper ตรวจอายุ/attempts/สถานะใน `backend/app/mock_db.py` และ `backend/app/auth.py`; ขยาย `backend/tests/test_auth.py` ด้วย `test_AC_02_06_otp_lifetime_attempts_and_resend`; เปลี่ยน T-10 เป็นเสร็จรอทีมตรวจและปรับยอดงาน. Tests Auth 5 passed; backend suite 41 passed; มี deprecation warning จาก Starlette/AnyIO. ไม่แก้ task อื่นหรือ implement การออก token/การยืนยันสำเร็จของ T-11
+
+## #11 | 2026-11-20 | Copilot | /implement T-11 ยืนยัน OTP และออก Token
+
+- **คำสั่ง:** ทำ T-11 ใน `specs/002-auth/tasks.md` ให้ verify OTP โดยไม่มี token ก่อน, ตั้ง `users.is_verified=true`, ออก token แบบ map กับ `user_id` และใช้ status/response กับ lifecycle ตาม contract
+- **สิ่งที่ AI ถามหรือรายงาน:** ไม่ต้องถามเพิ่ม; T-11 เป็น Ready และ prerequisite T-08/T-10 เปลี่ยนเป็น Done แล้ว
+- **คำตอบหรือการตัดสินใจของทีม:** ไม่มีคำตอบใหม่; ใช้ contract ที่ยืนยันไว้แล้วใน Q-02-03, Q-02-05, Q-02-09
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ใช้ `_issue_token()` และ in-memory `mock_db.tokens` ตาม implementation เดิม, ไม่เพิ่ม refresh/revoke หรือ persistence
+- **สิ่งที่แก้:** แก้ `backend/app/auth.py` และ `backend/tests/test_auth.py` ให้ validate request, ยืนยัน challenge, ตั้งสถานะผู้ใช้และออก token; เปลี่ยน T-11 เป็นเสร็จรอทีมตรวจและปรับยอดรวมใน `specs/002-auth/tasks.md`. `test_AC_02_03_verified_otp_returns_token` ผ่าน; Auth tests 6 passed; backend suite 42 passed. `git diff --check` ผ่าน; มี deprecation warning เดิมจาก Starlette/AnyIO
+
+## #12 | 2026-11-20 | Copilot | /implement T-12 Endpoint ข้อมูลผู้ใช้ปัจจุบัน
+
+- **คำสั่ง:** ทำ T-12 ใน `specs/002-auth/tasks.md` ให้ `GET /api/auth/me` ใช้ `get_current_user()`, รับ `Authorization: Bearer <token>` และส่งเฉพาะ `id`, `name`, `email` พร้อม status/error ตาม contract
+- **สิ่งที่ AI ถามหรือรายงาน:** ไม่ต้องถามเพิ่ม; T-12 เป็น Ready โดย T-02, T-04 และ T-08 เป็น Done
+- **คำตอบหรือการตัดสินใจของทีม:** ไม่มีคำตอบใหม่; ใช้ contract ที่ยืนยันไว้แล้วใน Q-02-03, Q-02-06 และ Q-02-09
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; เรียก helper `get_current_user()` เดิมและแปลงเฉพาะ HTTP 401 ให้ตรงกับ Auth error contract โดยไม่เปลี่ยนข้อความที่ consumer อื่นใช้อยู่; ไม่แก้ `main.py` เพราะ auth router ลงทะเบียนไว้แล้ว
+- **สิ่งที่แก้:** แก้ `backend/app/auth.py` และ `backend/tests/test_auth.py`; เพิ่ม `test_AC_02_02_me_returns_only_confirmed_user_fields` และ `test_AC_02_02_me_requires_a_valid_bearer_token`; เปลี่ยน T-12 เป็นเสร็จรอทีมตรวจและปรับยอดรวมใน `specs/002-auth/tasks.md`. Auth tests 8 passed; backend suite 44 passed; `git diff --check` ผ่าน. มี deprecation warning เดิมจาก Starlette/AnyIO
+
+## #13 | 2026-11-20 | Copilot | /implement T-13 เชื่อม UI Auth กับ API
+
+- **คำสั่ง:** ทำ T-13 ตาม AC-02-01/AC-02-06 ใน `specs/002-auth/tasks.md`; เชื่อม login/OTP, ไม่แนบ token ก่อนยืนยัน, เก็บ token หลังสำเร็จ, คง API behavior ของ Payment และทดสอบ end-to-end ใน browser
+- **สิ่งที่ AI ถามหรือรายงาน:** รายงานว่าไม่มีหน้า/route ของ Feature 003-Booking ใน frontend ปัจจุบัน จึงถามปลายทางหลัง login สำเร็จเพื่อไม่เพิ่ม navigation ที่ยังไม่ได้ยืนยัน
+- **คำตอบหรือการตัดสินใจของทีม:** ส่ง token ผ่าน callback `onAuthenticated(token)` เพื่อให้ Feature 003 เชื่อมต่อภายหลัง
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ไม่สร้าง route หรือหน้า Booking ใหม่; callback เป็น optional integration point และ token ถูกเก็บเพื่อให้ request ถัดไปใช้ได้
+- **สิ่งที่แก้:** `frontend/src/auth/AuthFields.jsx`, `frontend/src/auth/auth.css`, `frontend/src/api.js`, `frontend/src/App.jsx`, `frontend/src/main.jsx`; เพิ่ม tests ใน `frontend/src/auth/AuthFields.test.js`; เปลี่ยน T-13 เป็นเสร็จรอทีมตรวจ. `node --test src/auth/AuthFields.test.js` ผ่าน 4 tests; `npm run build` ผ่าน; ทดสอบ browser ด้วยบัญชี unverified (รวม resend, Enter, error detail), ยืนยัน token ที่เก็บไว้เรียก `/me` ได้ 200 และบัญชี verified login ข้าม OTP โดยไม่มี Authorization header ใน login request.
+
+## #14 | 2026-11-20 | Copilot | ปรับ UI OTP ไม่เปิดเผยรหัส mock
+
+- **คำสั่ง:** ซ่อนค่า OTP `123456` บน UI รวมถึงคำใบ้/placeholder ที่เผยรหัส; ให้ช่องเริ่มว่าง ผู้ใช้พิมพ์ 6 หลักเองและกด Enter; คง API contract และ Backend OTP check; ปรับเกณฑ์ T-13 และเอกสารที่ระบุการแสดงรหัสบน UI
+- **สิ่งที่ AI ถามหรือรายงาน:** แจ้งว่า T-13 อยู่สถานะ “เสร็จ รอทีมตรวจ” ซึ่งไม่พร้อมทำตามขั้นตอน `/implement`
+- **คำตอบหรือการตัดสินใจของทีม:** อนุมัติเปิด T-13 กลับเป็น “พร้อมทำ” เพื่อแก้ไขและตรวจซ้ำ
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; คง `mock_otp: "123456"` ใน API response และไม่เปลี่ยนโค้ด/การตรวจ OTP ฝั่ง Backend
+- **สิ่งที่แก้:** `frontend/src/auth/AuthFields.jsx`, `frontend/src/auth/auth.css`, `frontend/src/auth/AuthFields.test.js`; ปรับ `specs/002-auth/spec.md`, `plan.md`, `tasks.md`, `auth.feature`, `rules.md` และ `models.md`; เปลี่ยน T-13 กลับเป็น “เสร็จ รอทีมตรวจ”. `node --test src/auth/AuthFields.test.js` ผ่าน 4 tests; `npm run build` ผ่าน; ตรวจ browser พบช่อง OTP ว่าง ไม่มี placeholder/รหัสในข้อความหน้าเว็บ และกด Enter หลังกรอกค่าแล้วส่ง verify สำเร็จ.
+
+## #15 | 2026-11-20 | Copilot | /implement T-14 ตรวจ Token กับ Feature อื่น
+
+- **คำสั่ง:** ตรวจ token ที่ได้จาก Auth flow กับ `get_current_user()` และ consumer ของ Feature อื่น โดยไม่แก้ helper หรือ contract ของ consumer; ตรวจตาม AC-02-04
+- **สิ่งที่ AI ถามหรือรายงาน:** T-14 เดิมเป็น Blocked แม้ prerequisite T-11 เป็น Done แล้ว จึงขออนุมัติเปิดสถานะก่อนเริ่ม
+- **คำตอบหรือการตัดสินใจของทีม:** อนุมัติเปิด T-14 เป็น “พร้อมทำ”
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ใช้ mock endpoint `/api/dev/seed-booking` ที่มีอยู่เป็น consumer ของ Feature 003 โดยไม่แก้โค้ด consumer และไม่อ้างผลทดสอบ backend restart
+- **สิ่งที่แก้:** เพิ่ม `test_AC_02_04_token_identifies_current_user` ใน `backend/tests/test_auth.py`; ปรับสถานะ T-14 และยอดรวมใน `specs/002-auth/tasks.md` เป็น “เสร็จ รอทีมตรวจ”. Test สร้าง token ผ่าน login/OTP, ตรวจ mapping และ helper เดิม, ส่ง token ไปยัง mock consumer และตรวจว่า booking ผูกกับ user ที่ถูกต้อง. `pytest tests/test_auth.py -q` ผ่าน 9 tests; มี deprecation warning เดิมจาก Starlette/AnyIO.
+
+## #16 | 2026-11-20 | Copilot | ตรวจรับ T-12, T-13 และ T-14
+
+- **คำสั่ง:** ตรวจรับ T-12 ถึง T-14 ตามเกณฑ์ “เสร็จเมื่อ”; ตรวจปุ่มขอ OTP ใหม่และ ID ชุดใหม่; ยังไม่รัน regression/build ของ T-16
+- **สิ่งที่ AI ถามหรือรายงาน:** รายงานหลักฐานแยกตามงานก่อนเปลี่ยนสถานะ และขอคำยืนยันจากทีม
+- **คำตอบหรือการตัดสินใจของทีม:** ยืนยันรับผลตรวจ T-12, T-13 และ T-14
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ทดสอบ browser กับ backend ชั่วคราวที่เริ่มจาก fixture unverified แล้วหยุด server หลังตรวจ
+- **สิ่งที่แก้:** เปลี่ยน T-12, T-13, T-14 เป็น Done; ปรับรูปแบบสถานะ T-08/T-10 ที่เสร็จอยู่แล้วเป็น Done; เมื่อ T-08 ถึง T-15 ครบแล้ว เปลี่ยน T-16 จาก Blocked เป็น Ready และปรับยอดรวมเป็น 14 Done, 1 Ready, 1 Blocked. `pytest` เฉพาะ tests ของ `/me` และ T-14 ผ่าน 3 tests; `node --test src/auth/AuthFields.test.js` ผ่าน 4 tests. Browser จริง: login/resend ได้ 200 และ challenge ID ต่างกัน, ช่อง OTP ว่างและไม่เผย mock code, verify ด้วย ID ใหม่หลังกรอกรหัสเองและกด Enter ได้ 200; login/verify ไม่มี Authorization. ไม่ได้รัน regression suite หรือ build ของ T-16.
 
 ## #17 | 2026-11-19 | Copilot | /implement T-10 รวม origin/main เข้า feature/cancle
 
@@ -164,17 +699,612 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 - สถานะ: T-10 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; ไม่มีการ Push, Cherry-pick หรือเริ่ม T-03 ถึง T-09.
 - สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
 
-## #18 | 2026-11-19 | Copilot | ตรวจรับ T-10 และทบทวน Dependencies ของ T-03 ถึง T-09
+## #18 | 2026-11-20 | Copilot | ปรับเอกสาร register ให้ตรงกับ flow ที่ทีมยืนยัน
+
+- คำสั่ง: ตรวจว่า `spec.md` และไฟล์ใน `specs/001-register/` ตรงกัน และแก้ให้สอดคล้องหลังทีมชี้แจง flow สมัคร/ยืนยันตัวตน
+- คำชี้แจงและคำตอบของทีม: ใช้ email เป็น username (ไม่มี username แยก); หลังสมัครให้ส่งต่อไป flow OTP ทางเบอร์โทรของ ② ทันที และหลัง OTP ถูกจึง login ด้วย email/password; ② เป็นเจ้าของการส่ง/ตรวจ OTP; เมื่อ request ล้มเหลวให้เปิดปุ่มกลับและแสดง error; รายละเอียด log ยังไม่กำหนดและห้ามบันทึก password; ทีมอนุมัติ Q-11 สำหรับคำถาม log
+- สิ่งที่ AI ทำ: ปรับ spec, rules, models, Gherkin, plan และ tasks ให้ตรงกัน; เปลี่ยนชื่ออ้างอิง Gherkin ให้ตรงกับไฟล์จริง `feature.feature`; เพิ่ม Q-11 โดยไม่กำหนดรายละเอียด log แทนทีม; บันทึกคำยืนยันนี้ใน Change Log ของ spec
+- สิ่งที่ยังรอทีม/②: กำหนด URL/สัญญาส่งต่อไป flow OTP (Q-04) และตัดสินใจว่าต้องมี log แยกหรือไม่ รวมถึงวัตถุประสงค์ ข้อมูล และระยะเวลาเก็บ (Q-11)
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มีการเพิ่มฟิลด์ username แยกหรือ audit log; คงการจัดเก็บผู้ใช้ใน `users` ตามข้อกำหนดเดิม และยังไม่บันทึก password ลง log.
+
+## #19 | 2026-11-20 | Copilot | บันทึกคำถามและคำตอบเพื่อปรับ spec register
+
+- คำถาม AI: username เป็น email หรือมีฟิลด์แยก, “log การลงทะเบียน” หมายถึงอะไร, OTP เกิดตอนไหน, และเมื่อเชื่อมต่อ backend ไม่ได้ให้ทำอย่างไร
+- คำตอบทีม: ใช้ email เป็น username; หลังสมัครให้ยืนยัน OTP ก่อน แล้วจึง login ด้วย username/password; รายละเอียด log ยังไม่กำหนด; connectivity ยังไม่กำหนด
+- คำถาม AI: หลังสมัคร ① ส่งต่อให้ ② ทำ OTP หรือ ① เริ่มส่ง OTP เอง; จะบันทึก log เพิ่มเติมอย่างไร; เมื่อ request ล้มเหลวควรเปิดปุ่มกลับหรือไม่
+- คำตอบทีม: ① ส่งต่อไป flow OTP ของ ② ทันที; ห้ามบันทึก password และรายละเอียด log เป็น Open Question; เมื่อ request ล้มเหลวให้เปิดปุ่มกลับและแสดง error
+- คำถาม AI: อนุมัติ Q-11 เพื่อบันทึกคำถาม log แยกจาก `users` หรือไม่
+- คำตอบทีม: อนุมัติ Q-11
+
+## #20 | 2026-11-20 | Copilot | ปรับกฎ password และผู้ใช้ตัวอย่างของ register
+
+- คำสั่ง: ปรับนโยบาย password เป็นขั้นต่ำ 8 ตัวอักษร มีตัวพิมพ์ใหญ่และตัวพิมพ์เล็ก และอนุญาตสัญลักษณ์
+- คำถาม AI: ตัวเลข/สัญลักษณ์บังคับหรือไม่, ใช้กฎกับบัญชีเดิมหรือเฉพาะสมัครใหม่, และข้อความ error ต้องเป็นอย่างไร
+- คำตอบทีม: ต้องมีตัวพิมพ์ใหญ่และเล็ก; ตัวเลขกับสัญลักษณ์ไม่บังคับ; ใช้กับทุกบัญชี; error คือ “รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร และมีทั้งตัวพิมพ์ใหญ่กับตัวพิมพ์เล็ก”
+- คำถาม AI: ผู้ใช้ตัวอย่างสองรายที่ใช้ `1234` จะเปลี่ยนเป็นรหัสผ่านทดสอบสังเคราะห์ใด
+- คำตอบทีม: เปลี่ยนทั้งสองรายเป็น `TestUser8`
+- สิ่งที่ AI ทำ: ปรับ BR-RG-04, AC-01-09, ตัวอย่างและ references ในเอกสาร ①; อัปเดต `backend/app/mock_db.py` ให้ seed users ทั้งสองใช้ `TestUser8`; คง `password` ไว้เป็นข้อมูลที่ห้ามบันทึกใน log
+- สิ่งที่ยังรอทีม/②: ยืนยันวิธีเก็บ password และรับทราบ seed credential ใหม่ใน T-01 / Q-01
+
+## #21 | 2026-11-20 | Copilot | ตรวจหลังปรับ password policy
+
+- ผลตรวจ: ติดตั้ง dependencies ตาม `backend/requirements.txt` ใน venv ชั่วคราว เพราะ Python เริ่มต้นไม่มี pytest; `PYTHONPATH=. python -m pytest backend/tests -q` ผ่าน 36 tests (มี DeprecationWarning จาก Starlette/AnyIO 1 รายการ)
+- ตรวจ seed password: ผู้ใช้ตัวอย่าง 2 รายผ่านเงื่อนไขความยาวขั้นต่ำ 8 และมีตัวพิมพ์ใหญ่/เล็ก
+- `git diff --check` ผ่าน; ลบ venv ชั่วคราวแล้ว
+
+## #22 | 2026-11-20 | Copilot | กำหนดให้เก็บ password เป็น hash
+
+- คำชี้แจงของทีม: ต้องการเก็บ password เป็น hash เพราะตรงตามหลักที่เรียนมา
+- คำถาม AI: เลือกอัลกอริทึม/ไลบรารีอย่างไร และ ② ยืนยันวิธีที่ใช้ร่วมกันหรือยัง
+- คำตอบ/สถานะ: อธิบายว่าอัลกอริทึมคือวิธีสร้างและ verify hash; เสนอ Argon2id ให้ทีม ② พิจารณา แต่ยังไม่ถือเป็นการตัดสินใจ อัลกอริทึม/ไลบรารียังคงเป็น Q-01; สัญญา OTP ยังคงรอทีม ② ยืนยันใน Q-04
+- สิ่งที่ AI ทำ: ปรับ spec, rules, models, feature, plan และ tasks ให้ระบุว่าห้ามเก็บ plaintext และต้องใช้วิธี verify เดียวกับ ②; ยังไม่แก้ seed ใน `mock_db.py` เพราะยังไม่มีวิธี hash ที่ทีมยืนยัน
+
+## #23 | 2026-11-20 | Copilot | เลือก Argon2id สำหรับ password
+
+- คำถามของทีม: ต้องการวิธีที่ยืนยันและตรวจสอบได้ง่าย
+- คำตอบ/การตัดสินใจของทีม: ใช้ Argon2id ผ่าน `argon2-cffi` ฝั่ง ①; ตรวจ hash ด้วย prefix `$argon2id$`, verify รหัสที่ถูก และปฏิเสธรหัสที่ผิด
+- สิ่งที่ AI ทำ: ปรับ spec เป็น v1.6 และปรับ rules, models, Gherkin, plan, tasks ให้สอดคล้อง; เพิ่ม `backend/requirements.txt` ในไฟล์ของ T-05 สำหรับ dependency
+- สิ่งที่ยังรอ: ผู้ทำ ② ยืนยันว่า verify Argon2id hash รูปแบบเดียวกันได้และตกลง field ก่อน implement T-05 หรือแปลง seed; `mock_db.py` ยังไม่แก้
+
+## #24 | 2026-11-20 | Copilot | ชี้แจงหน้าจอลงทะเบียน
+
+- คำสั่งของทีม: ช่วยคิดว่า UI ควรวางอะไรตรงไหนระหว่างรอ T-02
+- สิ่งที่ AI ถามหรือรายงาน: spec มีข้อกำหนด UI-01-01 แต่ไม่มี mockup, Q-04 ยังไม่ระบุปลายทาง OTP, Q-08 ยังไม่ระบุผู้อนุมัติ; พบว่าข้อความปุ่ม "สมัคร" ขัดกับข้อที่ให้ข้อความปุ่มยืดหยุ่น และ T-10 ระบุ `/login` ทั้งที่ login เป็น Non-goal ของ ①
+- คำตอบ/การตัดสินใจของทีม: ใช้ลำดับและป้ายชื่อ "ชื่อ", "อีเมล", "เบอร์โทร", "รหัสผ่าน"; ไม่แสดงลิงก์ login; ปุ่มใช้คำว่า "สมัคร"; สงวน route `/login` ให้ ② โดย ① ไม่สร้างหน้า login; ให้ทำข้อเสนอร่างเพื่อทีม/PO ตรวจ แต่รอ ② ยืนยัน route OTP และรอผู้อนุมัติตาม Q-08
+- สิ่งที่ AI ทำ: ปรับ spec เป็น v1.7, plan เป็น v1.5, tasks เป็น v1.5 และ feature file เป็น v1.5 ให้ตรงคำยืนยัน; ไม่สร้าง mockup ที่อาจถูกเข้าใจว่าอนุมัติแล้ว
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี; ข้อเสนอการจัดวางในคำตอบยังเป็นร่าง ไม่ใช่ข้อกำหนดหรือ mockup ที่อนุมัติ
+
+## #25 | 2026-11-20 | Copilot | /implement T-16 ตรวจ Regression และ Build
+
+- **คำสั่ง:** ตรวจ Auth/Regression tests, Frontend build และ browser flow ตาม AC-02-01/02/03/04/06; ตรวจ AC-02-05 ตามหลักฐานที่บันทึกใน T-15
+- **สิ่งที่ AI ถามหรือรายงาน:** การรัน pytest จาก `backend/` เก็บ tests ได้แต่ collection ล้มเหลวเพราะ `ModuleNotFoundError: No module named 'backend'`; ปรับ working directory และ `PYTHONPATH` ให้ตรงกับ import ของ test suite โดยไม่แก้โค้ด
+- **คำตอบหรือการตัดสินใจของทีม:** ไม่มีคำถามค้าง; T-08 ถึง T-15 เป็น Done ตาม tasks.md และ T-16 พร้อมทำ
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ทดสอบ Browser ด้วย Backend ชั่วคราวและ fixture ที่ตั้ง `is_verified=false` เพื่อเริ่ม flow OTP; ปิดบริการชั่วคราวหลังตรวจ
+- **สิ่งที่แก้:** เปลี่ยนสถานะ T-16 เป็น “เสร็จ รอทีมตรวจ” และปรับยอดรวมใน `specs/002-auth/tasks.md`; เพิ่มบันทึกนี้ต่อท้าย. `PYTHONPATH=backend:. /workspaces/KhonYaai-Booking/.venv/bin/python -m pytest backend/tests -q` ผ่าน 45 tests (มี deprecation warning เดิมจาก Starlette/AnyIO); `node --test src/auth/AuthFields.test.js` ผ่าน 4 tests; `npm run build` ผ่าน. Browser E2E ยืนยัน login/resend HTTP 200 และ challenge IDs ต่างกัน, ช่อง OTP ว่างและไม่เผย mock code, verify ส่ง ID ใหม่และ OTP ที่ผู้ใช้กรอกหลัง Enter โดยไม่แนบ Authorization และได้ 200; ในการตรวจ flow เดียวกัน token ใช้ `/me` ได้ 200 และเรียก Feature 003 consumer ได้ 201 โดย booking ผูกกับ user ถูกต้อง. T-15 เสร็จก่อนตรวจ AC-02-05; ไม่สร้าง Gherkin Scenario สำหรับ AC นี้.
+## #26 | 2026-11-20 | Copilot | ปรับเอกสาร Register ให้ตรงกับ Auth และคำตัดสินล่าสุด
+
+- **คำสั่ง/คำชี้แจงของทีม:** เก็บ password ตรงตามค่าที่รับมาให้ตรงกับ Auth ปัจจุบัน; หลังสมัครไปหน้า `/login` แล้วให้ Auth จัดการ login/OTP; ต้องการลิงก์ Register/Login ทั้งสองทาง
+- **สิ่งที่ AI ถามหรือรายงาน:** รายงานว่าโค้ด Auth ปัจจุบันใช้ field `password` เดียวกันแบบค่าตรง, มี `POST /api/auth/login` และ `POST /api/auth/verify-otp`; หน้า Login ปัจจุบันยังไม่มีลิงก์กลับไป Register
+- **คำตอบหรือการตัดสินใจของทีม:** ยืนยันใช้ค่าตรงตามที่รับมาใน mock และ flow ของ Auth ปัจจุบัน; การเก็บ plaintext มีความเสี่ยงและไม่ควรใช้ production
+- **สิ่งที่ AI แก้:** ซิงก์ `spec.md`, `rules.md`, `models.md`, `feature.feature`, `plan.md` และ `tasks.md` ให้ระบุการเก็บ password ตามค่าที่รับมาใน mock, handoff หลังสมัครไป `/login`, และลิงก์จาก Register ไป Login; ปรับเลขเวอร์ชัน/การอ้างอิงเอกสาร
+- **สิ่งที่ยังต้องประสาน:** ลิงก์กลับจากหน้า Auth Login ไป `/register` เป็นงานของ feature ②; ไม่แก้ไฟล์ Auth ที่เพื่อนเป็นเจ้าของในรอบนี้ ให้ผู้ทำ ② เพิ่มและยืนยันผ่าน T-10
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ไม่แก้โค้ดและไม่รันทดสอบ เพราะเปลี่ยนเฉพาะเอกสาร
+
+## #27 | 2026-11-20 | Copilot | ปรับถ้อยคำเรื่องการเก็บ password ตามคำขอของทีม
+
+- **คำสั่งของทีม:** ไม่ต้องแสดงคำเตือนว่า password แบบ plaintext ไม่ควรใช้กับ production
+- **สิ่งที่ AI ทำ:** ลบคำเตือนดังกล่าวออกจากเอกสารปัจจุบันของ Register โดยคงข้อกำหนดการเก็บ password ตามค่าที่รับมาใน mock; ปรับเวอร์ชันและการอ้างอิงเอกสาร
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ไม่แก้โค้ด
+
+## #28 | 2026-11-20 | Copilot | ทำ T-01 และกำหนดคำตอบ Q-05 ตามที่ทีมมอบหมาย
+
+- **คำสั่งของทีม:** ให้ AI กำหนดคำตอบ Q-05 เอง
+- **หลักฐานที่ใช้:** สัญญา API ของ feature ④ ระบุ 409 สำหรับ conflict และ 422 สำหรับข้อมูลไม่ถูกรูปแบบ; Q-05 ของ Register มี 409 พร้อม `detail`/`field` และ 422 แบบรายการ `detail`
+- **การตัดสินใจ:** ใช้ความหมาย status code ร่วมกัน แต่ไม่บังคับ response body ให้เหมือนกันทุก feature; `field` ใช้เฉพาะ Register เพื่อระบุช่องซ้ำ; ไม่ได้ยืนยันกับผู้ทำ ④
+- **สิ่งที่ AI ทำ:** อัปเดต Q-05 และ D-01-06 ใน spec; ปรับ risk ใน plan และ T-01 ใน tasks ให้ตรง; บันทึกว่า T-01 เสร็จรอทีมตรวจ
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ไม่อ้างการยืนยันจาก ④ และไม่เปลี่ยนเอกสารของ feature อื่น
+
+## #29 | 2026-11-20 | Copilot | บันทึกการรับรอง T-01 และเริ่ม T-02
+
+- **คำยืนยันของทีม:** รับรอง T-01 ตามคำตอบ Q-05 ที่ AI กำหนด และอนุญาตให้ทำ T-02 ต่อ
+- **สิ่งที่ AI ทำ:** เปลี่ยนสถานะ T-01 เป็น `[x]` ตามการรับรองในแชต; เริ่มตรวจ `backend/app/mock_db.py` ตามขอบเขต T-02
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #30 | 2026-11-20 | Copilot | ตรวจ T-02: mock_db และ Auth seed
+
+- **สิ่งที่ตรวจ:** `mock_db.users` มีสอง seed user และฟิลด์ `id, name, email, phone, password, is_verified`; ค่าคงที่ราคา/มัดจำเป็น 10 บาท/กม. และ 30%; Auth login รับ credentials จาก `users` และ response ไม่คืน password
+- **ผลตรวจ:** seed ทั้งสองบัญชี login ผ่าน Auth และ response มีเฉพาะ token; ไม่พบสิ่งที่ขาด จึงไม่แก้ `backend/app/mock_db.py` ซึ่งมีการแก้ไข stage อยู่แล้ว
+- **การตรวจสอบ:** inline checks ผ่าน; `PYTHONPATH=backend python -m pytest backend/tests/test_auth.py -q` ผ่าน 9 tests (มี DeprecationWarning จาก Starlette/AnyIO)
+- **สิ่งที่ AI ทำ:** เปลี่ยนสถานะ T-02 เป็น `[~]` รอทีมตรวจ และบันทึกผลว่าไม่จำเป็นต้องแก้ไฟล์
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #31 | 2026-11-20 | Copilot | ตรวจรับ T-02 ตามมอบหมายของผู้ใช้
+
+- **คำสั่งของทีม:** ตรวจงานได้เองโดยไม่ต้องรอทีมทั้งหมด
+- **สิ่งที่ตรวจ:** `mock_db.users` มีสอง seed user พร้อมฟิลด์ที่กำหนด; seed password ใช้กับ Auth; response login ไม่คืน password; ค่าคงที่ 30% และ 10 บาท/กม.
+- **ผลตรวจ:** ผ่านเงื่อนไข T-02; ไม่แก้ `backend/app/mock_db.py` เพราะข้อมูลครบและไฟล์มีการเปลี่ยนแปลง stage อยู่แล้ว
+- **การตรวจสอบ:** `cd backend && pytest -q tests/test_auth.py` เริ่มไม่ได้เพราะ environment ไม่มี FastAPI; สร้าง venv ชั่วคราวและติดตั้งจาก `backend/requirements.txt`; `PYTHONPATH=backend python -m pytest backend/tests/test_auth.py -q` ผ่าน 9 tests (1 DeprecationWarning จาก Starlette/AnyIO)
+- **สิ่งที่ AI ทำ:** เปลี่ยนสถานะ T-02 เป็น `[x]` ตามที่ผู้ใช้มอบหมายให้ AI ตรวจ และแก้หมายเหตุสถานะในหัวไฟล์ที่ล้าสมัย
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #32 | 2026-11-20 | Copilot | /implement T-03 สร้างโครง Register backend
+
+- **คำสั่งของทีม:** ดำเนินงานต่อได้โดยไม่ต้องรอทีมทั้งหมด; เลือกแนวทาง A ให้ T-09 เป็นผู้ include router และตรวจ endpoint ใน `/docs`
+- **การปรับ task:** แก้เกณฑ์และคำอธิบาย T-03 ใน `tasks.md` ให้สอดคล้องกับขอบเขตไฟล์; ไม่พบ `auth_register.py` ต้นแบบใน repo จึงสร้างโครงจาก spec
+- **ไฟล์ที่สร้าง:** `backend/app/register/__init__.py`, `router.py`, `schemas.py`, `service.py`
+- **ผลการตรวจ:** `backend/tests/test_auth.py` ผ่าน 9 tests (1 DeprecationWarning); Register modules import ได้, Uvicorn เริ่มได้ และ `/openapi.json` ตอบ 200. การเห็น `POST /api/auth/register` ใน `/docs` ยังเป็นงาน T-09 หลัง include router
+- **สิ่งที่ AI ทำ:** เปลี่ยนสถานะ T-03 เป็น `[x]` ตามมอบหมายให้ AI ตรวจ; ไม่แก้ `main.py` หรือไฟล์ Auth ที่มีการเปลี่ยนแปลงของทีม
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #33 | 2026-11-20 | Copilot | /implement T-04 ตรวจ Register schemas
+
+- **ไฟล์ที่แก้:** `backend/app/register/schemas.py`
+- **สิ่งที่ทำ:** เพิ่ม `RegisterRequest` สำหรับ BR-RG-01 ถึง 04 (ตัดช่องว่างชื่อ/อีเมล, แปลงอีเมลเป็นตัวพิมพ์เล็ก, normalize เบอร์, ตรวจ password โดยไม่ trim); ฟิลด์ที่ขาดได้ error รายฟิลด์ "ห้ามเว้นว่าง" โดยยังคง required ใน OpenAPI. เพิ่ม `UserOut` ที่ไม่ประกาศ/ส่งออก `password`.
+- **การตรวจสอบ:** inline schema checks สำหรับ AC-01-02, AC-01-06 ถึง AC-01-10 ผ่าน (รวม required schema, normalization และข้อความ validation); `backend/tests/test_auth.py` ผ่าน 9 tests (1 DeprecationWarning).
+- **ขอบเขต:** รูปแบบ response error ที่ตัด `input` และคำนำหน้า `Value error, ` ยังเป็น T-07; ไม่แก้ handler หรือไฟล์อื่นนอกขอบเขต T-04.
+- **สถานะ:** เสร็จ รอทีมตรวจ (`[~]`).
+- **สิ่งที่ AI เกือบต้องเดาแต่ตรวจพบ:** ค่า default `""` จะทำให้ OpenAPI แสดงฟิลด์เป็น optional; เปลี่ยนเป็น required fields พร้อมเติมค่าที่ขาดใน model validator แทน.
+
+## #34 | 2026-11-20 | Copilot | /implement T-05 สร้าง Register service
+
+- **ไฟล์ที่แก้:** `backend/app/register/service.py`
+- **สิ่งที่ทำ:** normalize email/phone, ตรวจ email ซ้ำก่อน phone และส่ง duplicate details ที่มี `field`/409 ให้ router ใช้; สร้าง `id` ด้วย `mock_db.next_id`, เก็บ password ตามค่าที่รับ, ตั้ง `is_verified=False`, เพิ่ม record ใน `mock_db.users`, และคืนเฉพาะฟิลด์สาธารณะโดยไม่มี password
+- **การตรวจสอบ:** inline checks สำหรับ AC-01-03, AC-01-04, AC-01-05, AC-01-11, AC-01-12 และ Auth compatibility ผ่าน; `backend/tests/test_auth.py` ผ่าน 9 tests (1 DeprecationWarning)
+- **การทดสอบซ้ำ:** รอบแรกข้อมูลทดสอบเบอร์โทรชนกับ seed ที่มีอยู่และ service ปฏิเสธถูกต้อง; เปลี่ยนเฉพาะ test data เป็นเบอร์ไม่ซ้ำแล้วรันทวนผ่าน โดยไม่แก้โค้ด
+- **สถานะ:** เสร็จ รอทีมตรวจ (`[~]`).
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี; ไม่บันทึกค่ารหัสผ่านใน log
+
+## #35 | 2026-11-20 | Copilot | ตรวจรับ T-04 และ T-05 เพื่อปลดล็อก T-06
+
+- **คำสั่งของทีม:** อนุญาตให้ AI ปรับสถานะ dependency ที่ค้างได้เอง
+- **สิ่งที่ตรวจ:** T-04 มี inline schema checks ครอบคลุม required fields, normalization และ BR-RG-01 ถึง 04; T-05 มี inline checks ครอบคลุม duplicate ordering, ID, shared users, password ที่ Auth ใช้ และ response ที่ไม่มี password; regression Auth ผ่าน 9 tests ตามรายการใน #33 และ #34
+- **ผล:** ไม่พบเงื่อนไขที่ยังขาดในขอบเขต T-04/T-05; เปลี่ยนสถานะทั้งสองเป็น `[x]` และบันทึกว่า AI เป็นผู้ตรวจตามคำมอบหมาย ไม่อ้างว่าเป็นการตรวจจากทีม
+- **ขอบเขต:** เปลี่ยนเฉพาะสถานะ T-04/T-05 ใน `tasks.md`; ยังไม่ได้เริ่ม implement T-06
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #36 | 2026-11-20 | Copilot | /implement T-06 เพิ่ม Register endpoint
+
+- **ไฟล์ที่แก้:** `backend/app/register/router.py`
+- **สิ่งที่ทำ:** เพิ่ม `POST /api/auth/register` โดยไม่บังคับ `Authorization`; สมัครสำเร็จคืน 201 ผ่าน `UserOut` ซึ่งไม่ส่ง `password`; กรณีซ้ำคืน 409 พร้อม `detail` และ `field`; request ที่ไม่ผ่าน schema คืน 422 จาก FastAPI
+- **การตรวจสอบ:** inline checks `test_AC_01_01_register_success_without_authorization`, `test_AC_01_03_duplicate_email_returns_field_without_creation`, `test_AC_01_04_duplicate_phone_returns_field_without_creation` และ `test_register_invalid_request_returns_422` ผ่านทั้งหมด; `backend/tests/test_auth.py` ผ่าน 9 tests (1 DeprecationWarning); `git diff --check` ผ่าน
+- **Environment:** ติดตั้งจาก `backend/requirements.txt` ใน virtual environment ชั่วคราวตามคำยืนยันของทีม โดยไม่แก้ dependency manifest; ทดสอบผ่าน local FastAPI app เพราะการ include router ใน `main.py` เป็น T-09
+- **ขอบเขต:** ไม่แก้ `main.py`; การตัด `input`/คำนำหน้า error 422 ยังคงเป็น T-07; test suite ถาวรของ Register เป็น T-08. T-06 อยู่สถานะ `[~]` (เสร็จ รอทีมตรวจ)
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #37 | 2026-11-20 | Copilot | ตรวจรับ T-06 และกำหนดสถานะ
+
+- **คำสั่งของทีม:** อนุญาตให้ AI กำหนดสถานะงานเอง
+- **ผล:** อัปเดต T-06 จาก `[~]` เป็น `[x]` หลังตรวจ inline checks สำหรับ AC-01-01, AC-01-03, AC-01-04 และ 422 ผ่าน รวมทั้ง Auth regression 9 tests ผ่าน; บันทึกว่าเป็นการตรวจของ AI ไม่ใช่การรับรองจากทีม
+- **ขอบเขต:** ไม่เปลี่ยนสถานะ task อื่น; T-07 เป็นงานถัดไป และ T-08 ยังขึ้นกับ T-07
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #38 | 2026-11-20 | Copilot | /implement T-07 sanitize Register 422 responses
+
+- **ไฟล์ที่แก้:** `backend/app/register/router.py`
+- **สิ่งที่ทำ:** เพิ่ม `RegisterRoute` ที่จัดการ `RequestValidationError` เฉพาะ route Register; คืนเฉพาะ `loc`/`msg`, ตัด prefix `Value error, `, ใช้ "ห้ามเว้นว่าง" สำหรับ missing field และไม่ log validation data
+- **การตรวจสอบ:** `test_AC_01_09_invalid_password_is_sanitized_and_not_logged`, `test_AC_01_10_missing_fields_have_thai_required_errors`, และ `test_register_responses_do_not_echo_password_for_201_409_422` ผ่าน; `backend/tests/test_auth.py` ผ่าน 9 tests (1 DeprecationWarning); `py_compile` และ `git diff --check` ผ่าน
+- **การทดสอบซ้ำ:** ความพยายามแรกใช้ข้อมูล password ทดสอบที่ผ่านกฎ จึงได้ผล 201; แก้เฉพาะ test data ให้ผิดกฎ แล้วทดสอบซ้ำผ่าน โดยไม่เปลี่ยนโค้ดเพิ่ม
+- **Environment:** ใช้ virtual environment ชั่วคราวและ dependencies จาก `backend/requirements.txt` ตามคำยืนยันของทีม; ไม่แก้ manifest; การทดสอบเป็น inline checks เพราะไฟล์ทดสอบถาวรอยู่ในขอบเขต T-08
+- **สถานะ:** เสร็จ รอทีมตรวจ (`[~]`)
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #39 | 2026-11-20 | Copilot | ตรวจรับ T-07 เพื่อปลดล็อก T-08
+
+- **คำสั่งของทีม:** อนุญาตให้ AI ปรับสถานะตามหลักฐานที่ตรวจแล้ว
+- **ผล:** เปลี่ยนสถานะ T-07 จาก `[~]` เป็น `[x]` หลัง inline checks ของ AC-01-09/10, การไม่สะท้อน password ใน response 201/409/422 และไม่บันทึกค่าทดสอบลง log ผ่าน; Auth regression ผ่าน 9 tests
+- **ขอบเขต:** เปลี่ยนเฉพาะสถานะ T-07; ไม่เปลี่ยนโค้ดจาก T-07
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #40 | 2026-11-20 | Copilot | /implement T-08 เพิ่ม Register tests
+
+- **ไฟล์ที่สร้าง:** `backend/tests/test_register.py`
+- **สิ่งที่ทำ:** เพิ่ม tests ครบ AC-01-01 ถึง AC-01-12; fixture คืนค่า `mock_db.users`, `tokens` และ OTP challenges ก่อน/หลังแต่ละ test; ทดสอบ Register ผ่าน router โดยตรง และ AC-01-12 ตรวจว่า Auth login รับ password จาก field ร่วมเดียวกัน
+- **ผลทดสอบ:** `pytest -q tests/test_register.py` ผ่าน 14 tests (1 DeprecationWarning); รันชุดเดียวกันโดยระบุ test node IDs ย้อนลำดับผ่าน 14 tests; `py_compile` และ `git diff --check` ผ่าน
+- **การทดสอบซ้ำ:** คำสั่งตรวจลำดับครั้งแรกใช้ node ID ของ AC-01-12 ไม่ตรงกับชื่อจริง; ใช้ `--collect-only` ตรวจชื่อและรันลำดับย้อนใหม่ผ่านครบ
+- **Environment:** ใช้ venv ชั่วคราวและ dependencies จาก `backend/requirements.txt` ตามคำยืนยันของทีม; ไม่แก้ dependency manifest. สร้าง local TestClient app รวม Register และ Auth router เพราะการรวมเข้ากับ `main.py` เป็น T-09
+- **สถานะ:** เสร็จ รอทีมตรวจ (`[~]`)
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #41 | 2026-11-20 | Copilot | ตรวจรับ T-08 และกำหนดสถานะ
+
+- **คำสั่งของทีม:** อนุญาตให้ AI ปรับสถานะได้โดยไม่ต้องรอทีมตรวจ
+- **ผล:** เปลี่ยน T-08 จาก `[~]` เป็น `[x]` ตามผล pytest 14 passed และการรันซ้ำในลำดับย้อน 14 passed
+- **ขอบเขต:** เปลี่ยนเฉพาะสถานะ T-08; ไม่เริ่ม T-09
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #42 | 2026-11-20 | Copilot | /implement T-09 รวม Register router เข้ากับแอป
+
+- **ไฟล์ที่แก้:** `backend/app/main.py`, `backend/tests/test_auth.py`, `specs/001-register/tasks.md`, `prompt-log.md`
+- **สิ่งที่ทำ:** Include Register router ในแอปหลัก; เพิ่ม CORS origin `http://localhost:3000` โดยคง `http://localhost:5173`; ปรับ route assertion ของ Auth ให้กรองด้วย tag เพื่อไม่เหมารวม Register route ที่ใช้ prefix `/api/auth/`
+- **ผลทดสอบ:** `PYTHONPATH=.:backend /tmp/khonyaai-register-t09-venv/bin/pytest -q backend/tests` ผ่าน 59 tests (1 DeprecationWarning); TestClient ยืนยัน `POST /api/auth/register` อยู่ใน app/OpenAPI และ preflight CORS ผ่านทั้งสอง origin; `git diff --check` ผ่าน
+- **การรันครั้งแรก:** รันจาก `backend/` แล้ว collection ล้มเพราะ `test_cancellation.py` import `backend.app`; รันจาก repository root โดยกำหนด `PYTHONPATH=.:backend` แล้วผ่านครบ
+- **การอนุมัติขอบเขต:** ขอและได้รับอนุญาตให้แก้เฉพาะ route assertion ใน `backend/tests/test_auth.py` และใช้ virtualenv ชั่วคราวนอก repository พร้อม dependencies จาก `backend/requirements.txt`
+- **สถานะ:** เปลี่ยน T-09 จาก `[ ]` เป็น `[x]` หลังตรวจ integration และ test suite ผ่าน
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ขออนุญาตก่อนแก้ test ที่อยู่นอกช่องไฟล์ของ T-09 และก่อนติดตั้ง dependencies ใน virtualenv ชั่วคราว
+
+## #43 | 2026-11-20 | Copilot | /implement T-10 เตรียมเส้นทาง frontend ของ Register
+
+- **ไฟล์ที่แก้:** `frontend/src/App.jsx`, `frontend/.env.example`, `specs/001-register/tasks.md`, `prompt-log.md`
+- **สิ่งที่ทำ:** เพิ่ม native path handling แบบไม่เพิ่ม dependency; `/login` แสดง Auth flow เดิม ส่วน `/register` เปิด route shell ว่างเพื่อรอแบบฟอร์มใน T-13; เพิ่ม `VITE_API_BASE=http://localhost:8000` ตามค่าเริ่มต้นใน plan
+- **ผลตรวจ:** `npm --prefix frontend run build` ผ่าน; `curl` ได้ HTTP 200 ทั้ง `/register` และ `/login`; browser ตรวจพบ route marker ที่ `/register` และช่อง email/password ที่ `/login`; `git diff --check` ผ่าน
+- **Environment:** ต้องรัน `npm ci --prefix frontend` เพราะไม่มี Vite; npm แจ้ง 2 vulnerabilities (1 moderate, 1 high) ใน dependency set เดิม ไม่ได้เปลี่ยน manifest หรือ lockfile
+- **การประสาน ②:** `AuthFields.jsx` ยังไม่มีลิงก์กลับ `/register`; ตาม T-10 ให้เจ้าของ ② เพิ่มลิงก์ในไฟล์ของตน จึงยังไม่ถือว่า T-10 เสร็จ
+- **การเลือกแนวทาง:** ทีมเลือก native path handling, placeholder ก่อน T-13 และให้ทำ route shell ต่อระหว่างรอเจ้าของ ②
+- **สถานะ:** เปลี่ยน T-10 จาก `[ ]` เป็น `[~]`; รอเจ้าของ ② เพิ่มลิงก์ Login → Register ก่อนตรวจรับ
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ถามก่อนเลือก routing method/placeholder และก่อนติดตั้ง dependencies; ค้น repo แล้วไม่พบ routing library หรือแนวทางเดิมให้ยึด
+
+## #44 | 2026-11-20 | Copilot | ตรวจซ้ำลิงก์ Login → Register ของ T-10
+
+- **คำสั่งของทีม:** ตรวจว่ามีการเพิ่มลิงก์จากหน้า Login กลับ `/register` แล้วหรือไม่ และปรับสถานะ T-10
+- **ผลตรวจ:** ค้นไฟล์ทั้งหมดใน `frontend/`; พบ `/register` เฉพาะ route shell ใน `App.jsx`; `AuthFields.jsx` ยังไม่มีลิงก์และไม่มี diff ใหม่
+- **สถานะ:** คง T-10 เป็น `[~]` เพราะยังไม่ครบเงื่อนไขการประสานกับ ②
+- **สิ่งที่ AI เดา (ถ้ามี):** ไม่มี
+
+## #45 | 2026-11-20 | Copilot | /implement T-11 ตรวจข้อมูลสมัครฝั่ง frontend
+
+- **ไฟล์ที่สร้าง:** `frontend/src/lib/validators.js`
+- **สิ่งที่ทำ:** เพิ่ม `validateRegisterForm` สำหรับ BR-RG-01 ถึง BR-RG-04; คืนข้อความ error แยกตาม field ให้ตรงกับ backend; นับความยาว password แบบ Unicode code point ให้ตรงกับ Python
+- **ผลทดสอบ:** inline `test_AC_01_13_register_validation_messages_match_backend` ผ่านทุก assertion; `npm --prefix frontend run build` ผ่าน; `node --test frontend/src/auth/AuthFields.test.js` ผ่าน 4 tests; `git diff --check` ผ่าน
+- **Constraint/REQ:** ทำตาม REQ-FN-102 และ REQ-FN-105; ไม่เพิ่ม dependency
+- **สถานะ:** เปลี่ยน T-11 จาก `[ ]` เป็น `[x]` หลัง build และ regression checks ผ่าน
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ไม่มี; API ของ validator ยึด pattern errors-by-field ที่ Payment form ใช้อยู่
+
+## #46 | 2026-11-20 | Copilot | /implement T-12 เชื่อม Register API
+
+- **ไฟล์ที่สร้าง:** `frontend/src/api/register.js`
+- **สิ่งที่ทำ:** เพิ่ม `registerUser(body)` เรียก `POST ${VITE_API_BASE}/api/auth/register` โดยไม่ส่ง `Authorization`; คืน discriminated result `success`, `conflict`, `validation_error`, `network_error` และ `http_error` สำหรับสถานะอื่น
+- **ผลทดสอบ:** live backend ผ่าน 201, 409 อีเมลซ้ำ, 409 เบอร์ซ้ำ และ 422; ตรวจว่าไม่ส่ง `Authorization`; หยุด backend แล้วได้ `network_error`; inline status/network checks ผ่าน; `npm --prefix frontend run build` ผ่าน; `node --test frontend/src/auth/AuthFields.test.js` ผ่าน 4 tests
+- **การเลือก contract และ environment:** ทีมเลือก discriminated result; ทีมอนุญาต virtualenv ชั่วคราวและ dependencies จาก `backend/requirements.txt` เพื่อทดสอบ backend จริง
+- **Constraint/REQ:** รองรับ REQ-FN-101 และ REQ-SEC-101; ใช้ `VITE_API_BASE` ที่มีค่าเริ่มต้นตาม plan
+- **สถานะ:** เปลี่ยน T-12 จาก `[ ]` เป็น `[x]` หลังทดสอบ backend จริงครบทุก outcome ที่กำหนด
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ถามรูปแบบผลลัพธ์ของ `registerUser` ที่ spec/plan ไม่ได้ระบุ และขออนุญาตก่อนติดตั้ง backend dependencies ชั่วคราว
+
+## #47 | 2026-11-20 | Copilot | /implement T-13 สร้างหน้า Register
+
+- **ไฟล์ที่สร้าง:** `frontend/src/pages/RegisterPage.jsx`
+- **ไฟล์ที่แก้:** `frontend/src/App.jsx` (เชื่อม route `/register` ตามที่ทีมอนุญาต), `specs/001-register/tasks.md`, `prompt-log.md`
+- **สิ่งที่ทำ:** สร้างฟอร์ม 4 ช่องตาม UI-01-01; แสดงข้อความ error ใต้ช่องจากการตรวจข้อมูล, 409 จาก `field` และ 422 จาก `loc`; คงค่าฟอร์มไว้; เพิ่มลิงก์ไป `/login`
+- **ผลทดสอบ:** `npm --prefix frontend run build` ผ่าน; `node --test frontend/src/auth/AuthFields.test.js` ผ่าน 4 tests; `git diff --check` ผ่าน; browser ตรวจชนิด/ลำดับช่อง, ข้อความ error, ค่าฟอร์มหลัง 409/422 และเปิดหน้า `/login` ได้ โดยจำลอง response ของ backend
+- **Constraint/REQ:** รองรับ REQ-FN-101 และ REQ-FN-105; ไม่เพิ่ม dependency และไม่เริ่มทำ T-14/T-15
+- **สถานะ:** เปลี่ยน T-13 จาก `[ ]` เป็น `[x]` หลัง build, regression test และตรวจ browser ผ่าน
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ไม่มี; ไม่มี mockup ที่อนุมัติ จึงยึดข้อกำหนด UI-01-01 ใน spec และ contract จาก T-11/T-12
+
+## #48 | 2026-11-20 | Copilot | จัดโฟลเดอร์ frontend ของ Register
+
+- **คำสั่ง:** จัดไฟล์ Register ใน frontend ให้อยู่ในโฟลเดอร์ของ feature
+- **คำตอบหรือการตัดสินใจของทีม:** ย้ายเฉพาะไฟล์ Register ไป `frontend/src/register/`; คง Auth/Payment ตามเดิม และให้ `Countdown.jsx` อยู่ใน `payment/`
+- **ไฟล์ที่ย้าย:** `frontend/src/pages/RegisterPage.jsx`, `frontend/src/api/register.js`, `frontend/src/lib/validators.js` ไป `frontend/src/register/`
+- **ไฟล์ที่แก้:** `frontend/src/App.jsx` (ปรับ import), `specs/001-register/plan.md`, `specs/001-register/tasks.md`
+- **ผลตรวจ:** `npm --prefix frontend run build` ผ่าน; `node --test frontend/src/auth/AuthFields.test.js` ผ่าน 4 tests; `git diff --check` ผ่าน; ไม่พบ import/reference โค้ดที่ยังชี้ไป path เดิม
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ถามขอบเขตการย้ายและสถานะของ `Countdown.jsx`; ทีมยืนยันให้ย้ายเฉพาะ Register และคง Countdown ไว้ใน Payment
+
+## #49 | 2026-11-20 | Copilot | /implement T-14 จัดการระหว่างส่งและความล้มเหลว
+
+- **ไฟล์ที่แก้:** `frontend/src/register/RegisterPage.jsx`
+- **สิ่งที่ทำ:** ปิดปุ่มสมัครระหว่าง request; แสดงข้อความที่ได้จาก backend หรือ network error; คืนสถานะปุ่มใน `finally` ทั้งกรณี HTTP และ network failure
+- **ผลทดสอบ:** `npm --prefix frontend run build` ผ่าน; `node --test frontend/src/auth/AuthFields.test.js` ผ่าน 4 tests; browser ตรวจ AC-01-14 โดยหน่วง HTTP 500 และจำลอง network failure: ปุ่ม disabled ระหว่างรอ, แสดง error และกลับมา enabled ทั้งสองกรณี; `git diff --check` ผ่าน
+- **Constraint/REQ:** ทำตาม REQ-FN-107 ในการปิดปุ่มระหว่างรอ และเปิดกลับพร้อมแจ้ง error เมื่อ request ล้มเหลว
+- **สถานะ:** เปลี่ยน T-14 จาก `[ ]` เป็น `[x]` หลังตรวจ HTTP 500 และ network failure ผ่าน
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ไม่มี; ไม่มี mockup ที่อนุมัติ และใช้ error จาก backend/network โดยตรงตาม AC-01-14
+
+## #50 | 2026-11-20 | Copilot | /implement T-15 ส่งต่อไปหน้า Login
+
+- **ไฟล์ที่แก้:** `frontend/src/register/RegisterPage.jsx`
+- **สิ่งที่ทำ:** เมื่อ Register API ตอบ 201 เปลี่ยนเส้นทางไป `/login` ของ Auth; ไม่เริ่ม OTP ในหน้า Register
+- **ผลทดสอบ:** `npm --prefix frontend run build` ผ่าน; `node --test frontend/src/auth/AuthFields.test.js` ผ่าน 4 tests; browser ตรวจ AC-01-15 ด้วย 201 จำลอง: ไป `/login`, เห็นช่อง email/password และหลังส่งข้อมูลเข้าสู่ Auth ได้หน้า OTP ของ Auth; `git diff --check` ผ่าน
+- **Constraint/REQ:** รองรับ REQ-FN-106; การเริ่ม OTP คงอยู่ใน Auth ของ ② ตาม Q-04
+- **สถานะ:** เปลี่ยน T-15 จาก `[ ]` เป็น `[x]` หลังตรวจ redirect และการแยก Auth/OTP flow ผ่าน
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ไม่มี; spec กำหนด redirect ไป `/login` แต่ไม่ได้กำหนดให้ส่งหรือ prefill password จึงไม่ส่ง password ผ่าน URL หรือ storage และให้ผู้ใช้กรอกใน Auth
+
+## #51 | 2026-11-20 | Copilot | /implement T-16 ตรวจ UI AC-01-13 ถึง AC-01-15
+
+- **ไฟล์ที่สร้าง:** `specs/001-register/rtm.md` (checklist ตรวจด้วยตาตาม fallback ของ T-16)
+- **ไฟล์ที่แก้:** `specs/001-register/tasks.md`, `prompt-log.md`
+- **การเลือกแนวทาง:** Q-07 ยังไม่เลือกเครื่องมือ test React; ขออนุญาตทีมก่อนสร้าง `rtm.md` เพราะไม่ได้อยู่ในช่องไฟล์ของ T-16 และทีมอนุญาตให้สร้าง checklist
+- **ผลตรวจ:** Browser กับ Vite ผ่าน AC-01-13 ทั้ง 409 email/phone และ 422 phone/password โดยค่าฟอร์มยังอยู่; AC-01-14 ปุ่ม disabled ระหว่างรอ HTTP 500 และกลับ enabled พร้อม error ทั้งกรณี 500/network failure; AC-01-15 response 201 ไป `/login` และ Auth เปิด OTP หลังรับ email/password. API responses ถูกจำลอง ไม่ได้ทดสอบกับ backend จริง
+- **Constraint/REQ:** ตาม REQ-FN-105, REQ-FN-107 และ REQ-FN-106; ไม่เพิ่ม dependency และไม่เริ่ม T-21
+- **สถานะ:** เปลี่ยน T-16 จาก `[ ]` เป็น `[x]` หลัง checklist ครบ 3 AC
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ถามขออนุญาตก่อนสร้าง/แก้ `rtm.md` นอกช่องไฟล์ที่ระบุ; ทีมอนุญาต
+
+## #52 | 2026-11-20 | Copilot | /implement T-17 ตรวจตัวอย่างกฎธุรกิจ
+
+- **ไฟล์ที่แก้:** `specs/001-register/rules.md`
+- **สิ่งที่ทำ:** เพิ่มตัวอย่างสำหรับ BR-RG-08 ถึง BR-RG-10; ตรวจยืนยันว่า BR-RG-01 ถึง BR-RG-07 มีตัวอย่างอยู่แล้ว; spec ส่วน 5 อ้าง `rules.md` อยู่แล้วจึงไม่ต้องแก้ spec
+- **ผลตรวจ:** ตรวจครบ BR-RG-01 ถึง BR-RG-10 ว่ามีตัวอย่างอย่างน้อยหนึ่งรายการ; `git diff --check` ผ่าน; ไม่มี test อัตโนมัติเนื่องจากเป็นเอกสาร
+- **สถานะ:** เปลี่ยน T-17 จาก `[~]` เป็น `[x]` หลังครบเกณฑ์
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ไม่มี; ตัวอย่างที่เพิ่มเป็นกรณีตรงตามข้อความและตาราง Decision Table เดิม ไม่เปลี่ยนกฎหรือ ID
+
+## #53 | 2026-11-20 | Copilot | /implement T-18 ตรวจแบบจำลองกับ spec
+
+- **ไฟล์ที่แก้:** `specs/001-register/models.md`, `specs/001-register/tasks.md`
+- **สิ่งที่ทำ:** ปรับ MD-STM-01 ไม่ให้ Verified ดูเป็นสถานะสิ้นสุด; ปรับ MD-DOM-01 ให้จำลองเฉพาะ `users` ตาม spec ส่วน 7 โดยไม่เพิ่ม `bookings` ที่ไม่มีระบุในส่วน 3/7; ไม่ระบุจำนวน seed users ที่ spec ไม่ได้กำหนด
+- **ผลตรวจ:** เทียบ MD-CTX-01, MD-STM-01 และ MD-DOM-01 กับ spec ส่วน 3 และ 7; `git diff --check` ผ่าน; ไม่มี automated test สำหรับงานเอกสาร
+- **สถานะ:** เปลี่ยน T-18 จาก `[~]` เป็น `[x]` หลังตรวจความสอดคล้อง
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ไม่ถือความสัมพันธ์ `bookings.user_id` หรือจำนวนผู้ใช้ seed เป็นข้อกำหนดของ Register เพราะ spec ส่วน 3/7 ไม่ได้กำหนดไว้
+
+## #54 | 2026-11-20 | Copilot | /implement T-19 แปลง AC เป็น Gherkin
+
+- **ไฟล์ที่แก้:** `specs/001-register/feature.feature`, `specs/001-register/tasks.md`
+- **สิ่งที่ทำ:** แก้ Background ให้ข้อมูล `password` ของผู้ใช้ตัวอย่างตรงกับ spec ส่วน 7 และ BR-RG-04 ซึ่งกำหนดให้เก็บค่าที่รับมาใน mock; คง AC-01-12 เป็นข้อค้นพบภายใน และ AC-01-15 ให้ไป `/login` ก่อน Auth เริ่ม OTP
+- **ผลตรวจ:** ตรวจ static พบ AC-01-01 ถึง AC-01-15 ครบ (15/15), AC-01-12 มีแท็ก `@internal`, ข้อความ hash เก่าถูกเอาออก; `git diff --check` ผ่าน. ไม่รัน Gherkin runner เพราะไฟล์ระบุว่ายังไม่ได้ผูกกับเครื่องมือรัน
+- **สถานะ:** เปลี่ยน T-19 จาก `[~]` เป็น `[x]`
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ถามขอบเขตเพราะ task อธิบายให้แก้ spec ส่วน 6 แต่คอลัมน์ไฟล์ระบุเฉพาะ `feature.feature`; ทีมเลือกให้แก้เฉพาะไฟล์ที่ระบุ จึงไม่แก้ `spec.md` (ส่วน 6 ที่ตรวจแล้วสอดคล้องกับ AC ในไฟล์อยู่แล้ว)
+
+## #55 | 2026-11-20 | Copilot | /implement T-20 สร้าง mockup UI-01-01
+
+- **ไฟล์ที่สร้าง/แก้:** `specs/001-register/mockups/UI-01-01-register.html`, `specs/001-register/tasks.md`
+- **สิ่งที่ทำ:** สร้าง mockup แบบ static HTML ครบ 5 สถานะ (ปกติ, 422, 409, กำลังส่ง/ล้มเหลว, ส่งต่อหลังสำเร็จ); ระบุ `data-req` ให้ช่อง ปุ่ม ลิงก์ และ error; ไม่ใส่กล่อง `รอ Q-08` เพราะ Q-08 เป็นเรื่องผู้อนุมัติ ไม่ใช่ UI ของผู้ใช้
+- **ผลตรวจ:** static check ผ่าน (5 สถานะ, ชนิด/ป้ายช่อง, ข้อความ error 6 แบบ, ลิงก์ `/login`, ปุ่ม disabled ระหว่างส่งและ enabled เมื่อล้มเหลว); เปิด preview ใน browser ได้; `git diff --check` ผ่าน
+- **สถานะ:** เปลี่ยน T-20 จาก `[ ]` เป็น `[x]`; mockup ยังเป็นร่างให้ PO ยืนยันตาม Q-08
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** spec ไม่ระบุข้อความสำหรับ error จาก request failure; ทีมเลือกให้แสดงเฉพาะ error indicator โดยไม่กำหนดข้อความตายตัว
+
+## #56 | 2026-11-20 | Copilot | /implement T-21 สร้าง RTM Register
+
+- **ไฟล์ที่แก้:** `specs/001-register/rtm.md`, `specs/001-register/tasks.md`
+- **สิ่งที่ทำ:** เพิ่ม forward/reverse traceability ครบ 12 REQ และ 15 AC, หลักฐาน test/task/code/UI, ตรวจความครบของ spec และนำ F-01 ถึง F-09 จาก plan.md มาใส่ RTM; คง checklist T-16 เดิมไว้; บันทึก F-10 สำหรับ AC-01-12 ที่ตรวจได้ภายใน และ F-11 สำหรับข้อความสถานะ mockup ใน spec ที่ยังไม่อัปเดต
+- **ผลตรวจ:** `cd backend && python -m pytest -q tests/test_register.py` ได้ 14 passed; static check RTM coverage 12 REQ/15 AC/F-01 ถึง F-11 และ path references ผ่าน; `git diff --check` ผ่าน
+- **สถานะ:** เปลี่ยน T-21 จาก `[ ]` เป็น `[x]`
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** task ระบุให้ย้าย F-01 ถึง F-09 แต่คอลัมน์ไฟล์อนุญาตเฉพาะ `rtm.md`; ทีมเลือกให้เพิ่มใน RTM และคงตารางต้นทางใน plan.md
+
+## #57 | 2026-11-20 | Copilot | /implement T-22 ยืนยันรหัสและติดตามคำถามเปิด
+
+- **สิ่งที่ AI ถามหรือรายงาน:** ขอให้ทีมยืนยันรหัสที่ AI เสนอ, คำตอบ Q-06/Q-10/Q-11 และอนุญาตแก้ `tasks.md` เพื่อปิดสถานะ T-22 ตามขั้นตอน /implement
+- **คำตอบหรือการตัดสินใจของทีม:** ยืนยันรหัส UC-01, REQ, AC, BR-RG และ D-01 ชุดปัจจุบันโดยไม่เปลี่ยน ID; ยืนยันข้อเสนอที่ยังเปิดใน Q-06; รับรองหลักฐานภายใน AC-01-12 ตาม RTM; ตัดสินใจไม่ต้องมี log แยกจาก `users`; อนุญาตให้อัปเดต `tasks.md`
+- **ไฟล์ที่แก้:** `specs/001-register/spec.md`, `specs/001-register/tasks.md`, `prompt-log.md`
+- **สิ่งที่ทำ:** เพิ่ม spec v1.11 และบันทึกผลยืนยันใน Change Log; ปิด Q-06, Q-10 และ Q-11 ตามคำตอบทีม; เปลี่ยน T-22 เป็น `[x]`
+- **ผลตรวจ:** ตรวจ static ว่ามีบันทึกยืนยันรหัสและคำตอบครบทั้งสาม Q; `git diff --check` ผ่าน; ไม่มีการรัน automated test เนื่องจากเป็นการแก้เอกสาร
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ถามการยืนยันรหัสและสถานะของแต่ละ Q รวมถึงการตัดสินใจเรื่อง log แทนการตัดสินใจเอง
+
+## #58 | 2026-11-20 | Copilot | /implement T-23 ตรวจตัวเลขไฟล์ภาพรวม 6 Feature
+
+- **สิ่งที่ AI ถามหรือรายงาน:** รายงานว่า `docs/Khonย้าย-ภาพรวมระบบ.html` มีตัวเลขและตัวอย่างครบแล้ว; SPEC-04 (`specs/004-payment/spec.md`) ระบุมัดจำ 30% แต่ไม่ได้กำหนดอัตราค่าขนส่ง 10 บาท/กม.; ขอคำยืนยันการตีความและขอบเขตการอัปเดต tracking
+- **คำตอบหรือการตัดสินใจของทีม:** ให้เทียบมัดจำ 30% กับ SPEC-04 และรับรองอัตรา 10 บาท/กม. ในไฟล์ภาพรวม; อนุญาตให้อัปเดต `tasks.md`, `prompt-log.md` และ `spec.md` เพื่อปิด Q-09
+- **ไฟล์ที่ตรวจ/แก้:** ตรวจ `docs/Khonย้าย-ภาพรวมระบบ.html` โดยไม่แก้เพราะเนื้อหาตรงเกณฑ์อยู่แล้ว; แก้ `specs/001-register/spec.md` และ `specs/001-register/tasks.md`; เพิ่มบันทึกนี้
+- **สิ่งที่ทำ:** ยืนยันใน spec ว่าข้อ 1 = มัดจำ 30%, ข้อ 5 = 10 บาท/กม. และตัวอย่าง 30 กม. = 300 บาท / มัดจำ 90 บาท / เหลือ 210 บาท; บันทึกว่า SPEC-04 ใช้มัดจำ 30% และไม่กำหนดอัตราค่าขนส่ง; ปิด Q-09 และเปลี่ยน T-23 เป็น `[x]`
+- **ผลตรวจ:** ตรวจ static ค่าในไฟล์ภาพรวมและ SPEC-04; `git diff --check` สำหรับไฟล์ที่แก้ผ่าน; ไม่มี automated test เนื่องจากเป็นการตรวจ/แก้เอกสาร
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ถามว่า SPEC-04 ต้องเทียบเฉพาะมัดจำ 30% หรือรวมอัตรา 10 บาท/กม. ด้วย และขออนุญาตแก้ไฟล์ tracking นอกช่องไฟล์ของ task
+
+## #59 | 2026-11-20 | Copilot | ปรับข้อกำหนด Auth สำหรับ Login ↔ Register
+
+- **คำสั่ง:** บันทึกความต้องการให้หน้า Login มีปุ่มไป Register แบบไป-กลับ; ตอบคำถามข้อมูลบัญชีทดสอบและวิธีรัน; ยังไม่แก้โค้ด
+- **สิ่งที่ AI ถามหรือรายงาน:** รายงานว่าหน้า Register มีลิงก์ “เข้าสู่ระบบ” อยู่แล้ว แต่หน้า Login ยังไม่มีปุ่มกลับไป Register; ถามข้อความบนปุ่ม, ให้แสดงระหว่างขั้น OTP หรือไม่ และอนุญาตให้บันทึกใน Draft Auth spec/prompt-log หรือไม่. รายงานด้วยว่าบัญชีทดสอบรอบก่อนเป็นข้อมูลในหน่วยความจำที่หายเมื่อปิด backend, แจ้งบัญชี seed, คำสั่งรัน และข้อจำกัด CORS ของ origin `127.0.0.1:5173`
+- **คำตอบหรือการตัดสินใจของทีม:** ใช้ข้อความปุ่ม “สมัครสมาชิก”; แสดงเฉพาะฟอร์ม Login email/password ไม่แสดงในหน้ากรอก OTP; อนุญาตให้บันทึกข้อกำหนดใน Draft Auth spec และ prompt-log ก่อนทำโค้ด
+- **สิ่งที่แก้:** ปรับ `specs/002-auth/spec.md` เป็น v1.1 โดยบันทึกคำตอบ Q-02-10 และเชื่อมกับ REQ-FN-201/AC-02-01; เพิ่ม scenario นำทางไป-กลับใน `specs/002-auth/auth.feature`; เพิ่มบันทึกนี้. ไม่แก้โค้ด, plan.md, tasks.md หรือไฟล์ mockup
+- **ผลตรวจ:** ตรวจ diff และรูปแบบเอกสาร; ไม่มีการรันทดสอบ เนื่องจากแก้เฉพาะ spec/Gherkin/log
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ถามข้อความปุ่มและว่าควรแสดงในหน้า OTP ด้วยหรือไม่; ไม่เพิ่ม Requirement/AC ID ใหม่และไม่ถือว่าโค้ดถูก implement แล้ว
+
+## #60 | 2026-11-20 | Copilot | เปลี่ยนหน้าแรกเป็น Register
+
+- **คำสั่ง:** บันทึกให้หน้า `/` เปิด Register ก่อน พร้อมปุ่มไป Login; คงการนำทางกลับไป Register จาก Login; ยังไม่แก้โค้ด
+- **สิ่งที่ AI ถามหรือรายงาน:** รายงานว่า `/` ปัจจุบันแสดง Login, `/register` แสดง Register และปุ่ม/ลิงก์จาก Register ไป Login ใน UI-01-01 ปัจจุบันเป็นลิงก์ข้อความ; Auth spec ยังระบุว่า Login เป็นหน้าเริ่มต้น; ขอให้ยืนยันว่าจะใช้ปุ่มจริงหรือคงลิงก์เดิม
+- **คำตอบหรือการตัดสินใจของทีม:** ให้ `/` เปิดหน้า Register; ใช้ปุ่มจริง “เข้าสู่ระบบ” ไป `/login`; คงปุ่ม “สมัครสมาชิก” จากฟอร์ม Login ไป `/register` ตามคำยืนยันก่อนหน้า; อนุญาตให้อัปเดต Draft specs และ prompt-log แต่ไม่แก้โค้ด
+- **สิ่งที่แก้:** ปรับ `specs/001-register/spec.md` เป็น v1.13 และ `specs/002-auth/spec.md` เป็น v1.2; ปรับ `specs/002-auth/auth.feature` ให้ตรวจการเริ่มที่ Register และเดินทางไป-กลับ; เพิ่มบันทึกนี้. ไม่แก้ mockup, plan.md, tasks.md หรือ source code
+- **ผลตรวจ:** ตรวจ diff และรูปแบบเอกสาร; ไม่มีการรันทดสอบ เนื่องจากยังไม่แก้โค้ด
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ถามว่าจะเปลี่ยนลิงก์บน Register เป็นปุ่มจริงหรือคงรูปแบบเดิม; แจ้งให้ทีมปรับ mockup ซึ่งยังแสดงลิงก์ให้ตรงกับคำยืนยันใหม่
+
+## #61 | 2026-11-20 | Copilot | ปรับแผนและงาน Register ให้ตรง route เริ่มต้น
+
+- **คำสั่ง:** ปรับ plan/tasks ของ Register ให้ครอบคลุมการเปิด Register ที่ `/` และ navigation ระหว่าง Register กับ Login; คง ID และสถานะงานเดิม
+- **สิ่งที่ AI ถามหรือรายงาน:** ถามขอบเขต feature เพราะมี plan/tasks ทั้ง Register และ Auth และถามว่าจะเขียน tasks.md ใหม่หรือเพิ่ม task ต่อท้าย
+- **คำตอบหรือการตัดสินใจของทีม:** ปรับเฉพาะ plan/tasks ของ Register; คง ID/สถานะเดิมและแก้ T-10
+- **สิ่งที่แก้:** ปรับ `specs/001-register/plan.md` เป็น v1.9 อ้าง spec v1.13 และระบุ route `/`/`/register`, ปุ่มไป Login, checklist navigation และความต่างของ mockup; ปรับ `specs/001-register/tasks.md` เป็น v1.9 โดยแก้ขอบเขต/เกณฑ์ T-10 และตาราง traceability. ไม่แก้โค้ด, Auth plan/tasks, mockup หรือสถานะของ task
+- **ผลตรวจ:** `git diff --check` ผ่าน; ไม่มีการรันทดสอบ เนื่องจากแก้เฉพาะเอกสาร
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ถามขอบเขตว่าจะปรับ Register อย่างเดียวหรือทั้ง Register/Auth และถามวิธีจัดการ tasks.md เดิม; ยึด Q-08 ให้ทีมปรับ mockup เอง
+
+## #62 | 2026-11-20 | Copilot | ปรับ flow Login/Register ตามคำยืนยันล่าสุด
+
+- **คำสั่ง:** ทำ T-10 ให้เรียบร้อย โดยให้หน้าแรกเป็น Login, มีปุ่มสมัครสมาชิกไป Register และ Register กลับ Login ตามแนวทางเดิม
+- **สิ่งที่ AI ถามหรือรายงาน:** พบว่า mockup `UI-01-01` ยังคงแสดง label ลิงก์เป็น `/login`; ทีมเลือกข้อความ “เข้าสู่ระบบ” ตามแนวทาง Auth แต่ mockup ยังไม่ถูกปรับและ Q-08 ยังเปิด
+- **คำตอบหรือการตัดสินใจของทีม:** `/` เป็น Login, `/register` เป็น Register, Login มีปุ่ม “สมัครสมาชิก” ไป Register เฉพาะฟอร์ม email/password (ไม่แสดงใน OTP); Register มีลิงก์ข้อความ “เข้าสู่ระบบ” ไป `/login`
+- **สิ่งที่แก้:** ปรับ Register spec เป็น v1.14, plan/tasks เป็น v1.10; ปรับ Auth spec เป็น v1.3, `auth.feature`, plan/tasks ให้ตรง flow และแบ่ง navigation ของ AC-02-01 ไปตรวจใน Register T-10. ไม่แก้ source code หรือ mockup เพราะข้อความใน mockup ยังขัดกับคำยืนยันและต้องให้ทีมแก้เอง
+- **ผลตรวจ:** `git diff --check` ผ่าน; ไม่รันทดสอบเพราะยังไม่มีการเปลี่ยน source code
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ไม่แก้ mockup หรือเลือกข้อความให้ขัดกับคำยืนยัน; หยุดก่อนเริ่ม UI จนทีมจัดการ label `/login` กับ “เข้าสู่ระบบ” และยืนยัน Q-08
+
+## #63 | 2026-11-20 | Copilot | Implement T-10 Login/Register navigation
+
+- **คำสั่ง:** ทำ T-10 ให้เสร็จและตรวจสอบ flow Login/Register
+- **สิ่งที่ AI ถามหรือรายงาน:** mockup แสดง label `/login` แต่ spec เดิมระบุ “เข้าสู่ระบบ”; ขอให้ทีมเลือกว่าจะยึด label ใน mockup หรือแก้ mockup
+- **คำตอบหรือการตัดสินใจของทีม:** ใช้ label `/login` ตาม mockup; คง `/` เป็น Login, ปุ่ม “สมัครสมาชิก” ไป `/register` และ Register กลับ `/login`
+- **สิ่งที่แก้:** ปรับ Register spec v1.15, plan v1.11, T-10 ให้รวม `AuthFields.jsx`, `auth.css`, `AuthFields.test.js`, `RegisterPage.jsx`; ปรับ Auth spec v1.4, plan/tasks ให้ตรง label และ flow; เพิ่มปุ่มจริง “สมัครสมาชิก” เฉพาะฟอร์ม Login และลิงก์ `/login` ให้ตรง mockup
+- **ผลตรวจ:** `cd frontend && node --test src/auth/AuthFields.test.js` ผ่าน 5/5; `cd frontend && npm run build` ผ่าน; ตรวจ browser ด้วย API mock: `/` แสดง Login, ปุ่มสมัครไป `/register`, ลิงก์ `/login` กลับหน้า Login และเมื่อแสดง OTP ไม่มีปุ่มสมัครสมาชิก; `git diff --check` ผ่าน. คำสั่งทดสอบครั้งแรกจาก root หาไฟล์/manifest ไม่พบ แล้วรันซ้ำจาก `frontend/` สำเร็จ
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ให้ label ลิงก์เป็น “เข้าสู่ระบบ” หรือ `/login`; ยึดคำตอบล่าสุด `/login`. `auth.feature` ถูกทีมย้อนการแก้ระหว่างงาน จึงไม่ได้แก้ซ้ำ; เนื้อหา Gherkin ปัจจุบันยังมี scenario เริ่มที่ Register ซึ่งขัดกับ spec ล่าสุดและต้องให้ทีมตรวจเอง. Q-08 ยังเปิดในส่วนผู้อนุมัติ UI โดยไม่ขวาง navigation ที่ทีมยืนยัน
+
+## #64 | 2026-11-20 | Copilot | ปรับ label และรูปแบบลิงก์หน้า Register
+
+- **คำสั่ง:** ปรับหน้า Register ไม่ให้แสดง path ดิบ `/login` และทำลิงก์กลับ Login ให้ดูสวย
+- **สิ่งที่ AI ถามหรือรายงาน:** ขอให้ยืนยันข้อความที่จะแสดงและว่าจะให้แก้ mockup HTML ให้ตรงด้วยหรือไม่
+- **คำตอบหรือการตัดสินใจของทีม:** ใช้ข้อความ “เข้าสู่ระบบ”; อนุญาตให้ปรับ mockup และโค้ด
+- **สิ่งที่แก้:** ปรับ Register spec v1.16, plan v1.12, tasks v1.12; ปรับ Auth spec v1.5, plan/tasks; แก้ label ทั้ง 6 สถานะใน `UI-01-01-register.html` และปรับ alignment, hover/focus style; หน้า Register แสดงลิงก์ “เข้าสู่ระบบ” จัดกึ่งกลาง ใช้สี brand และ focus indicator โดยยังชี้ไป `/login`
+- **ผลตรวจ:** `node --test src/auth/AuthFields.test.js` ผ่าน 5/5; `npm run build` ผ่าน; `git diff --check` ผ่าน; browser เปิด `/register` ได้และตรวจพบข้อความ/URL ของลิงก์และ computed style (สี brand, block, ไม่ขีดเส้นใต้ปกติ). Browser click รอบนี้ timeout ระหว่างรอ element stable; ปลายทาง `href="/login"` ไม่เปลี่ยน และก่อนปรับ label ได้ทดสอบ click navigation ผ่าน
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ไม่เพิ่มข้อความประกอบอย่าง “มีบัญชีแล้ว?” ซึ่งไม่มีใน Requirement; ใช้เฉพาะ label ที่ทีมเลือก. `auth.feature` ยังไม่ได้แก้ตามการย้อนแก้ก่อนหน้า และยังขัดกับ route เริ่มต้นใน spec; Q-08 ยังรอระบุ PO/อนุมัติ UI โดยละเอียด
+
+## #65 | 2026-11-20 | Copilot | แก้ Failed to fetch และตรวจ credential login
+
+- **คำสั่ง:** ตรวจและแก้ปัญหาสมัครขึ้น `Failed to fetch` จากนั้นตรวจเหตุผลที่บัญชีล็อกอินไม่ผ่าน
+- **สิ่งที่ AI ตรวจพบ:** หน้าเว็บอยู่ที่ origin `http://127.0.0.1:5174` แต่ `register.js` เรียก `http://localhost:8000` โดยตรง; CORS preflight ของ backend ตอบ `400 Disallowed CORS origin` สำหรับ origin นี้. Vite proxy `/api` ส่งต่อถึง backend ได้ (GET `.../api/auth/register` ได้ 405 Method Not Allowed ซึ่งยืนยันว่าถึง route ที่รับ POST)
+- **คำตอบหรือการตัดสินใจของทีม:** ใช้ mock account/ข้อมูลที่สมัครเพื่อเตรียม demo; ไม่มีการเปลี่ยน API contract
+- **สิ่งที่แก้:** ให้ Register เรียก same-origin `/api/auth/register` ผ่าน Vite proxy เมื่อไม่ได้ตั้ง `VITE_API_BASE`; ปรับ `.env.example`; เพิ่ม `register.test.js`; อัปเดต plan v1.13 และเปิด T-12 กลับเป็น `[~]` เพื่อให้ทีมตรวจ
+- **ผลตรวจ:** Frontend tests ผ่าน 6/6; `npm run build` และ `git diff --check` ผ่าน. API login ใน backend ปัจจุบันไม่รับ seed credential แต่รับบัญชีที่สมัครอยู่; backend ที่เริ่มแยกใหม่ตอบ token ให้ seed credential ได้ แสดงว่า seed ถูกต้องแต่ process ปัจจุบันมีข้อมูล in-memory ต่างจากไฟล์เริ่มต้น
+- **สิ่งที่ AI เกือบต้องเดาแต่ถามแทน:** ไม่สรุปว่า Auth logic ผิดจากข้อความ error อย่างเดียว; ตรวจ API จริงทั้ง process ปัจจุบันและ process ใหม่. ระหว่างตรวจ proxy ได้ส่งคำขอสมัครทดสอบที่ backend ตอบสำเร็จแทนที่จะปฏิเสธอีเมลซ้ำ จึงอาจเพิ่ม mock user ใน memory ของ backend ที่กำลังรัน; แจ้งทีมให้ทราบและไม่รีสตาร์ต backend เพื่อไม่ลบข้อมูลอื่นของทีม
+
+## #66 | 2026-11-20 | Copilot | /clarify ตอบคำถามและปรับข้อกำหนด Booking
+
+- คำสั่ง: อัปเดต `specs/003-booking/spec.md` และ `specs/003-booking/booking.feature` ตามคำตอบทีมเรื่องผลดูราคาล่าสุด, เวลา, ราคาต่ำมาก, response 201, ตำแหน่งปัจจุบัน และการเปิดหน้าชำระมัดจำซ้ำ.
+- สิ่งที่ AI ถามหรือรายงาน: ถ้าปุ่มยืนยันต้องอาศัยผลดูราคาล่าสุด ต้องระบุว่าการแก้ข้อมูลทุกช่องล้างผลเดิมหรือไม่; ต้องกำหนดแหล่งเวลาตรวจ 4 ชั่วโมง; ต้องตัดสินกรณีมัดจำ 0 บาท; ต้องระบุ schema response 201; ต้องระบุพฤติกรรมเมื่ออ่านตำแหน่งไม่ได้และเมื่อเปิดหน้าชำระมัดจำไม่สำเร็จ.
+- คำตอบหรือการตัดสินใจของทีม: แก้ข้อมูลจุดรับ จุดส่ง เวลา หรือประเภทสิ่งของแล้วต้องดูราคาใหม่; backend คำนวณราคาใหม่ตอนยืนยันโดยไม่มี quote id; ใช้เวลาของ server และ server อยู่เขตเวลาเดียวกับผู้ใช้; ปฏิเสธมัดจำ 0 บาทด้วย 422 และข้อความ "ระยะใกล้เกินไป" โดยยังไม่กำหนดค่าบริการขั้นต่ำ; response 201 ส่ง booking ครบทุกฟิลด์ตามสัญญา; ความล้มเหลวของตำแหน่งทุกกรณีใช้ข้อความเดียวกัน; ถ้าเปิดหน้าชำระมัดจำไม่ได้ให้แสดง booking id เดิมและกด retry ได้โดยไม่สร้าง booking ซ้ำ.
+- สิ่งที่ AI ทำ: เปลี่ยน spec เป็น v1.1 และเพิ่ม Change Log; ปรับ REQ-FN-304, พฤติกรรม/API, response 201 ตัวอย่าง JSON, ตาราง AC/traceability, D-03-08 และเพิ่ม D-03-16; เพิ่ม AC-03-14 สำหรับระยะ 0.1 กม.; ปรับ AC-03-03, AC-03-06, AC-03-13 และส่วน UI; อัปเดต `booking.feature` เป็น v1.2 และเพิ่ม scenario ตามคำตอบทีม.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
+
+## #67 | 2026-11-20 | Copilot | /clarify ตอบคำถามและปรับข้อกำหนด Booking รอบที่ 2
+
+- คำสั่ง: "อัปเดต spec.md (ตัวอย่าง 201, ส่วน 12, หัว, REQ-FN-302), booking.feature (ถ้า Q1 ให้ /quote ตอบ 422 ต้องมี scenario ของ /quote ใน AC-03-14), mockups/ และบันทึกข้อตกลง timezone ใน README ตามคำตอบทีม"
+- สิ่งที่ AI ถามหรือรายงาน: `/quote` และ `/api/bookings` ต้องตอบ 422 พร้อมข้อความเดียวกันเมื่อมัดจำเป็น 0 บาท; ตัวอย่าง response 201 ต้องตรงกับพิกัดจริง; mockup ต้องระบุสถานะ 6–8; `/quote` ไม่ตรวจ BR-02; feature file ต้องเป็น v1.2 และ REQ-FN-302 ต้องอ้าง AC-03-14
+- คำตอบหรือการตัดสินใจของทีม: ยืนยันให้ `/quote` และ `/api/bookings` ตอบ 422 พร้อมข้อความ "ระยะใกล้เกินไป"; ใช้ตัวอย่างพิกัดจริง 0.5 กม. กับราคา 5/2/3; เพิ่มรายการสถานะ 6–8 ในส่วน UI; `/quote` ไม่ตรวจ BR-02; server เดโมตั้งเวลาไทยโดยทีมและไม่ตรวจ timezone ใน runtime; ใช้ booking.feature v1.2 และเพิ่ม AC-03-14 ใน REQ-FN-302
+- สิ่งที่ AI ทำ: อัปเดต spec.md เป็น v1.2 และ feature file เป็น v1.2; แก้ตัวอย่าง response 201 และตาราง traceability; เพิ่ม scenario `/quote` ใน AC-03-14; ปรับรายการ "ต้องตรง" และข้อความสถานะใน mockup; เพิ่มข้อตกลง timezone ใน README
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
+
+## #68 | 2026-11-20 | Copilot | /plan ร่างแผนฟีเจอร์ Booking
+
+- คำสั่ง: ร่าง `specs/003-booking/plan.md` จาก `spec.md`, `rules.md`, `models.md`, `booking.feature` และ mockup UI-03-01 พร้อมตาราง Constraints และแผนทดสอบ AC
+- ผลลัพธ์: สร้าง plan ที่ครอบคลุมเทคโนโลยี โมเดลข้อมูล API/หน้าจอ Constraints ทั้งหมดของ feature, AC-03-01 ถึง AC-03-14 และลำดับงาน 10 ขั้น; ใช้ FastAPI + pytest + React + Vite ตาม REQ-CON-301 และ D-03-01 ที่ซ้ำกับโครงโค้ด/feature อื่น
+- Constraint ที่ feature นี้ใช้จริง: REQ-CON-301, REQ-IF-302, D-03-01 ถึง D-03-16, REQ-SEC-301/AS-01 และ MD-CTX-03/MD-DOM-03/MD-STM-03/MD-SEQ-03
+- Constraint กลาง: ยังไม่มี `specs/000-shared/constraints.md` จึงไม่มีข้อ D-00-xx/REQ กลางให้เพิ่มในตารางนี้
+- สิ่งที่ทดสอบยากหรือทดสอบไม่ได้ในสภาพนักศึกษา: geolocation บราวเซอร์ต้อง mock; การส่งต่อไปหน้าชำระมัดจำจริงต้องรอสัญญากับ feature ④; การตรวจเวลาแบบ 4 ชั่วโมงต้องควบคุมเวลา server
+- สิ่งที่ AI ไม่เดาเพราะติด Open Questions: retention/privacy PII ตาม Q-05; เจ้าของงานและสถานะหลังจองตาม Q-08; ชื่อ PO/mockup approval ตาม Q-10; การย้าย BR และสร้างไฟล์กลางตาม Q-03
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี
+
+## #69 | 2026-11-20 | Copilot | /tasks แตก plan Booking เป็น tasks
+
+- คำสั่ง: ร่าง `specs/003-booking/tasks.md` จาก spec, plan, rules, models, feature และ mockup UI-03-01 โดยไม่เริ่ม implementation
+- ผลลัพธ์: สร้าง 15 task โดยเรียงจาก backend schema/place/validation/quote/booking/auth ไปยัง frontend mock/API integration และ test; มี 0 task ที่มีสถานะรอ Q-xx และมีตารางครบสำหรับ AC-03-01 ถึง AC-03-14 กับ constraint ที่ plan ระบุ
+- Constraint: ยังไม่มี `specs/000-shared/constraints.md` จึงบันทึกแถว “ไม่เกี่ยวกับ feature นี้เพราะไฟล์กลางยังไม่มี” ในตาราง
+- สิ่งที่ทดสอบยาก: geolocation ต้อง mock ใน frontend test และ boundary เวลา 4 ชั่วโมงต้องควบคุม server datetime
+- สิ่งที่ยังไม่ทำ: Q-03, Q-05, Q-08 และ Q-10; AS-01/AS-04/AS-05 ใช้พฤติกรรมชั่วคราวตาม spec เท่านั้น
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี
+
+## #70 | 2026-11-20 | Copilot | /implement T-01 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-01 สร้าง schema และโครง router Booking โดยแก้ไฟล์ที่ task ระบุเท่านั้น ไม่เริ่ม T-02 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/main.py`, `backend/app/bookings/__init__.py`, `backend/app/bookings/schemas.py`, `backend/app/bookings/router.py`
+- ผล test: smoke Python ตรวจ route `/api/places`, `/api/bookings/quote`, `/api/bookings` พบครบ; `PYTHONPATH=backend python -m pytest backend/tests -q` ผ่าน 36 tests
+- Constraint ที่ทำจริง: REQ-CON-301 ใช้ FastAPI/Python/mock app เดิม; REQ-FN-301 และ REQ-FN-304 มี schema/request/response โครง; D-03-09 มี schema response booking ครบตามสัญญา; REQ-DAT-301 รับค่าข้อมูลจองแยกจากยอด
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ไม่มี เปิด router ปลายทางให้ตอบ 501 ชั่วคราวเฉพาะส่วนงาน T-02/T-04/T-06 และยังไม่สร้าง logic หรือข้อมูลอื่น
+- สถานะ: T-01 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #71 | 2026-11-20 | Copilot | /implement T-02 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-02 เพิ่ม endpoint รายการสถานที่ ให้ทีมอนุญาตเพิ่ม test โดยไม่ได้เริ่ม T-03 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/router.py`, `backend/app/bookings/service.py`, `backend/tests/test_booking.py`
+- ผล test: `test_AC_03_11_places_include_address_and_coordinates` และ `test_AC_03_11_places_require_valid_token` ผ่านร่วม regression suite; `38 passed`
+- Constraint ที่ทำจริง: REQ-FN-305/D-03-15 อ่าน places จาก mock_db; REQ-FN-301 แสดง address/lat/lng ให้หน้าเลือกสถานที่; REQ-SEC-301 ใช้ get_current_user และตอบ 401 สำหรับไม่มีหรือ token ผิด
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตให้เพิ่ม `backend/tests/test_booking.py` สำหรับ test AC-03-11 แม้ task ต้นทางระบุไฟล์ที่แตะ router/service
+- สถานะ: T-02 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #72 | 2026-11-20 | Copilot | /implement T-03 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-03 เพิ่ม helper ตรวจข้อมูลจอง ให้ทีมอนุญาตเพิ่ม test AC-03-05 ใน backend/tests/test_booking.py โดยไม่ได้เริ่ม T-04 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/service.py`, `backend/tests/test_booking.py`
+- ผล test: `test_AC_03_05_complete_booking_data_passes_validation` และ parameterized `test_AC_03_05_missing_or_invalid_field_rejected` ผ่านร่วม regression suite; `44 passed`
+- Constraint ที่ทำจริง: REQ-FN-301/BR-04 ตรวจ scheduled_at และข้อมูลครบ; D-03-06 ตรวจ pickup/dropoff address และพิกัด; D-03-13/BR-04 ตรวจ item_size เป็น SMALL/MEDIUM/LARGE; D-03-15 ไม่ส่งพิกัดหรือที่อยู่ใหม่เป็นแหล่งข้อมูลจริง
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตให้เพิ่ม test AC-03-05 ใน `backend/tests/test_booking.py`
+- สถานะ: T-03 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #73 | 2026-11-20 | Copilot | /implement T-04 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-04 เพิ่มการคำนวณ quote ให้ทีมอนุญาตเพิ่ม test AC-03-02 ใน backend/tests/test_booking.py โดยไม่ได้เริ่ม T-05 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/service.py`, `backend/app/bookings/router.py`, `backend/tests/test_booking.py`
+- ผล test: parameterized `test_AC_03_02_quote_returns_backend_calculated_amounts` ครอบคลุม 3.0/12.3/30.0 กม. ผ่านร่วม regression suite; `47 passed`
+- Constraint ที่ทำจริง: REQ-FN-302/BR-01/BR-05 คำนวณด้วย mock_db.calc_distance_km() และ calc_price(); REQ-DAT-301 ไม่รับหรือใช้ยอดหน้าเว็บ; D-03-03/D-03-07 ไม่มีสูตรคำนวณซ้ำ; quote ไม่สร้าง mock_db.bookings
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตให้เพิ่ม test AC-03-02 ใน `backend/tests/test_booking.py`
+- สถานะ: T-04 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #74 | 2026-11-20 | Copilot | /implement T-05 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-05 จัดการระยะ 0.0 และมัดจำ 0 ให้ทีมอนุญาตเพิ่ม test AC-03-10 และ AC-03-14 ใน backend/tests/test_booking.py โดยไม่ได้เริ่ม T-06 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/service.py`, `backend/app/bookings/router.py`, `backend/tests/test_booking.py`
+- ผล test: `test_AC_03_10_same_location_rejected_for_quote_and_booking` และ `test_AC_03_14_zero_deposit_rejected_for_quote_and_booking` ผ่านร่วม regression suite; `49 passed`
+- Constraint ที่ทำจริง: D-03-05/D-03-16 ปฏิเสธระยะ 0.0 และมัดจำ 0 ด้วย 422; quote และ booking guard ใช้ข้อความเดียวกันคือ “ระยะใกล้เกินไป” สำหรับมัดจำ 0 และ “จุดรับและจุดส่งต้องอยู่คนละที่” สำหรับระยะ 0.0
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตให้เพิ่ม test ของ AC-03-10 และ AC-03-14 ใน backend/tests/test_booking.py
+- สถานะ: T-05 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; booking ข้อมูลปกติยังไม่สร้างจนถึง T-06 และ task อื่นยังไม่เปลี่ยน
+
+## #75 | 2026-11-20 | Copilot | /implement T-06 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-06 ตรวจจองล่วงหน้าและสร้าง booking ให้ทีมอนุญาตเพิ่ม test AC-03-01/04/06/08 ใน backend/tests/test_booking.py โดยไม่ได้เริ่ม T-07 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/service.py`, `backend/app/bookings/router.py`, `backend/tests/test_booking.py`
+- ผล test: AC-03-01, AC-03-04 boundary, AC-03-06 created_at และ AC-03-08 backend recalculation ผ่านร่วม regression suite; `56 passed`
+- Constraint ที่ทำจริง: BR-02/D-03-08 ตรวจ scheduled_at กับ server datetime และปฏิเสธต่ำกว่า 4 ชั่วโมง; D-03-04 สร้าง booking ตอน POST; D-03-09 ส่ง booking 201 ครบฟิลด์และ created_at เป็น ISO; REQ-DAT-301 คำนวณยอดใหม่ไม่ใช้ยอดจาก body
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมตัดสิน T-06 ตั้ง status PENDING_DEPOSIT ตอนสร้างแล้วให้ T-07 ต่อ change_status และ status_logs
+- สถานะ: T-06 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #76 | 2026-11-20 | Copilot | /implement T-07 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-07 เชื่อมสถานะ PENDING_DEPOSIT กับ change_status ให้ทีมอนุญาตแตะ router/test เพิ่มเพื่อเชื่อมและทดสอบ status_logs
+- ไฟล์ที่สร้างหรือแก้: `backend/app/bookings/service.py`, `backend/app/bookings/router.py`, `backend/tests/test_booking.py`
+- ผล test: `test_AC_03_01_pending_deposit_uses_change_status_and_status_log` ผ่านร่วม regression suite; `57 passed`
+- Constraint ที่ทำจริง: REQ-IF-302/REQ-FN-304 ตั้ง status ผ่าน mock_db.change_status(); MD-STM-03 ได้ PENDING_DEPOSIT และ status_logs; D-03-10 ตรวจ audit ผ่าน mock_db.status_logs โดยตรง
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตแก้ router และเพิ่ม test ให้ POST booking เรียก change_status() จริง
+- สถานะ: T-07 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #77 | 2026-11-20 | Copilot | /implement T-08 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-08 เพิ่ม auth ให้ทุก endpoint Booking ให้ทีมอนุญาตเพิ่ม test AC-03-09 ใน backend/tests/test_booking.py
+- ไฟล์ที่สร้างหรือแก้: `backend/app/auth.py`, `backend/app/bookings/router.py`, `backend/tests/test_booking.py`
+- ผล test: `test_AC_03_09_booking_endpoints_require_valid_token` และ `test_AC_03_09_booking_owner_comes_from_current_user` ผ่านร่วม regression suite; `60 passed`
+- Constraint ที่ทำจริง: REQ-SEC-301/AS-01 ใช้ get_current_user กับ places, quote, booking; ไม่มี/ผิด token ตอบ 401 และไม่มี booking ถูกสร้าง; booking user_id มาจาก get_current_user
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตเพิ่ม test AC-03-09 ใน backend/tests/test_booking.py
+- สถานะ: T-08 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #78 | 2026-11-20 | Copilot | /implement T-09 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-09 สร้างหน้าจอฟอร์ม Booking แบบ mock API ให้ทีมอนุญาตเพิ่ม test หน้า Booking และไม่เริ่ม T-10 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/App.jsx`, `frontend/src/booking/BookingPage.jsx`, `frontend/src/booking/booking.css`, `frontend/src/api.js`, `frontend/src/booking/BookingPage.test.js`
+- ผล test: node test ผ่าน 3 tests สำหรับ AC-03-11/12/13; `npm ci && npm run build` ผ่านด้วย Vite
+- Constraint ที่ทำจริง: REQ-FN-301/305/306 ใช้ฟอร์มจอง รายการ mock places และ geolocation; D-03-14 ใช้ theme จาก payment.css; D-03-15 ไม่เรียกแผนที่/geocoding จริง; Q-10 mockup ร่างยังไม่ถือว่าได้รับอนุมัติ
+- รายการต้องตรง UI-03-01: ชื่อ “จองรถขนย้าย”; ป้ายวันที่/เวลา, จุดรับ, จุดส่ง, ประเภทสิ่งของ; ข้อความปุ่ม “ดูราคา”, “ใช้ตำแหน่งปัจจุบัน” และข้อความ fallback “อ่านตำแหน่งปัจจุบันไม่ได้ กรุณาเลือกจากรายการ”
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตเพิ่ม test หน้า Booking; mock API ใช้ข้อมูล mock places เท่านั้นและยังไม่ได้เชื่อม endpoint จริง
+- สถานะ: T-09 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #79 | 2026-11-20 | Copilot | /implement T-10 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-10 สร้างหน้าสรุปราคาและ quote freshness ให้ทีมอนุญาตแก้ mock API/test และไม่เริ่ม T-11 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/booking/BookingPage.jsx`, `frontend/src/booking/booking.css`, `frontend/src/api.js`, `frontend/src/booking/BookingPage.test.js`
+- ผล test: `AC-03-02 mock quote returns amounts only` และ `AC-03-03 quote freshness is cleared after form change` ผ่านร่วม node test; รวม 5 tests ผ่าน; `npm run build` ผ่าน
+- Constraint ที่ทำจริง: REQ-FN-302/D-03-07 หน้าแสดงยอดจาก mock quote; REQ-FN-304/AC-03-03 แก้วันเวลา จุดรับ จุดส่ง หรือ item_size แล้วล้าง quote และปิดปุ่มยืนยันจนดูราคาใหม่
+- รายการต้องตรง UI-03-01 สถานะ 2/6: แสดงระยะทาง ค่าบริการ มัดจำ 30% ส่วนที่เหลือ และข้อความ “แก้ข้อมูลแล้ว ผลดูราคาเดิมถูกล้าง กรุณากด ‘ดูราคา’ ใหม่”
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตเพิ่ม mock quote ใน api.js และ test; หน้าจอไม่มีคำนวณยอดเองใน T-10
+- สถานะ: T-10 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #80 | 2026-11-20 | Copilot | /implement T-11 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-11 สร้างหน้าสถานะข้อผิดพลาดและสร้างสำเร็จให้ทีมอนุญาตเพิ่ม mock helper/test และไม่เริ่ม T-12 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/booking/BookingPage.jsx`, `frontend/src/booking/booking.css`, `frontend/src/api.js`, `frontend/src/booking/BookingPage.test.js`
+- ผล test: AC-03-05, AC-03-06 และ AC-03-14 เพิ่มใน node test; รวม 8 tests ผ่าน; `npm run build` ผ่าน
+- Constraint ที่ทำจริง: REQ-FN-301/303/304/IF-301 แสดงข้อมูลไม่ครบ/จองล่วงหน้าไม่พอ/mock booking success พร้อม booking id และปุ่มไปชำระมัดจำ; AC-03-06 retry เก็บ booking เดิม ไม่สร้าง booking ใหม่บนหน้าจอ mock
+- รายการต้องตรง UI-03-01 สถานะ 3/4/7/8: ข้อความข้อมูลไม่ครบ, จองล่วงหน้าไม่ถึง 4 ชั่วโมง, ระยะใกล้เกินไป, การจองหมายเลขและข้อความเปิดหน้าชำระไม่สำเร็จ
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตเพิ่ม mock helper ใน api.js/test; API จริงและ navigation ไปหน้าชำระจะอยู่ T-12 ไม่สร้างตอน T-11
+- สถานะ: T-11 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #81 | 2026-11-20 | Copilot | /implement T-12 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-12 ต่อหน้าจอ Booking กับ API จริง ให้ทีมอนุญาตแก้ App.jsx/test และไม่เริ่ม task ถัดไป
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/api.js`, `frontend/src/booking/BookingPage.jsx`, `frontend/src/App.jsx`, `frontend/src/booking/BookingPage.test.js`
+- ผล test: node test 9 tests ผ่าน; `npm run build` ผ่าน; integration ผ่าน Vite proxy places 6 รายการ/quote 5/2/3/booking id 1 และ payment PENDING_DEPOSIT 2 บาท
+- Constraint ที่ทำจริง: หน้าจอเรียก GET /api/places, POST /api/bookings/quote และ POST /api/bookings จริง; booking request ไม่มียอดหน้าเว็บ; การเปิดชำระเรียก GET /api/payments/{id}; App แสดง PaymentPage ด้วย booking id และกลับหน้าจองซ้ำได้
+- รายการต้องตรง UI-03-01: ข้อความสถานะ/ยอด/ปุ่มคงตาม spec; retry เปิดชำระพลาดจะใช้ booking id เดิมและไม่เรียก POST booking ซ้ำ
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ทีมอนุญาตแก้ App.jsx และ test integration; ไม่เพิ่ม endpoint อ่าน booking ของ feature ③
+- สถานะ: T-12 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #82 | 2026-11-20 | Copilot | /implement T-13 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-13 เติม backend test สำหรับข้อมูล ราคา เวลา และยอด; ไม่เริ่ม T-14 เป็นต้นไป
+- ไฟล์ที่สร้างหรือแก้: `backend/tests/test_booking.py`
+- ผล test: suite backend ผ่าน 62 tests; เพิ่ม test response 201 ครบ contract และ test `/quote` เวลาน้อยกว่า 4 ชั่วโมงตอบ 200 โดยไม่สร้าง booking
+- Constraint ที่ทำจริง: T-13 ครอบคลุม AC-03-01/02/04/05/08/10/14 และ BR-01/02/04/05 ผ่าน pytest; ยืนยัน backend recalculates amounts และ quote ไม่สร้าง booking
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ไม่มี
+- สถานะ: T-13 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #83 | 2026-11-20 | Copilot | /implement T-14 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-14 เพิ่ม backend test auth/place/status/สัญญา feature ④ และไม่เริ่ม T-15
+- ไฟล์ที่สร้างหรือแก้: `backend/tests/test_booking.py`
+- ผล test: suite backend ผ่าน 64 tests; เพิ่ม AC-03-07 ยอดตรง payment summary และ AC-03-09 user อื่นอ่าน payment booking ได้ 404
+- Constraint ที่ทำจริง: REQ-SEC-301 AC-03-09; REQ-FN-305 AC-03-11; REQ-IF-301/302 AC-03-07/01; สถานะและ owner ตรวจผ่าน mock_db/payment summary
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: แก้ clock ของ payment test ให้ตรงกับ booking 10:20 เพื่อไม่ให้ timeout ยกเลิก booking ในขณะตรวจยอด
+- สถานะ: T-14 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; task อื่นยังไม่เปลี่ยนและไม่ได้เริ่มทำ
+
+## #84 | 2026-11-20 | Copilot | /implement T-15 spec/003-booking/tasks.md
+
+- คำสั่ง: ทำเฉพาะ T-15 เพิ่ม frontend cross-feature tests สำหรับ quote stale/geolocation/retry และ npm build
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/booking/BookingPage.test.js`, `frontend/src/api.js`
+- ผล test: node test 11 tests ผ่าน; AC-03-03/06/12/13 ครอบคลุมด้วย pure/mock test; `npm run build` ผ่านและเชื่อม App กับ PaymentPage ด้วย booking id
+- Constraint ที่ทำจริง: REQ-FN-306/304/IF-301 และ D-03-14 ตรวจผ่าน frontend mock contract; retry ใช้ booking id เดิม
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: task ต้นทางระบุ .jsx แต่ repo ไม่มี frontend test framework; ใช้ไฟล์ .js + node --test ที่มีอยู่ พร้อมเพิ่ม App อย่างที่ integration T-12 ตรวจแล้ว
+- สถานะ: T-15 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; ไม่มี task ถัดไปให้เริ่ม
+## #85 | 2026-11-19 | Copilot | ตรวจรับ T-10 และทบทวน Dependencies ของ T-03 ถึง T-09
 
 - คำสั่ง: บันทึกการยืนยันตรวจรับ T-10 จากทีม, เปลี่ยนสถานะเป็นเสร็จแล้ว และปรับเป็นพร้อมทำเฉพาะ Task ที่ Dependencies ครบและไม่มีการยืนยันจากทีมค้างอยู่; ไม่เริ่ม Implement หรือทำ Git operation.
 - ผลตรวจ: T-10 ผ่านการตรวจรับจากทีม. T-03 ยังรอสัญญาข้อมูลจากเจ้าของ Booking; T-04 รอ Q-06-11 ถึง Q-06-13 และสัญญาจากเจ้าของ Payment; T-05 รอ Q-06-14 และสัญญาจากเจ้าของ Tracking; T-06 รอทีมยืนยัน UI ID, Mockup และข้อความ; T-08 รอ T-03/T-04/T-05 และการปิด Open Questions/สัญญาที่เกี่ยวข้อง; T-09 รอ T-06 และการยืนยัน UI ID/Mockup.
 - การเปลี่ยนแปลง: อัปเดต T-10 เป็น “เสร็จแล้ว”; ไม่มี Task ใดใน T-03 ถึง T-09 เปลี่ยนเป็น “พร้อมทำ” เพราะยังมี Dependency หรือการยืนยันจากทีมค้างอยู่.
 - สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
 
-## #19 | 2026-11-19 | Copilot | /implement T-06 Cancellation Frontend Demo
+## #86 | 2026-11-19 | Copilot | /implement T-06 Cancellation Frontend Demo
 
 - คำสั่ง/อนุมัติ: ทีมอนุมัติ UI-06-01 ถึง UI-06-04 และ Mockup ทั้ง 4 หน้าเป็นต้นแบบ Demo, อนุมัติไฟล์ `frontend/src/cancellation/` และ `frontend/src/App.jsx`; ใช้ข้อมูลจำลองและ React state เท่านั้น ไม่เรียก Backend, ไม่บันทึกข้อมูล และไม่ทำธุรกรรมจริง.
 - ไฟล์ที่สร้าง/แก้: `frontend/src/cancellation/BookingDetail.jsx`, `CancellationDemo.jsx`, `ConfirmationWarning.jsx`, `DemoTimeSelector.jsx`, `NotAllowed.jsx`, `ResultPreview.jsx`, `cancellation.css`, `demoState.js`, `test_AC_06_DRAFT_05.test.js`; แก้ `frontend/src/App.jsx`, `specs/006-cancle/tasks.md` และเพิ่มบันทึกนี้.
 - ผลตรวจ: `node --test frontend/src/cancellation/test_AC_06_DRAFT_05.test.js` ผ่าน 5 tests (44, 45, 119, 120 และยืนยันก่อนผลจำลอง); Backend `PYTHONPATH=. .venv/bin/python -m pytest backend/tests -q` ผ่าน 36 tests. `npm --prefix frontend run build` เรียกไม่ได้เพราะ `vite: command not found`; ไม่ติดตั้ง Dependencies. `git diff --check` ผ่าน.
 - การทำงาน: App มีทางเลือกเข้า Cancellation Demo และคง Payment Demo เดิม; Demo เปลี่ยนหน้าด้วย state ในหน่วยความจำ. ผลทุกกรณีระบุเป็นตัวอย่างและไม่มีการยกเลิก/คืนเงินจริง; ไม่แสดงยอดเงินจริงหรือกล่องรายละเอียด Q-06-11/Q-06-12. T-06 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”.
 - สิ่งที่ AI เดา/ถามแทน: ไม่กำหนดข้อมูล Booking หรือยอดมัดจำจริง และไม่ตีความรายละเอียด Q-06-11/Q-06-12; ใช้ข้อความข้อมูลจำลองตามขอบเขตที่ทีมอนุมัติ.
+
+## #87 | 2026-11-21 | Copilot | แก้ Merge Conflict หลังรวม main
+
+- คำสั่ง: รวมเนื้อหา `frontend/src/App.jsx` และ `prompt-log.md` จาก `feature/cancle` กับ `main`; เก็บฟังก์ชัน Auth/Register/Booking/Payment และ Cancellation Demo; ไม่สร้าง Merge Commit.
+- การเปลี่ยนแปลง: เก็บรายการทั้งหมดจาก main ตามเดิม; นำรายการ Cancellation เดิม #18–#19 มาต่อท้ายเป็น #85–#86 ตามลำดับเดิม โดยไม่ลบประวัติหรือทำซ้ำเนื้อหา; บันทึกการแก้ Conflict นี้เป็นรายการ #87.
+- ผลตรวจ: รอผล Frontend Build, Backend Tests, Cancellation Boundary Tests และ `git diff --check`.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
+
+## #88 | 2026-11-21 | Copilot | ทดสอบหลังแก้ Merge Conflict
+
+- คำสั่ง: ตรวจ Frontend Build, Backend Tests, Cancellation Boundary Tests และ diff หลัง Resolve; ไม่ Commit หรือ Push.
+- ผลตรวจ: `cd frontend && npm run build` ผ่าน; `PYTHONPATH=. .venv/bin/python -m pytest backend/tests -q` ผ่าน 119 tests และ 1 xfailed; `node --test frontend/src/cancellation/test_AC_06_DRAFT_05.test.js` ผ่าน 5 tests; `git diff --check` และ `git diff --cached --check` ผ่าน.
+- ข้อจำกัด: `npm test -- --run src/App.test.jsx` รันไม่ได้เพราะ `vitest: command not found`; ไม่ติดตั้ง dependency.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
