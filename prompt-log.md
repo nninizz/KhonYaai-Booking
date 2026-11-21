@@ -1280,3 +1280,31 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 - Constraint ที่ทำจริง: REQ-FN-306/304/IF-301 และ D-03-14 ตรวจผ่าน frontend mock contract; retry ใช้ booking id เดิม
 - สิ่งที่เกือบต้องเดาแต่ถามแทน: task ต้นทางระบุ .jsx แต่ repo ไม่มี frontend test framework; ใช้ไฟล์ .js + node --test ที่มีอยู่ พร้อมเพิ่ม App อย่างที่ integration T-12 ตรวจแล้ว
 - สถานะ: T-15 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”; ไม่มี task ถัดไปให้เริ่ม
+## #85 | 2026-11-19 | Copilot | ตรวจรับ T-10 และทบทวน Dependencies ของ T-03 ถึง T-09
+
+- คำสั่ง: บันทึกการยืนยันตรวจรับ T-10 จากทีม, เปลี่ยนสถานะเป็นเสร็จแล้ว และปรับเป็นพร้อมทำเฉพาะ Task ที่ Dependencies ครบและไม่มีการยืนยันจากทีมค้างอยู่; ไม่เริ่ม Implement หรือทำ Git operation.
+- ผลตรวจ: T-10 ผ่านการตรวจรับจากทีม. T-03 ยังรอสัญญาข้อมูลจากเจ้าของ Booking; T-04 รอ Q-06-11 ถึง Q-06-13 และสัญญาจากเจ้าของ Payment; T-05 รอ Q-06-14 และสัญญาจากเจ้าของ Tracking; T-06 รอทีมยืนยัน UI ID, Mockup และข้อความ; T-08 รอ T-03/T-04/T-05 และการปิด Open Questions/สัญญาที่เกี่ยวข้อง; T-09 รอ T-06 และการยืนยัน UI ID/Mockup.
+- การเปลี่ยนแปลง: อัปเดต T-10 เป็น “เสร็จแล้ว”; ไม่มี Task ใดใน T-03 ถึง T-09 เปลี่ยนเป็น “พร้อมทำ” เพราะยังมี Dependency หรือการยืนยันจากทีมค้างอยู่.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
+
+## #86 | 2026-11-19 | Copilot | /implement T-06 Cancellation Frontend Demo
+
+- คำสั่ง/อนุมัติ: ทีมอนุมัติ UI-06-01 ถึง UI-06-04 และ Mockup ทั้ง 4 หน้าเป็นต้นแบบ Demo, อนุมัติไฟล์ `frontend/src/cancellation/` และ `frontend/src/App.jsx`; ใช้ข้อมูลจำลองและ React state เท่านั้น ไม่เรียก Backend, ไม่บันทึกข้อมูล และไม่ทำธุรกรรมจริง.
+- ไฟล์ที่สร้าง/แก้: `frontend/src/cancellation/BookingDetail.jsx`, `CancellationDemo.jsx`, `ConfirmationWarning.jsx`, `DemoTimeSelector.jsx`, `NotAllowed.jsx`, `ResultPreview.jsx`, `cancellation.css`, `demoState.js`, `test_AC_06_DRAFT_05.test.js`; แก้ `frontend/src/App.jsx`, `specs/006-cancle/tasks.md` และเพิ่มบันทึกนี้.
+- ผลตรวจ: `node --test frontend/src/cancellation/test_AC_06_DRAFT_05.test.js` ผ่าน 5 tests (44, 45, 119, 120 และยืนยันก่อนผลจำลอง); Backend `PYTHONPATH=. .venv/bin/python -m pytest backend/tests -q` ผ่าน 36 tests. `npm --prefix frontend run build` เรียกไม่ได้เพราะ `vite: command not found`; ไม่ติดตั้ง Dependencies. `git diff --check` ผ่าน.
+- การทำงาน: App มีทางเลือกเข้า Cancellation Demo และคง Payment Demo เดิม; Demo เปลี่ยนหน้าด้วย state ในหน่วยความจำ. ผลทุกกรณีระบุเป็นตัวอย่างและไม่มีการยกเลิก/คืนเงินจริง; ไม่แสดงยอดเงินจริงหรือกล่องรายละเอียด Q-06-11/Q-06-12. T-06 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”.
+- สิ่งที่ AI เดา/ถามแทน: ไม่กำหนดข้อมูล Booking หรือยอดมัดจำจริง และไม่ตีความรายละเอียด Q-06-11/Q-06-12; ใช้ข้อความข้อมูลจำลองตามขอบเขตที่ทีมอนุมัติ.
+
+## #87 | 2026-11-21 | Copilot | แก้ Merge Conflict หลังรวม main
+
+- คำสั่ง: รวมเนื้อหา `frontend/src/App.jsx` และ `prompt-log.md` จาก `feature/cancle` กับ `main`; เก็บฟังก์ชัน Auth/Register/Booking/Payment และ Cancellation Demo; ไม่สร้าง Merge Commit.
+- การเปลี่ยนแปลง: เก็บรายการทั้งหมดจาก main ตามเดิม; นำรายการ Cancellation เดิม #18–#19 มาต่อท้ายเป็น #85–#86 ตามลำดับเดิม โดยไม่ลบประวัติหรือทำซ้ำเนื้อหา; บันทึกการแก้ Conflict นี้เป็นรายการ #87.
+- ผลตรวจ: รอผล Frontend Build, Backend Tests, Cancellation Boundary Tests และ `git diff --check`.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
+
+## #88 | 2026-11-21 | Copilot | ทดสอบหลังแก้ Merge Conflict
+
+- คำสั่ง: ตรวจ Frontend Build, Backend Tests, Cancellation Boundary Tests และ diff หลัง Resolve; ไม่ Commit หรือ Push.
+- ผลตรวจ: `cd frontend && npm run build` ผ่าน; `PYTHONPATH=. .venv/bin/python -m pytest backend/tests -q` ผ่าน 119 tests และ 1 xfailed; `node --test frontend/src/cancellation/test_AC_06_DRAFT_05.test.js` ผ่าน 5 tests; `git diff --check` และ `git diff --cached --check` ผ่าน.
+- ข้อจำกัด: `npm test -- --run src/App.test.jsx` รันไม่ได้เพราะ `vitest: command not found`; ไม่ติดตั้ง dependency.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
