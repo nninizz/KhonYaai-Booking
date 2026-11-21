@@ -167,8 +167,10 @@ export default function CustomerTrackingPage({ jobId, api = DEFAULT_API, schedul
   const lastTime = (position || lastKnownRef.current)?.recorded_at;
 
   // การจัดวาง: ป้ายและการ์ดซ้อนอยู่บนแผนที่ (D-05-26 ออกแบบการจัดวางเองได้)
+  // zIndex สูงกว่า pane ของ Leaflet (400) ไม่งั้นป้ายและการ์ดทีมงานจะถูกแผนที่บังไว้
   const overlay = {
     position: 'absolute',
+    zIndex: 1000,
     left: 12,
     right: 12,
     background: 'rgba(255,255,255,0.95)',
@@ -187,31 +189,29 @@ export default function CustomerTrackingPage({ jobId, api = DEFAULT_API, schedul
     <div>
     <div data-testid="customer-page" style={{ position: 'relative', width: '100%', height: '400px', borderRadius: 12, overflow: 'hidden' }}>
       <div data-testid="map" ref={mapRef} style={{ position: 'absolute', inset: 0 }} />
-      <div style={{ ...overlay, top: 12 }}>
-        {scheduledAt ? <p data-testid="scheduled-at" style={{ fontSize: 13, color: '#475569' }}>นัดขนย้าย {new Date(scheduledAt).toLocaleString('th-TH')}</p> : null}
-        {stage && stage !== 'searching' ? <p data-testid="stage" style={{ fontWeight: 700, color: '#115e59' }}>{STAGE_LABELS[stage]}</p> : null}
+      <div style={{ ...overlay, top: 8, left: 8, right: 8, padding: '4px 8px', fontSize: 11, lineHeight: 1.4, maxWidth: 230 }}>
+        {scheduledAt ? <p data-testid="scheduled-at" style={{ margin: 0, color: '#475569' }}>นัดขนย้าย {new Date(scheduledAt).toLocaleString('th-TH')}</p> : null}
+        {stage && stage !== 'searching' ? <p data-testid="stage" style={{ margin: 0, fontWeight: 700, color: '#115e59' }}>{STAGE_LABELS[stage]}</p> : null}
         {showUnavailable ? (
-          <p data-testid="unavailable">
+          <p data-testid="unavailable" style={{ margin: 0 }}>
             ตำแหน่งไม่พร้อมใช้งาน
             {lastTime ? ` (ล่าสุด ${formatTime(lastTime)})` : null}
           </p>
         ) : null}
         {position && position.is_stale ? (
-          <p data-testid="stale-badge">ตำแหน่งอาจไม่เป็นปัจจุบัน</p>
+          <p data-testid="stale-badge" style={{ margin: 0 }}>ตำแหน่งอาจไม่เป็นปัจจุบัน</p>
         ) : null}
-        {position ? <p data-testid="last-time">อัปเดตล่าสุด {formatTime(position.recorded_at)}</p> : null}
+        {position ? <p data-testid="last-time" style={{ margin: 0 }}>อัปเดตล่าสุด {formatTime(position.recorded_at)}</p> : null}
       </div>
       {team ? (
-        <section data-testid="team-card" style={{ ...overlay, bottom: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
+        <section data-testid="team-card" style={{ ...overlay, bottom: 8, left: 8, right: 8, padding: '4px 8px', fontSize: 11, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {team.photo_url ? (
-            <img data-testid="team-photo" src={team.photo_url} alt={team.lead_name} width={56} height={56} style={{ borderRadius: '50%', flex: 'none' }} />
+            <img data-testid="team-photo" src={team.photo_url} alt={team.lead_name} width={32} height={32} style={{ borderRadius: '50%', flex: 'none' }} />
           ) : null}
-          <div>
-            <p data-testid="team-lead">หัวหน้าทีม: {team.lead_name}</p>
-            <p data-testid="team-phone">เบอร์โทร: {team.phone}</p>
-            <p data-testid="team-plate">ทะเบียนรถ: {team.plate}</p>
-            <p data-testid="team-vehicle">ประเภทรถ: {team.vehicle_type}</p>
-          </div>
+          <p data-testid="team-lead" style={{ margin: 0 }}>{team.lead_name}</p>
+          <p data-testid="team-phone" style={{ margin: 0 }}>{team.phone}</p>
+          <p data-testid="team-plate" style={{ margin: 0 }}>{team.plate}</p>
+          <p data-testid="team-vehicle" style={{ margin: 0 }}>{team.vehicle_type}</p>
         </section>
       ) : null}
     </div>

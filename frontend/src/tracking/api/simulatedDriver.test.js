@@ -2,7 +2,7 @@
 // ทดสอบตำแหน่งคนขับจำลอง (T-13 ข้อมูลจำลอง)
 // รองรับ: D-05-39 (ไม่คืนตำแหน่งก่อนถึงเวลานัด), REQ-IF-001
 import { expect, test } from 'vitest';
-import { SIMULATED_TRIP_MS, simulatedDriverPosition } from './simulatedDriver.js';
+import { APPROACH_END, DEMO_DRIVER_START_OFFSET, SIMULATED_TRIP_MS, simulatedDriverPosition } from './simulatedDriver.js';
 
 const PICKUP = { lat: 13.0, lng: 100.0 };
 const DROPOFF = { lat: 14.0, lng: 101.0 };
@@ -14,10 +14,23 @@ test('D_05_39_no_driver_position_before_scheduled_time', () => {
     .toThrow('ยังไม่ถึงเวลานัด');
 });
 
-test('D_05_39_driver_starts_at_pickup_at_scheduled_time', () => {
+test('D_05_39_driver_starts_from_demo_start_point_at_scheduled_time', () => {
   const p = simulatedDriverPosition({ pickup: PICKUP, dropoff: DROPOFF, scheduledAt: SCHEDULED, nowMs: START });
+  expect(p.lat).toBeCloseTo(PICKUP.lat + DEMO_DRIVER_START_OFFSET.lat);
+  expect(p.lng).toBeCloseTo(PICKUP.lng + DEMO_DRIVER_START_OFFSET.lng);
+});
+
+test('D_05_39_driver_reaches_pickup_before_loading', () => {
+  const p = simulatedDriverPosition({ pickup: PICKUP, dropoff: DROPOFF, scheduledAt: SCHEDULED, nowMs: START + SIMULATED_TRIP_MS * APPROACH_END });
   expect(p.lat).toBeCloseTo(PICKUP.lat);
   expect(p.lng).toBeCloseTo(PICKUP.lng);
+});
+
+test('D_05_39_same_start_point_for_every_client', () => {
+  const a = simulatedDriverPosition({ pickup: PICKUP, dropoff: DROPOFF, scheduledAt: SCHEDULED, nowMs: START + 1000 });
+  const b = simulatedDriverPosition({ pickup: PICKUP, dropoff: DROPOFF, scheduledAt: SCHEDULED, nowMs: START + 1000 });
+  expect(a.lat).toBe(b.lat);
+  expect(a.lng).toBe(b.lng);
 });
 
 test('D_05_39_driver_stays_at_pickup_while_loading', () => {

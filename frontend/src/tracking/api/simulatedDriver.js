@@ -3,6 +3,11 @@
 // ค่าปกติ 15 วินาที (0.25 นาที); VITE_DEMO_TRIP_MINUTES ใช้เฉพาะตอนเดโม
 // สัดส่วนของการเดินทางที่คนขับยังจอดอยู่ที่จุดรับ (ถึงต้นทาง + กำลังขนของ) ก่อนเริ่มขับ
 export const LOADING_END = 0.2;
+// สัดส่วนของการเดินทางที่คนขับกำลังวิ่งจากจุดเริ่มไปต้นทาง (ตรงกับขั้น "ถึงต้นทางแล้ว" ที่ 0.1)
+export const APPROACH_END = 0.1;
+// จุดเริ่มของคนขับจำลอง = ต้นทาง + ค่าคงที่นี้ (ประมาณ 1 กม.ทั้งแนวเหนือ-ใต้และตะวันออก-ตะวันตก)
+// เป็นค่าคงที่เพื่อให้ทุกเครื่องได้ตำแหน่งเดียวกันโดยไม่ต้องมี backend (ข้อมูลจำลองเดโม)
+export const DEMO_DRIVER_START_OFFSET = { lat: 0.01, lng: -0.01 };
 export const SIMULATED_TRIP_MS = (Number(import.meta.env.VITE_DEMO_TRIP_MINUTES) || 0.25) * 60 * 1000;
 
 /**
@@ -17,6 +22,17 @@ export function simulatedDriverPosition({ pickup, dropoff, scheduledAt, route = 
     throw err;
   }
   const t = Math.min(1, (nowMs - startMs) / SIMULATED_TRIP_MS);
+  // ช่วงแรก คนขับวิ่งจากจุดเริ่ม (ต้นทาง + offset) ไปถึงต้นทาง
+  if (t < APPROACH_END) {
+    const f = t / APPROACH_END;
+    const from = { lat: pickup.lat + DEMO_DRIVER_START_OFFSET.lat, lng: pickup.lng + DEMO_DRIVER_START_OFFSET.lng };
+    return {
+      lat: from.lat + (pickup.lat - from.lat) * f,
+      lng: from.lng + (pickup.lng - from.lng) * f,
+      recorded_at: new Date(nowMs).toISOString(),
+      is_stale: false,
+    };
+  }
   // คนขับจอดอยู่ที่จุดรับจนกว่าจะขนของเสร็จ แล้วจึงขับ (ความคืบหน้าการขับ 0–1 หลัง LOADING_END)
   const drive = t <= LOADING_END ? 0 : (t - LOADING_END) / (1 - LOADING_END);
   const point = route && route.length >= 2

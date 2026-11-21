@@ -102,6 +102,12 @@ export default function App({ onAuthenticated } = {}) {
     ...trackingApi,
     getLatest: async () => simulatedDriverPosition({ pickup, dropoff, scheduledAt, route }),
     getStage: async () => ({ stage: simulatedStage({ scheduledAt }) }),
+    // ข้อมูลทีมงานแสดงตั้งแต่ขั้นหาคนขับได้แล้ว (D-05-34) ตั้งขั้นในข้อมูลจำลองให้ตรงกับหน้าแผนที่
+    // เพราะหน้าภาพรวมตั้งขั้นนี้ด้วย timer ซึ่งอาจยังไม่ทำงานเมื่อเปิดหน้าแผนที่โดยตรง
+    getTeamInfo: async (id) => {
+      trackingApi.setStage(id, "driver_found");
+      return trackingApi.getTeamInfo(id);
+    },
   };
 
   if (bookingId) {
