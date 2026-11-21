@@ -1,3 +1,4 @@
+import secrets
 from datetime import timedelta
 
 import pytest
@@ -6,10 +7,21 @@ from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
 from app import mock_db
-from app.auth import _check_mock_otp, get_current_user
+from app.auth import (
+    _check_mock_otp,
+    bind_registration_proof,
+    get_current_user,
+    registration_proofs,
+)
 from app.main import app
 
 client = TestClient(app)
+
+
+def _registration_proof_for(user):
+    proof = secrets.token_urlsafe(32)
+    bind_registration_proof(proof, user["id"])
+    return proof
 
 
 def test_AC_02_02_auth_endpoint_methods_and_paths_registered():
@@ -24,6 +36,8 @@ def test_AC_02_02_auth_endpoint_methods_and_paths_registered():
 
     assert auth_routes == {
         ("POST", "/api/auth/login"),
+        ("POST", "/api/auth/otp-challenges"),
+        ("POST", "/api/auth/otp-challenges/{otp_challenge_id}/resend"),
         ("POST", "/api/auth/verify-otp"),
         ("GET", "/api/auth/me"),
     }
@@ -57,12 +71,13 @@ def test_AC_02_01_verified_account_login_issues_token():
         mock_db.otp_challenges.update(original_challenges)
 
 
-def test_AC_02_01_unverified_account_login_starts_mock_otp():
-    # ตรวจ AC-02-01: บัญชี unverified เริ่ม OTP mock ไปยัง phone
+def test_AC_02_01_unverified_account_login_requires_verification():
+    # ตรวจ AC-02-01: บัญชี unverified ปฏิเสธ login และไม่เริ่ม OTP
     user = mock_db.users[0]
     original_verified = user["is_verified"]
     original_tokens = mock_db.tokens.copy()
     original_challenges = mock_db.otp_challenges.copy()
+    original_proofs = registration_proofs.copy()
     user["is_verified"] = False
 
     try:
@@ -71,24 +86,18 @@ def test_AC_02_01_unverified_account_login_starts_mock_otp():
             json={"email": user["email"], "password": user["password"]},
         )
 
-        assert response.status_code == 200
-        body = response.json()
-        assert set(body) == {"otp_challenge_id", "mock_otp"}
-        assert body["mock_otp"] == mock_db.MOCK_OTP
-        assert body["otp_challenge_id"] in mock_db.otp_challenges
-        challenge = mock_db.otp_challenges[body["otp_challenge_id"]]
-        assert challenge["user_id"] == user["id"]
-        assert challenge["phone"] == user["phone"]
-        assert challenge["otp"] == mock_db.MOCK_OTP
-        assert challenge["failed_attempts"] == 0
-        assert challenge["status"] == "active"
+        assert response.status_code == 403
+        assert response.json() == {"detail": "Account verification required"}
         assert mock_db.tokens == original_tokens
+        assert mock_db.otp_challenges == original_challenges
     finally:
         user["is_verified"] = original_verified
         mock_db.tokens.clear()
         mock_db.tokens.update(original_tokens)
         mock_db.otp_challenges.clear()
         mock_db.otp_challenges.update(original_challenges)
+        registration_proofs.clear()
+        registration_proofs.update(original_proofs)
 
 
 def test_AC_02_01_login_rejects_invalid_credentials_and_request():
@@ -108,22 +117,70 @@ def test_AC_02_01_login_rejects_invalid_credentials_and_request():
     assert invalid_request.json() == {"detail": "Request validation failed"}
 
 
+def test_AC_02_01_registration_proof_starts_otp_once():
+    # ตรวจ AC-02-01: proof ที่ผูกกับบัญชีใช้เริ่ม OTP ได้ครั้งเดียว
+    user = mock_db.users[0]
+    original_verified = user["is_verified"]
+    original_challenges = mock_db.otp_challenges.copy()
+    original_proofs = registration_proofs.copy()
+    user["is_verified"] = False
+
+    try:
+        proof = _registration_proof_for(user)
+        response = client.post(
+            "/api/auth/otp-challenges",
+            json={"registration_proof": proof},
+        )
+        replay = client.post(
+            "/api/auth/otp-challenges",
+            json={"registration_proof": proof},
+        )
+        invalid_proof = client.post(
+            "/api/auth/otp-challenges",
+            json={"registration_proof": "unknown-proof"},
+        )
+        invalid_request = client.post(
+            "/api/auth/otp-challenges",
+            json={"registration_proof": ""},
+        )
+
+        assert response.status_code == 200
+        assert set(response.json()) == {"otp_challenge_id", "mock_otp"}
+        challenge = mock_db.otp_challenges[response.json()["otp_challenge_id"]]
+        assert challenge["user_id"] == user["id"]
+        assert challenge["phone"] == user["phone"]
+        assert replay.status_code == invalid_proof.status_code == 400
+        assert replay.json() == invalid_proof.json() == {
+            "detail": "Invalid registration proof"
+        }
+        assert invalid_request.status_code == 422
+        assert invalid_request.json() == {
+            "detail": "Request validation failed"
+        }
+    finally:
+        user["is_verified"] = original_verified
+        mock_db.otp_challenges.clear()
+        mock_db.otp_challenges.update(original_challenges)
+        registration_proofs.clear()
+        registration_proofs.update(original_proofs)
+
+
 def test_AC_02_06_otp_lifetime_attempts_and_resend():
     # ตรวจ AC-02-06: อายุ OTP, การขอใหม่, attempts แยกชุด และ status/error
     user = mock_db.users[0]
     original_verified = user["is_verified"]
     original_tokens = mock_db.tokens.copy()
     original_challenges = mock_db.otp_challenges.copy()
+    original_proofs = registration_proofs.copy()
     user["is_verified"] = False
 
     try:
         first_response = client.post(
-            "/api/auth/login",
-            json={"email": user["email"], "password": user["password"]},
+            "/api/auth/otp-challenges",
+            json={"registration_proof": _registration_proof_for(user)},
         )
         second_response = client.post(
-            "/api/auth/login",
-            json={"email": user["email"], "password": user["password"]},
+            f"/api/auth/otp-challenges/{first_response.json()['otp_challenge_id']}/resend",
         )
         first_id = first_response.json()["otp_challenge_id"]
         second_id = second_response.json()["otp_challenge_id"]
@@ -154,8 +211,8 @@ def test_AC_02_06_otp_lifetime_attempts_and_resend():
         assert second_challenge["failed_attempts"] == 3
 
         third_response = client.post(
-            "/api/auth/login",
-            json={"email": user["email"], "password": user["password"]},
+            "/api/auth/otp-challenges",
+            json={"registration_proof": _registration_proof_for(user)},
         )
         third_id = third_response.json()["otp_challenge_id"]
         third_challenge = mock_db.otp_challenges[third_id]
@@ -176,23 +233,32 @@ def test_AC_02_06_otp_lifetime_attempts_and_resend():
         mock_db.tokens.update(original_tokens)
         mock_db.otp_challenges.clear()
         mock_db.otp_challenges.update(original_challenges)
+        registration_proofs.clear()
+        registration_proofs.update(original_proofs)
 
 
-def test_AC_02_03_verified_otp_returns_token():
-    # ตรวจ AC-02-03: ยืนยัน OTP โดยไม่มี token ก่อน และผูก token กับผู้ใช้
+def test_AC_02_03_verified_otp_marks_account_without_issuing_token():
+    # ตรวจ AC-02-03: ยืนยัน OTP โดยไม่มี token ก่อน และไม่ออก token
     user = mock_db.users[0]
     original_verified = user["is_verified"]
     original_tokens = mock_db.tokens.copy()
     original_challenges = mock_db.otp_challenges.copy()
+    original_proofs = registration_proofs.copy()
     user["is_verified"] = False
 
     try:
-        login_response = client.post(
-            "/api/auth/login",
-            json={"email": user["email"], "password": user["password"]},
+        challenge_response = client.post(
+            "/api/auth/otp-challenges",
+            json={"registration_proof": _registration_proof_for(user)},
         )
-        challenge_id = login_response.json()["otp_challenge_id"]
-        assert login_response.status_code == 200
+        second_challenge_response = client.post(
+            "/api/auth/otp-challenges",
+            json={"registration_proof": _registration_proof_for(user)},
+        )
+        challenge_id = challenge_response.json()["otp_challenge_id"]
+        second_challenge_id = second_challenge_response.json()["otp_challenge_id"]
+        assert challenge_response.status_code == 200
+        assert second_challenge_response.status_code == 200
         assert challenge_id in mock_db.otp_challenges
         assert mock_db.tokens == original_tokens
 
@@ -205,12 +271,22 @@ def test_AC_02_03_verified_otp_returns_token():
         )
 
         assert response.status_code == 200
-        body = response.json()
-        assert set(body) == {"token"}
+        assert response.json() == {"is_verified": True}
         assert user["is_verified"] is True
-        assert body["token"] not in original_tokens
-        assert mock_db.tokens[body["token"]] == user["id"]
+        assert mock_db.tokens == original_tokens
         assert mock_db.otp_challenges[challenge_id]["status"] == "verified"
+
+        repeated_verification = client.post(
+            "/api/auth/verify-otp",
+            json={
+                "otp_challenge_id": second_challenge_id,
+                "otp": mock_db.MOCK_OTP,
+            },
+        )
+        assert repeated_verification.status_code == 400
+        assert repeated_verification.json() == {
+            "detail": "OTP verification failed"
+        }
 
         invalid_request = client.post(
             "/api/auth/verify-otp",
@@ -226,6 +302,8 @@ def test_AC_02_03_verified_otp_returns_token():
         mock_db.tokens.update(original_tokens)
         mock_db.otp_challenges.clear()
         mock_db.otp_challenges.update(original_challenges)
+        registration_proofs.clear()
+        registration_proofs.update(original_proofs)
 
 
 def test_AC_02_04_token_identifies_current_user():
@@ -234,17 +312,18 @@ def test_AC_02_04_token_identifies_current_user():
     original_verified = user["is_verified"]
     original_tokens = mock_db.tokens.copy()
     original_challenges = mock_db.otp_challenges.copy()
+    original_proofs = registration_proofs.copy()
     original_bookings = mock_db.bookings.copy()
     original_status_logs = mock_db.status_logs.copy()
     user["is_verified"] = False
 
     try:
-        login_response = client.post(
-            "/api/auth/login",
-            json={"email": user["email"], "password": user["password"]},
+        challenge_response = client.post(
+            "/api/auth/otp-challenges",
+            json={"registration_proof": _registration_proof_for(user)},
         )
-        assert login_response.status_code == 200
-        challenge_id = login_response.json()["otp_challenge_id"]
+        assert challenge_response.status_code == 200
+        challenge_id = challenge_response.json()["otp_challenge_id"]
 
         verify_response = client.post(
             "/api/auth/verify-otp",
@@ -254,7 +333,15 @@ def test_AC_02_04_token_identifies_current_user():
             },
         )
         assert verify_response.status_code == 200
-        token = verify_response.json()["token"]
+        assert verify_response.json() == {"is_verified": True}
+        assert mock_db.tokens == original_tokens
+
+        login_response = client.post(
+            "/api/auth/login",
+            json={"email": user["email"], "password": user["password"]},
+        )
+        assert login_response.status_code == 200
+        token = login_response.json()["token"]
 
         assert mock_db.tokens[token] == user["id"]
         assert get_current_user(f"Bearer {token}") is user
@@ -274,6 +361,8 @@ def test_AC_02_04_token_identifies_current_user():
         mock_db.tokens.update(original_tokens)
         mock_db.otp_challenges.clear()
         mock_db.otp_challenges.update(original_challenges)
+        registration_proofs.clear()
+        registration_proofs.update(original_proofs)
         mock_db.bookings[:] = original_bookings
         mock_db.status_logs[:] = original_status_logs
 

@@ -1,4 +1,4 @@
-# stub ของ ② ยืนยันตัวตน — เมื่อ ② เสร็จให้แทนไฟล์นี้ (ชื่อ get_current_user เหมือนเดิม)
+# Auth endpoints และผู้ใช้ปัจจุบันของ Feature 002
 import re
 import secrets
 from datetime import datetime, timedelta
@@ -10,6 +10,8 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from app import mock_db
+
+registration_proofs: dict[str, int] = {}
 
 
 # รองรับ REQ-SEC-301, REQ-SEC-401 (stub ของ ② ดู AS-01)
@@ -24,6 +26,25 @@ def get_current_user(authorization: str | None = Header(default=None)):
 
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+
+# รองรับ REQ-FN-201: ผูก proof ที่ Register สร้างกับบัญชีเพื่อให้ Auth ตรวจการใช้ครั้งเดียว
+def bind_registration_proof(registration_proof: str, user_id: int) -> None:
+    user = next(
+        (candidate for candidate in mock_db.users if candidate["id"] == user_id),
+        None,
+    )
+    if (
+        not isinstance(registration_proof, str)
+        or not registration_proof
+        or registration_proof in registration_proofs
+        or user is None
+        or user.get("is_verified") is True
+    ):
+        raise ValueError(
+            "Registration proof must be unique and bound to an unverified user"
+        )
+    registration_proofs[registration_proof] = user_id
 
 
 # รองรับ REQ-FN-201 และ REQ-FN-205: ตรวจรูปแบบ input ของ login ตาม API contract
@@ -47,6 +68,20 @@ class LoginRequest(BaseModel):
         # รองรับ REQ-FN-201: ห้าม password ว่างโดยไม่ trim
         if len(value) < 1:
             raise ValueError("Password must contain at least one character")
+        return value
+
+
+# รองรับ REQ-FN-201: ตรวจหลักฐานที่ออกจากขั้นสมัครก่อนเริ่ม OTP
+class RegistrationOtpChallengeRequest(BaseModel):
+    model_config = ConfigDict(strict=True)
+
+    registration_proof: str
+
+    @field_validator("registration_proof")
+    @classmethod
+    def validate_registration_proof(cls, value: str) -> str:
+        if not value:
+            raise ValueError("Registration proof must not be empty")
         return value
 
 
@@ -120,11 +155,7 @@ def _check_mock_otp(challenge_id: str, otp: str) -> mock_db.OtpChallenge:
     return challenge
 
 
-def _pending_auth_handler() -> None:
-    raise NotImplementedError("Auth handler behavior is pending API contract confirmation.")
-
-
-# รองรับ REQ-FN-201 และ REQ-FN-205; ตรวจ credentials และเริ่ม OTP mock สำหรับบัญชีที่ยังไม่ยืนยัน
+# รองรับ REQ-FN-201 และ REQ-FN-203: Login ออก token เฉพาะบัญชีที่ยืนยันแล้ว
 @router.post("/login")
 async def login(request: Request) -> dict[str, str]:
     try:
@@ -155,8 +186,45 @@ async def login(request: Request) -> dict[str, str]:
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    if user.get("is_verified") is True:
-        return {"token": _issue_token(user["id"])}
+    if user.get("is_verified") is not True:
+        raise HTTPException(status_code=403, detail="Account verification required")
+
+    return {"token": _issue_token(user["id"])}
+
+
+# รองรับ REQ-FN-201 และ REQ-FN-205: แลก proof จากการสมัครเป็น OTP challenge หนึ่งครั้ง
+@router.post("/otp-challenges")
+async def start_registration_otp(request: Request) -> dict[str, str]:
+    try:
+        payload: Any = await request.json()
+    except (JSONDecodeError, UnicodeDecodeError):
+        raise HTTPException(
+            status_code=422,
+            detail="Request validation failed",
+        )
+
+    try:
+        challenge_request = RegistrationOtpChallengeRequest.model_validate(
+            payload,
+            strict=True,
+        )
+    except ValidationError:
+        raise HTTPException(
+            status_code=422,
+            detail="Request validation failed",
+        )
+
+    user_id = registration_proofs.pop(challenge_request.registration_proof, None)
+    user = next(
+        (
+            candidate
+            for candidate in mock_db.users
+            if candidate["id"] == user_id
+        ),
+        None,
+    )
+    if user is None or user.get("is_verified") is True:
+        raise HTTPException(status_code=400, detail="Invalid registration proof")
 
     challenge_id = _send_mock_otp(user["id"], user["phone"])
     return {
@@ -165,9 +233,34 @@ async def login(request: Request) -> dict[str, str]:
     }
 
 
-# รองรับ REQ-FN-203 และ REQ-FN-205: ยืนยัน OTP ครั้งแรกและออก token ที่ผูกกับผู้ใช้
+# รองรับ REQ-FN-201 และ REQ-FN-205: ขอ OTP ชุดใหม่โดยคงกติกาอายุ/ความผิดแยกต่อ challenge
+@router.post("/otp-challenges/{otp_challenge_id}/resend")
+def resend_registration_otp(otp_challenge_id: str) -> dict[str, str]:
+    challenge = mock_db.otp_challenges.get(otp_challenge_id)
+    if challenge is None:
+        raise HTTPException(status_code=400, detail="OTP verification failed")
+
+    user = next(
+        (
+            candidate
+            for candidate in mock_db.users
+            if candidate["id"] == challenge["user_id"]
+        ),
+        None,
+    )
+    if user is None or user.get("is_verified") is True:
+        raise HTTPException(status_code=400, detail="OTP verification failed")
+
+    challenge_id = _send_mock_otp(user["id"], user["phone"])
+    return {
+        "otp_challenge_id": challenge_id,
+        "mock_otp": mock_db.MOCK_OTP,
+    }
+
+
+# รองรับ REQ-FN-203 และ REQ-FN-205: ยืนยัน OTP และตั้งสถานะบัญชีโดยไม่ออก token
 @router.post("/verify-otp")
-async def verify_otp(request: Request) -> dict[str, str]:
+async def verify_otp(request: Request) -> dict[str, bool]:
     try:
         payload: Any = await request.json()
     except (JSONDecodeError, UnicodeDecodeError):
@@ -184,23 +277,29 @@ async def verify_otp(request: Request) -> dict[str, str]:
             detail="Request validation failed",
         )
 
-    challenge = _check_mock_otp(
-        verification.otp_challenge_id,
-        verification.otp,
+    existing_challenge = mock_db.otp_challenges.get(
+        verification.otp_challenge_id
     )
+    if existing_challenge is None:
+        raise HTTPException(status_code=400, detail="OTP verification failed")
+
     user = next(
         (
             candidate
             for candidate in mock_db.users
-            if candidate["id"] == challenge["user_id"]
+            if candidate["id"] == existing_challenge["user_id"]
         ),
         None,
     )
-    if user is None:
+    if user is None or user.get("is_verified") is True:
         raise HTTPException(status_code=400, detail="OTP verification failed")
 
+    challenge = _check_mock_otp(
+        verification.otp_challenge_id,
+        verification.otp,
+    )
     user["is_verified"] = True
-    return {"token": _issue_token(user["id"])}
+    return {"is_verified": True}
 
 
 # รองรับ REQ-FN-202 และ REQ-FN-204: คืนข้อมูลผู้ใช้ปัจจุบันตาม API contract
