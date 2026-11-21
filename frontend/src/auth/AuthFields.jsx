@@ -1,6 +1,13 @@
 import "./auth.css";
-import { useState } from "react";
-import { authLogin, storeAuthToken, verifyOtp } from "../api.js";
+import { useEffect, useState } from "react";
+import {
+  authLogin,
+  clearOtpChallengeHandoff,
+  readOtpChallengeHandoff,
+  resendOtp,
+  storeAuthToken,
+  verifyOtp,
+} from "../api.js";
 
 // รองรับ REQ-FN-201, REQ-FN-106, REQ-CON-201
 export function AuthLoginFields({
@@ -65,14 +72,20 @@ export function AuthOtpFields({ otp = "", onOtpChange }) {
   );
 }
 
-// รองรับ REQ-FN-201, REQ-FN-203, REQ-FN-205 และ REQ-CON-201: เชื่อม flow login/OTP กับ API
+// รองรับ REQ-FN-201, REQ-FN-203, REQ-FN-205 และ REQ-CON-201: เชื่อม handoff สมัคร, OTP และ login
 export function AuthFlow({ onAuthenticated }) {
   const [credentials, setCredentials] = useState({ email: "", password: "" });
-  const [otpChallengeId, setOtpChallengeId] = useState("");
+  const [otpChallengeId, setOtpChallengeId] = useState(
+    readOtpChallengeHandoff,
+  );
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    clearOtpChallengeHandoff();
+  }, []);
 
   async function completeLogin(token) {
     storeAuthToken(token);
@@ -80,7 +93,7 @@ export function AuthFlow({ onAuthenticated }) {
     setStatus("เข้าสู่ระบบสำเร็จ");
   }
 
-  async function requestOtp(event) {
+  async function submitLogin(event) {
     event.preventDefault();
     setError("");
     setStatus("");
@@ -91,6 +104,21 @@ export function AuthFlow({ onAuthenticated }) {
         await completeLogin(result.token);
         return;
       }
+      throw new Error("รูปแบบผลตอบกลับจากระบบไม่ถูกต้อง");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function requestOtp(event) {
+    event.preventDefault();
+    setError("");
+    setStatus("");
+    setSubmitting(true);
+    try {
+      const result = await resendOtp(otpChallengeId);
       if (!result.otp_challenge_id) {
         throw new Error("รูปแบบผลตอบกลับจากระบบไม่ถูกต้อง");
       }
@@ -113,10 +141,13 @@ export function AuthFlow({ onAuthenticated }) {
         otp_challenge_id: otpChallengeId,
         otp,
       });
-      if (!result.token) {
+      if (result.is_verified !== true) {
         throw new Error("รูปแบบผลตอบกลับจากระบบไม่ถูกต้อง");
       }
-      await completeLogin(result.token);
+      setOtpChallengeId("");
+      setOtp("");
+      setCredentials({ email: "", password: "" });
+      setStatus("ยืนยันบัญชีสำเร็จ กรุณาเข้าสู่ระบบ");
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -127,7 +158,7 @@ export function AuthFlow({ onAuthenticated }) {
   return (
     <section className="card auth-card">
       {!otpChallengeId ? (
-        <form onSubmit={requestOtp}>
+        <form onSubmit={submitLogin}>
           <h2>เข้าสู่ระบบ</h2>
           <AuthLoginFields
             email={credentials.email}

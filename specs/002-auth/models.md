@@ -17,23 +17,24 @@ flowchart LR
     Backend[Auth Backend]
     MockSms["Mock SMS sender"]
   end
+  Register[Register Feature]
   Users[(Mock data: users)]
   OtherFeatures[Feature อื่น]
 
-  Booker -->|"email และรหัสผ่าน / กรอก OTP"| Frontend
-  Frontend -->|"คำขอ Auth ผ่าน REST"| Backend
+  Booker -->|"email/password หรือกรอก OTP"| Frontend
+  Register -->|"registration_proof แบบ opaque"| Frontend
+  Frontend -->|"เริ่ม OTP ด้วย registration_proof"| Backend
+  Frontend -->|"Login, verify OTP, resend"| Backend
   Backend -->|"อ่านข้อมูลผู้ใช้และ users.phone"| Users
   Backend -->|"ขอส่ง OTP แบบจำลอง"| MockSms
   MockSms -->|"จำลอง SMS ไป users.phone; ค่า OTP mock"| Backend
-  Backend -->|"ส่ง challenge response รวม mock_otp ตาม API contract"| Frontend
-  Backend -->|"ออก token เมื่อ flow login สำเร็จ"| Frontend
+  Backend -->|"challenge response รวม mock_otp ตาม API contract"| Frontend
+  Backend -->|"ออก token เมื่อ Login ของ verified สำเร็จ"| Frontend
   Frontend -->|"ส่ง token ให้ใช้ต่อ"| OtherFeatures
   OtherFeatures -->|"ใช้ token / get_current_user()"| Backend
 ```
 
-`Mock SMS sender` เป็นส่วนจำลองภายในระบบ Auth ไม่ใช่ SMS provider หรือระบบภายนอกจริง ไม่มี external SMS integration ในขอบเขตนี้ การวาดการส่ง token และ OTP เป็นภาพรวมเชิงแนวคิด ไม่ได้กำหนด API request/response หรือรูปแบบ token.
-
-Frontend รับ challenge response ตาม API contract รวม `mock_otp` แต่ไม่ render ค่ารหัส; ช่องกรอก OTP เริ่มว่างและผู้ใช้พิมพ์รหัสเอง.
+`Mock SMS sender` เป็นส่วนจำลองภายในระบบ Auth ไม่ใช่ SMS provider จริง. `registration_proof` เป็น opaque ใช้ครั้งเดียวและผูกกับบัญชี; Auth แลกเป็น challenge ID แต่ไม่รับ `user_id` อย่างเดียวเป็นหลักฐาน. Frontend ไม่ render ค่า `mock_otp`; ช่อง OTP เริ่มว่าง.
 
 ผู้ใช้ mock ที่มีอยู่ทั้งหมดใน `backend/app/mock_db.py` ได้รับอนุมัติจากทีมให้ใช้เป็น fixtures (Q-02-08).
 
@@ -50,82 +51,88 @@ classDiagram
     is_verified
   }
 
-  class OTP {
+  class RegistrationProof {
+    opaque_value
+    user_id
+    used_once
+  }
+
+  class OTPChallenge {
+    otp_challenge_id
     code
     failed_attempt_count
     status
+    created_at
   }
 
-  class VerificationFlow {
-    status
+  class AuthToken {
+    token
+    user_id
   }
 
-  class AuthToken
-  class OtherFeature
+  RegistrationProof --> User : ผูกกับบัญชี; ใช้เมื่อสร้าง challenge
+  User --> OTPChallenge : receives mock SMS at phone
+  User --> AuthToken : token is issued only on verified Login
 
-  User --> OTP : receives mock SMS at phone
-  OTP --> VerificationFlow : checked in Auth flow
-  VerificationFlow --> AuthToken : after successful login flow
-  AuthToken --> OtherFeature : used by other features
-
-  note for User "ยืนยันการใช้: email สำหรับ login; password เป็น credential สำหรับ login โดยไม่กำหนดรูปแบบหรือการจัดเก็บ; phone เป็นปลายทาง SMS OTP และเป็นข้อมูลส่วนบุคคล. OTP ที่ถูกต้องครั้งแรกตั้ง is_verified เป็น true; login ครั้งต่อไปเมื่อ is_verified=true ไม่ต้องยืนยัน OTP ซ้ำ. GET /api/auth/me ส่งเฉพาะ id, name, email. ค่าเริ่มต้น/ชนิดข้อมูลและสถานะหลัง backend restart ยังไม่กำหนด."
-  note for OTP "ยืนยันแล้ว: code เป็นตัวเลข 6 หลัก ค่า mock คงที่ 123456; เริ่มนับอายุ 15 นาทีเมื่อ mock SMS/OTP แสดงผล; กรอกผิดครบ 3 ครั้งแล้ว code นั้นใช้ไม่ได้. ขอใหม่ได้ทันทีไม่จำกัดจำนวนครั้ง และ code เดิมใช้ได้จนหมดอายุ. วิธีแยกหลาย issuance และนับจำนวนครั้งผิดแยกชุดยังเป็นคำถาม Q-02-04."
-  note for VerificationFlow "OTP ที่ถูกต้องครั้งแรกทำให้ users.is_verified เป็น true; บัญชีที่เป็น true ไม่ต้องยืนยัน OTP ซ้ำเมื่อ login."
-  note for AuthToken "ใช้ mapping ปัจจุบัน token → user_id. ออกหลัง flow login สำเร็จ: ต้องผ่าน OTP หากยังไม่ verified; หาก verified แล้ว login ด้วย email/password สำเร็จได้ token. อายุ/หมดอายุและ lifecycle อื่นยังไม่กำหนด (Q-02-05)."
+  note for User "OTP ที่ถูกต้องครั้งแรกตั้ง is_verified=true; การยืนยัน OTP ไม่ออก token. Login ครั้งต่อไปเมื่อ is_verified=true ใช้ email/password และออก token. GET /api/auth/me ส่งเฉพาะ id, name, email."
+  note for RegistrationProof "Opaque proof ผูกกับบัญชีและใช้เริ่ม OTP ได้ครั้งเดียว; proof ผิด/ใช้แล้วไม่สร้าง challenge."
+  note for OTPChallenge "code เป็นตัวเลข 6 หลัก ค่า mock 123456; อายุ 15 นาที; กรอกผิดครบ 3 ครั้งปิดเฉพาะชุดนั้น. Resend สร้าง challenge ID ใหม่และไม่ยกเลิก challenge เก่าที่ยังไม่หมดอายุ."
+  note for AuthToken "Mapping token → user_id; ออกเฉพาะหลัง Login สำเร็จของบัญชี verified. อายุเท่า process backend; ไม่มี refresh/revoke endpoint; ใช้ไม่ได้หลัง restart."
 ```
+
+คำว่า `RegistrationProof` เป็นแนวคิดของ opaque proof ที่ทีมยืนยัน ไม่ได้เพิ่ม field ลงใน entity `users`. รูปแบบ/การจัดเก็บ password และ token ไม่กำหนดเพิ่มเติมนอก API contract.
 
 ### สถานะ attribute
 
-| Entity | ยืนยันแล้ว | พบในภาพรวมแต่ความหมาย/การใช้ใน Auth ยังไม่ยืนยัน |
+| Entity | ยืนยันแล้ว | ขอบเขต / สิ่งที่ยังไม่กำหนด |
 |---|---|---|
-| `User` | `email` ใช้ login; `password` ใช้เป็น credential สำหรับ login โดยไม่กำหนดรูปแบบหรือการจัดเก็บ; `phone` เป็นปลายทางรับ SMS OTP และเป็นข้อมูลส่วนบุคคล; `id`, `name`, `email` ส่งกลับจาก `/api/auth/me`; OTP ที่ถูกต้องครั้งแรกตั้ง `is_verified=true`, การ login ต่อไปเมื่อเป็น `true` ไม่ต้องทำ OTP ซ้ำ | ค่าเริ่มต้นและชนิดข้อมูลของ `is_verified`; สถานะ `is_verified` หลัง backend restart |
-| `OTP` | `code` เป็น `123456`; UI ไม่แสดงค่าและให้ผู้ใช้กรอกเอง; เริ่มนับอายุ 15 นาทีเมื่อ flow กรอก OTP แสดงผล; กรอกผิดครบ 3 ครั้งแล้ว code นั้นใช้ไม่ได้ | วิธีระบุหลายคำขอและนับจำนวนครั้งผิดแยกชุด เมื่อ OTP ทุกชุดใช้ code เดียวกัน |
-| `VerificationFlow` | OTP ที่ถูกต้องและยังไม่หมดอายุทำให้ flow สำเร็จและตั้ง `users.is_verified=true`; บัญชีที่ `is_verified=true` ไม่ต้องยืนยัน OTP ซ้ำเมื่อ login | ค่าเริ่มต้นและชนิดข้อมูลของ `users.is_verified` |
-| `AuthToken` | ใช้ mapping ปัจจุบัน `token → user_id` และใช้ต่อกับ Feature อื่น; ออกเมื่อ flow login สำเร็จ (OTP สำเร็จสำหรับบัญชีที่ยังไม่ verified หรือ email/password ถูกต้องสำหรับบัญชีที่ verified) | อายุ/หมดอายุและ lifecycle อื่นของ token |
-
-ไม่กำหนดชนิดข้อมูล, รูปแบบหรือการจัดเก็บของ `password`, อายุ/หมดอายุและ lifecycle อื่นของ token, หรือรายละเอียดอื่นที่ไม่มีหลักฐานใน `spec.md` และคำตอบทีม.
+| `User` | `email` และ `password` ใช้ Login; `phone` เป็นปลายทางรับ SMS OTP; OTP ถูกต้องครั้งแรกตั้ง `is_verified=true`; `/me` ส่งเฉพาะ `id`, `name`, `email` | ค่าเริ่มต้น `is_verified` หลัง backend restart เป็นไปตาม fixture ตาม AS-02-01; ชนิดข้อมูล/validation ตาม API contract |
+| `RegistrationProof` | opaque, ผูกกับบัญชี, ใช้ครั้งเดียว; proof ผิดหรือใช้แล้วตอบ 400 และไม่สร้าง challenge | format และการส่งผ่าน Register response ยังเป็นงานเชื่อมต่อของ Feature 001 |
+| `OTPChallenge` | code `123456`; อายุ 15 นาที; ID แยกชุด; ผิดครบ 3 ครั้งปิดเฉพาะชุด; resend สร้าง ID ใหม่และ challenge เก่ายังใช้ได้จนหมดอายุ | ไม่มี SMS provider จริง |
+| `AuthToken` | mapping `token → user_id`; ออกเฉพาะ Login สำเร็จของบัญชี verified; ใช้ได้ตลอดอายุ process backend; ไม่มี refresh/revoke endpoint | ใช้ไม่ได้หลัง restart; `/me` รับ `Authorization: Bearer <token>` |
 
 `GET /api/auth/me` ส่งเฉพาะ `id`, `name`, `email`; ไม่ส่ง `phone`, `password`, OTP, token หรือ `is_verified` (Q-02-06).
 
 ## MD-02-03 (AI เสนอ รอทีมยืนยัน): State Diagram
 
-### วงจรชีวิต OTP
+### วงจรชีวิต OTP challenge
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Active: แสดง flow กรอก OTP โดยไม่แสดงค่ารหัส; เริ่มนับอายุ
+  [*] --> Active: proof ถูกต้อง; แสดง OTP flow และเริ่มนับอายุ
   Active --> Active: กรอกผิดครั้งที่ 1 หรือ 2
   Active --> Verified: กรอกถูกก่อนหมดอายุ
-  Active --> Invalid: กรอกผิดครบ 3 ครั้ง
+  Active --> Locked: กรอกผิดครบ 3 ครั้ง
   Active --> Expired: อายุครบ 15 นาที
   Verified --> [*]
-  Invalid --> [*]
+  Locked --> [*]
   Expired --> [*]
 ```
 
-อายุ 15 นาทีเริ่มนับเมื่อ mock SMS/OTP แสดงผลแล้ว. การขอรหัสใหม่ทำได้ทันทีและไม่จำกัดจำนวนครั้ง; OTP เดิมยังใช้ได้จนหมดอายุ. วิธีแยก instance/state ของ OTP หลายรายการที่ใช้ค่า `123456` และนับจำนวนครั้งผิดแยกชุดยังไม่กำหนด (Q-02-04) จึงไม่แสดงการขอใหม่เป็นการเปลี่ยนสถานะของ OTP เดิม.
+Resend สร้าง challenge ใหม่ที่มี ID และจำนวนครั้งผิดแยกจากชุดเดิม; challenge เดิมยังใช้ได้จนหมดอายุหรือถูกปิดตามกติกา.
 
-### สถานะการยืนยันใน Auth flow
+### ลำดับยืนยันบัญชีและ Login
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Login: เริ่ม login ด้วย email/password
-  Login --> AwaitingOTP: users.is_verified ไม่เป็น true
-  Login --> LoginAccepted: users.is_verified เป็น true และ email/password ถูกต้อง; ออก token
-  AwaitingOTP --> VerifiedInFlow: OTP ถูกต้องและยังไม่หมดอายุ / ตั้ง users.is_verified=true
-  AwaitingOTP --> Login: OTP หมดอายุหรือใช้ไม่ได้
-  VerifiedInFlow --> LoginAccepted: ยืนยันครั้งแรกสำเร็จ
-  LoginAccepted --> [*]
+  [*] --> AwaitingHandoff: สมัครสำเร็จ
+  AwaitingHandoff --> AwaitingOTP: proof ถูกต้อง; สร้าง challenge
+  AwaitingOTP --> Verified: OTP ถูกต้อง / ตั้ง users.is_verified=true
+  Verified --> Login: กลับหน้า Login โดยไม่มี token
+  Login --> Authenticated: credentials ถูกต้องและ is_verified=true / ออก token
+  Login --> VerificationRequired: credentials ถูกต้องและ is_verified ไม่เป็น true / 403, ไม่มี token
+  Authenticated --> [*]: ไปหน้า Booking
+  VerificationRequired --> [*]
 ```
 
-บัญชีที่มี `users.is_verified=true` ข้ามขั้น OTP ในการ login ครั้งต่อไป; การ login ครั้งแรกที่ OTP ถูกต้องต้องบันทึกค่านี้เป็น `true`. ค่าเริ่มต้นและชนิดข้อมูลของ field และการคงค่า `is_verified` หลัง backend restart ยังไม่ยืนยัน. รายละเอียด token ยังไม่กำหนดครบ.
+หลัง backend restart ให้ `is_verified` กลับเป็นค่าเริ่มต้นของ mock fixture โดยไม่เพิ่ม persistence (AS-02-01).
 
 ## MD-02-04 (AI เสนอ รอทีมยืนยัน): External Sequence
 
-ไม่มี external sequence ที่ต้องกำหนดสำหรับ Auth ในขอบเขตนี้ เพราะการส่ง SMS เป็น mock ภายในระบบและไม่มีการเชื่อมต่อ SMS provider ภายนอกจริง. รายละเอียดลำดับภายในระหว่าง Frontend, Auth Backend และ mock sender ยังไม่กำหนดเป็น API/sequence contract.
+ไม่มี external sequence ที่ต้องกำหนดสำหรับ Auth ในขอบเขตนี้ เพราะการส่ง SMS เป็น mock ภายในระบบและไม่มีการเชื่อมต่อ SMS provider ภายนอกจริง. การเชื่อม Register เป็น handoff ระหว่าง Feature: Register ส่ง opaque `registration_proof` ให้ Frontend; Frontend เรียก Auth endpoint เพื่อรับ `otp_challenge_id` แล้วเปิดหน้า OTP. การแก้ Feature 001 อยู่นอกขอบเขตงานนี้.
 
 ## ประเด็นอ้างอิงที่ยังเปิด
 
-- Q-02-04: วิธีระบุ OTP หลายคำขอที่ใช้ค่า `123456` พร้อมกัน และนับจำนวนครั้งผิดแยกชุด
-- Q-02-05: อายุ/หมดอายุและ lifecycle อื่นของ token
-- ค่าเริ่มต้นและชนิดข้อมูลของ `users.is_verified` และการคงค่านี้หลัง backend restart ยังไม่ยืนยัน
+- Q-02-01: แหล่ง Requirement ต้นฉบับ, PB/EV และรหัสทางการยังตรวจสอบไม่ได้
+- Q-02-10: Labels, layout, UI ID และ mockup ของ Auth นอกเหนือจาก flow ที่ยืนยันแล้วยังเปิด
+- Q-02-11: owner/PO/ผู้ตรวจและวันอนุมัติ Baseline ยังไม่กำหนด
