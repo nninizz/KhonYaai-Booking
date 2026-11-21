@@ -96,7 +96,7 @@ export default function BookingPage({ onBooked }) {
     if (!booking) return;
     try {
       await getPayment(booking.id);
-      if (onBooked) onBooked(booking.id);
+      if (onBooked) onBooked(booking.id, booking);
     } catch {
       setPaymentFailure(true);
     }

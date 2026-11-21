@@ -175,8 +175,10 @@ export function validateMockBookingState(scheduledAt, pickup, dropoff, itemSize)
   if (!itemSize) return "กรอกข้อมูลไม่ครบ";
 
   const scheduled = new Date(scheduledAt);
-  if (Number.isNaN(scheduled.getTime()) || scheduled.getTime() - Date.now() < 4 * 60 * 60 * 1000) {
-    return "จองล่วงหน้าไม่ถึง 4 ชั่วโมง";
+  // กฎ BR-02 ค่าปกติ 4 ชั่วโมง; VITE_DEMO_MIN_ADVANCE_HOURS ใช้เฉพาะตอนเดโม
+  const minHours = Number(import.meta.env.VITE_DEMO_MIN_ADVANCE_HOURS) || 4;
+  if (Number.isNaN(scheduled.getTime()) || scheduled.getTime() - Date.now() < minHours * 60 * 60 * 1000) {
+    return "จองล่วงหน้าไม่ถึง " + minHours + " ชั่วโมง";
   }
   return "";
 }
