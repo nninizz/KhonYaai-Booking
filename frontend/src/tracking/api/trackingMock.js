@@ -68,6 +68,15 @@ const teamByJob = new Map();
 // งานที่สิ้นสุดแล้ว (session ปิดหรือถูกยกเลิก AS-12) ไม่แสดงข้อมูลทีมงานอีก (D-05-29)
 const endedJobs = new Set();
 
+// ตัวอย่างข้อมูลทีมงานสำหรับเดโมเท่านั้น (ปลอม ไม่ใช่คนจริง) เบอร์และทะเบียนไม่ตรงกับบุคคลใด
+export const DEMO_TEAM_INFO = {
+  lead_name: 'สมชาย ตัวอย่าง',
+  phone: '000-000-0000',
+  photo_url: null,
+  plate: 'ทดสอบ 0001',
+  vehicle_type: 'รถกระบะ (ตัวอย่าง)',
+};
+
 /**
  * จำลองการสิ้นสุดงานจากการยกเลิก (AS-12) ใช้ใน test และ demo
  * @param {string} jobId
@@ -92,7 +101,8 @@ export function setTeamInfo(jobId, info) {
  * @param {string} jobId
  */
 export async function getTeamInfo(jobId) {
-  const info = teamByJob.get(jobId);
+  // ตัวอย่างข้อมูลทีมงานสำหรับเดโม ใช้เมื่อยังไม่ได้ setTeamInfo (ไม่ใช่ข้อมูลจริง ไม่ใช่ข้อมูลใน mockup)
+  const info = teamByJob.get(jobId) ?? DEMO_TEAM_INFO;
   const stage = stageByJob.get(jobId) ?? 'searching';
   const matched = STAGES.indexOf(stage) >= STAGES.indexOf('driver_found');
   if (!info || !matched || endedJobs.has(jobId)) {

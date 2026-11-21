@@ -1,11 +1,13 @@
 # mock_db.py — ข้อมูลกลางที่ทุก feature import ไปใช้ (ไม่มี database, รีสตาร์ทแล้วรีเซ็ต)
+import os
 from datetime import datetime
 from math import radians, sin, cos, asin, sqrt
 from typing import Literal, TypedDict
 
 PRICE_PER_KM = 10             # กฎข้อ 5
 DEPOSIT_PERCENT = 30          # กฎข้อ 1
-MIN_ADVANCE_HOURS = 4         # กฎข้อ 2
+# กฎข้อ 2 (ค่าปกติ 4 ชั่วโมง) ตั้ง DEMO_MIN_ADVANCE_HOURS เฉพาะตอนเดโม (เช่น 0.01) ค่าปกติไม่เปลี่ยน
+MIN_ADVANCE_HOURS = float(os.environ.get("DEMO_MIN_ADVANCE_HOURS", "4"))
 FULL_REFUND_MINUTES = 120     # กฎข้อ 3
 NO_CANCEL_MINUTES = 45        # กฎข้อ 3 — เหลือ ≤ 45 นาที ยกเลิกไม่ได้
 DEPOSIT_TIMEOUT_MINUTES = 15  # กฎข้อ 8
