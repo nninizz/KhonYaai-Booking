@@ -1295,3 +1295,24 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ�
 - ผลตรวจ: `node --test frontend/src/cancellation/test_AC_06_DRAFT_05.test.js` ผ่าน 5 tests (44, 45, 119, 120 และยืนยันก่อนผลจำลอง); Backend `PYTHONPATH=. .venv/bin/python -m pytest backend/tests -q` ผ่าน 36 tests. `npm --prefix frontend run build` เรียกไม่ได้เพราะ `vite: command not found`; ไม่ติดตั้ง Dependencies. `git diff --check` ผ่าน.
 - การทำงาน: App มีทางเลือกเข้า Cancellation Demo และคง Payment Demo เดิม; Demo เปลี่ยนหน้าด้วย state ในหน่วยความจำ. ผลทุกกรณีระบุเป็นตัวอย่างและไม่มีการยกเลิก/คืนเงินจริง; ไม่แสดงยอดเงินจริงหรือกล่องรายละเอียด Q-06-11/Q-06-12. T-06 เปลี่ยนเป็น “เสร็จ รอทีมตรวจ”.
 - สิ่งที่ AI เดา/ถามแทน: ไม่กำหนดข้อมูล Booking หรือยอดมัดจำจริง และไม่ตีความรายละเอียด Q-06-11/Q-06-12; ใช้ข้อความข้อมูลจำลองตามขอบเขตที่ทีมอนุมัติ.
+
+## #87 | 2026-11-21 | Copilot | แก้ Merge Conflict หลังรวม main
+
+- คำสั่ง: รวมเนื้อหา `frontend/src/App.jsx` และ `prompt-log.md` จาก `feature/cancle` กับ `main`; เก็บฟังก์ชัน Auth/Register/Booking/Payment และ Cancellation Demo; ไม่สร้าง Merge Commit.
+- การเปลี่ยนแปลง: เก็บรายการทั้งหมดจาก main ตามเดิม; นำรายการ Cancellation เดิม #18–#19 มาต่อท้ายเป็น #85–#86 ตามลำดับเดิม โดยไม่ลบประวัติหรือทำซ้ำเนื้อหา; บันทึกการแก้ Conflict นี้เป็นรายการ #87.
+- ผลตรวจ: รอผล Frontend Build, Backend Tests, Cancellation Boundary Tests และ `git diff --check`.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
+
+## #88 | 2026-11-21 | Copilot | ทดสอบหลังแก้ Merge Conflict
+
+- คำสั่ง: ตรวจ Frontend Build, Backend Tests, Cancellation Boundary Tests และ diff หลัง Resolve; ไม่ Commit หรือ Push.
+- ผลตรวจ: `cd frontend && npm run build` ผ่าน; `PYTHONPATH=. .venv/bin/python -m pytest backend/tests -q` ผ่าน 119 tests และ 1 xfailed; `node --test frontend/src/cancellation/test_AC_06_DRAFT_05.test.js` ผ่าน 5 tests; `git diff --check` และ `git diff --cached --check` ผ่าน.
+- ข้อจำกัด: `npm test -- --run src/App.test.jsx` รันไม่ได้เพราะ `vitest: command not found`; ไม่ติดตั้ง dependency.
+- สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
+
+## #89 | 2026-11-21 | Copilot | เปลี่ยน Flow ยืนยัน OTP
+
+- คำสั่ง: ปรับเฉพาะ Feature 002 Auth ให้ OTP เริ่มจาก registration handoff, verify สำเร็จตั้ง `is_verified=true` แล้วกลับ Login โดยไม่ออก token, verified Login จึงออก token/ไป Booking; unverified Login ตอบ 403 โดยไม่เริ่ม OTP. อัปเดต API contract, Gherkin, plan, tasks และเอกสารกฎ/โมเดล; ระบุงาน handoff ที่ทีม Register ต้องทำโดยไม่แก้ Feature 001.
+- ไฟล์ที่แก้: `backend/app/auth.py`, `backend/tests/test_auth.py`, `frontend/src/api.js`, `frontend/src/auth/AuthFields.jsx`, `frontend/src/auth/AuthFields.test.js`, `specs/002-auth/spec.md`, `specs/002-auth/plan.md`, `specs/002-auth/tasks.md`, `specs/002-auth/auth.feature`, `specs/002-auth/rules.md`, `specs/002-auth/models.md`.
+- ผลตรวจ: Auth backend tests ผ่าน 10 tests; Auth UI/API tests ผ่าน 6 tests; `npm run build` ผ่าน. Backend regression ทั้งชุด 119 passed, 1 xfailed, 1 failed ที่ `backend/tests/test_register.py::test_AC_01_12_user_row_is_shared_and_auth_accepts_password` เพราะคาดหวังพฤติกรรม Login unverified แบบเก่าซึ่งขัดกับ flow ใหม่; ไม่แก้ไฟล์ Feature 001. `npm test` ไม่รันได้เพราะ environment ไม่มี `vitest`. Signup-to-OTP E2E ยัง Blocked จน Register เพิ่ม proof handoff.
+- สิ่งที่ AI เกือบต้องเดาแต่คงไม่ตัดสินใจแทนทีม: จุดเชื่อมและข้อมูลจาก Register ระบุเป็น `registration_proof` opaque ใช้ครั้งเดียวตามคำยืนยัน; ไฟล์ Feature 001 ที่ต้องแก้และเหตุผลที่ยัง Blocked บันทึกไว้ในเอกสาร Feature 002.

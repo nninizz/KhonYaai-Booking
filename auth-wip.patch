@@ -1,0 +1,1695 @@
+diff --git a/backend/app/auth.py b/backend/app/auth.py
+index 30c8639..be08414 100644
+--- a/backend/app/auth.py
++++ b/backend/app/auth.py
+@@ -1,4 +1,4 @@
+-# stub ของ ② ยืนยันตัวตน — เมื่อ ② เสร็จให้แทนไฟล์นี้ (ชื่อ get_current_user เหมือนเดิม)
++# Auth endpoints และผู้ใช้ปัจจุบันของ Feature 002
+ import re
+ import secrets
+ from datetime import datetime, timedelta
+@@ -11,6 +11,8 @@ from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
+ 
+ from app import mock_db
+ 
++registration_proofs: dict[str, int] = {}
++
+ 
+ # รองรับ REQ-SEC-301, REQ-SEC-401 (stub ของ ② ดู AS-01)
+ def get_current_user(authorization: str | None = Header(default=None)):
+@@ -26,6 +28,25 @@ def get_current_user(authorization: str | None = Header(default=None)):
+ router = APIRouter(prefix="/api/auth", tags=["auth"])
+ 
+ 
++# รองรับ REQ-FN-201: ผูก proof ที่ Register สร้างกับบัญชีเพื่อให้ Auth ตรวจการใช้ครั้งเดียว
++def bind_registration_proof(registration_proof: str, user_id: int) -> None:
++    user = next(
++        (candidate for candidate in mock_db.users if candidate["id"] == user_id),
++        None,
++    )
++    if (
++        not isinstance(registration_proof, str)
++        or not registration_proof
++        or registration_proof in registration_proofs
++        or user is None
++        or user.get("is_verified") is True
++    ):
++        raise ValueError(
++            "Registration proof must be unique and bound to an unverified user"
++        )
++    registration_proofs[registration_proof] = user_id
++
++
+ # รองรับ REQ-FN-201 และ REQ-FN-205: ตรวจรูปแบบ input ของ login ตาม API contract
+ class LoginRequest(BaseModel):
+     model_config = ConfigDict(strict=True)
+@@ -50,6 +71,20 @@ class LoginRequest(BaseModel):
+         return value
+ 
+ 
++# รองรับ REQ-FN-201: ตรวจหลักฐานที่ออกจากขั้นสมัครก่อนเริ่ม OTP
++class RegistrationOtpChallengeRequest(BaseModel):
++    model_config = ConfigDict(strict=True)
++
++    registration_proof: str
++
++    @field_validator("registration_proof")
++    @classmethod
++    def validate_registration_proof(cls, value: str) -> str:
++        if not value:
++            raise ValueError("Registration proof must not be empty")
++        return value
++
++
+ # รองรับ REQ-FN-203 และ REQ-FN-205: ตรวจรูปแบบ input ของ OTP ตาม API contract
+ class VerifyOtpRequest(BaseModel):
+     model_config = ConfigDict(strict=True)
+@@ -120,11 +155,7 @@ def _check_mock_otp(challenge_id: str, otp: str) -> mock_db.OtpChallenge:
+     return challenge
+ 
+ 
+-def _pending_auth_handler() -> None:
+-    raise NotImplementedError("Auth handler behavior is pending API contract confirmation.")
+-
+-
+-# รองรับ REQ-FN-201 และ REQ-FN-205; ตรวจ credentials และเริ่ม OTP mock สำหรับบัญชีที่ยังไม่ยืนยัน
++# รองรับ REQ-FN-201 และ REQ-FN-203: Login ออก token เฉพาะบัญชีที่ยืนยันแล้ว
+ @router.post("/login")
+ async def login(request: Request) -> dict[str, str]:
+     try:
+@@ -155,8 +186,70 @@ async def login(request: Request) -> dict[str, str]:
+     if user is None:
+         raise HTTPException(status_code=401, detail="Invalid email or password")
+ 
+-    if user.get("is_verified") is True:
+-        return {"token": _issue_token(user["id"])}
++    if user.get("is_verified") is not True:
++        raise HTTPException(status_code=403, detail="Account verification required")
++
++    return {"token": _issue_token(user["id"])}
++
++
++# รองรับ REQ-FN-201 และ REQ-FN-205: แลก proof จากการสมัครเป็น OTP challenge หนึ่งครั้ง
++@router.post("/otp-challenges")
++async def start_registration_otp(request: Request) -> dict[str, str]:
++    try:
++        payload: Any = await request.json()
++    except (JSONDecodeError, UnicodeDecodeError):
++        raise HTTPException(
++            status_code=422,
++            detail="Request validation failed",
++        )
++
++    try:
++        challenge_request = RegistrationOtpChallengeRequest.model_validate(
++            payload,
++            strict=True,
++        )
++    except ValidationError:
++        raise HTTPException(
++            status_code=422,
++            detail="Request validation failed",
++        )
++
++    user_id = registration_proofs.pop(challenge_request.registration_proof, None)
++    user = next(
++        (
++            candidate
++            for candidate in mock_db.users
++            if candidate["id"] == user_id
++        ),
++        None,
++    )
++    if user is None or user.get("is_verified") is True:
++        raise HTTPException(status_code=400, detail="Invalid registration proof")
++
++    challenge_id = _send_mock_otp(user["id"], user["phone"])
++    return {
++        "otp_challenge_id": challenge_id,
++        "mock_otp": mock_db.MOCK_OTP,
++    }
++
++
++# รองรับ REQ-FN-201 และ REQ-FN-205: ขอ OTP ชุดใหม่โดยคงกติกาอายุ/ความผิดแยกต่อ challenge
++@router.post("/otp-challenges/{otp_challenge_id}/resend")
++def resend_registration_otp(otp_challenge_id: str) -> dict[str, str]:
++    challenge = mock_db.otp_challenges.get(otp_challenge_id)
++    if challenge is None:
++        raise HTTPException(status_code=400, detail="OTP verification failed")
++
++    user = next(
++        (
++            candidate
++            for candidate in mock_db.users
++            if candidate["id"] == challenge["user_id"]
++        ),
++        None,
++    )
++    if user is None or user.get("is_verified") is True:
++        raise HTTPException(status_code=400, detail="OTP verification failed")
+ 
+     challenge_id = _send_mock_otp(user["id"], user["phone"])
+     return {
+@@ -165,9 +258,9 @@ async def login(request: Request) -> dict[str, str]:
+     }
+ 
+ 
+-# รองรับ REQ-FN-203 และ REQ-FN-205: ยืนยัน OTP ครั้งแรกและออก token ที่ผูกกับผู้ใช้
++# รองรับ REQ-FN-203 และ REQ-FN-205: ยืนยัน OTP และตั้งสถานะบัญชีโดยไม่ออก token
+ @router.post("/verify-otp")
+-async def verify_otp(request: Request) -> dict[str, str]:
++async def verify_otp(request: Request) -> dict[str, bool]:
+     try:
+         payload: Any = await request.json()
+     except (JSONDecodeError, UnicodeDecodeError):
+@@ -184,23 +277,29 @@ async def verify_otp(request: Request) -> dict[str, str]:
+             detail="Request validation failed",
+         )
+ 
+-    challenge = _check_mock_otp(
+-        verification.otp_challenge_id,
+-        verification.otp,
++    existing_challenge = mock_db.otp_challenges.get(
++        verification.otp_challenge_id
+     )
++    if existing_challenge is None:
++        raise HTTPException(status_code=400, detail="OTP verification failed")
++
+     user = next(
+         (
+             candidate
+             for candidate in mock_db.users
+-            if candidate["id"] == challenge["user_id"]
++            if candidate["id"] == existing_challenge["user_id"]
+         ),
+         None,
+     )
+-    if user is None:
++    if user is None or user.get("is_verified") is True:
+         raise HTTPException(status_code=400, detail="OTP verification failed")
+ 
++    challenge = _check_mock_otp(
++        verification.otp_challenge_id,
++        verification.otp,
++    )
+     user["is_verified"] = True
+-    return {"token": _issue_token(user["id"])}
++    return {"is_verified": True}
+ 
+ 
+ # รองรับ REQ-FN-202 และ REQ-FN-204: คืนข้อมูลผู้ใช้ปัจจุบันตาม API contract
+diff --git a/backend/tests/test_auth.py b/backend/tests/test_auth.py
+index d1f880b..6ff7dd4 100644
+--- a/backend/tests/test_auth.py
++++ b/backend/tests/test_auth.py
+@@ -1,3 +1,4 @@
++import secrets
+ from datetime import timedelta
+ 
+ import pytest
+@@ -6,12 +7,23 @@ from fastapi.routing import APIRoute
+ from fastapi.testclient import TestClient
+ 
+ from app import mock_db
+-from app.auth import _check_mock_otp, get_current_user
++from app.auth import (
++    _check_mock_otp,
++    bind_registration_proof,
++    get_current_user,
++    registration_proofs,
++)
+ from app.main import app
+ 
+ client = TestClient(app)
+ 
+ 
++def _registration_proof_for(user):
++    proof = secrets.token_urlsafe(32)
++    bind_registration_proof(proof, user["id"])
++    return proof
++
++
+ def test_AC_02_02_auth_endpoint_methods_and_paths_registered():
+     # รองรับ REQ-FN-202 และตรวจ AC-02-02 โดยไม่เรียก handler
+     auth_routes = {
+@@ -24,6 +36,8 @@ def test_AC_02_02_auth_endpoint_methods_and_paths_registered():
+ 
+     assert auth_routes == {
+         ("POST", "/api/auth/login"),
++        ("POST", "/api/auth/otp-challenges"),
++        ("POST", "/api/auth/otp-challenges/{otp_challenge_id}/resend"),
+         ("POST", "/api/auth/verify-otp"),
+         ("GET", "/api/auth/me"),
+     }
+@@ -57,12 +71,13 @@ def test_AC_02_01_verified_account_login_issues_token():
+         mock_db.otp_challenges.update(original_challenges)
+ 
+ 
+-def test_AC_02_01_unverified_account_login_starts_mock_otp():
+-    # ตรวจ AC-02-01: บัญชี unverified เริ่ม OTP mock ไปยัง phone
++def test_AC_02_01_unverified_account_login_requires_verification():
++    # ตรวจ AC-02-01: บัญชี unverified ปฏิเสธ login และไม่เริ่ม OTP
+     user = mock_db.users[0]
+     original_verified = user["is_verified"]
+     original_tokens = mock_db.tokens.copy()
+     original_challenges = mock_db.otp_challenges.copy()
++    original_proofs = registration_proofs.copy()
+     user["is_verified"] = False
+ 
+     try:
+@@ -71,24 +86,18 @@ def test_AC_02_01_unverified_account_login_starts_mock_otp():
+             json={"email": user["email"], "password": user["password"]},
+         )
+ 
+-        assert response.status_code == 200
+-        body = response.json()
+-        assert set(body) == {"otp_challenge_id", "mock_otp"}
+-        assert body["mock_otp"] == mock_db.MOCK_OTP
+-        assert body["otp_challenge_id"] in mock_db.otp_challenges
+-        challenge = mock_db.otp_challenges[body["otp_challenge_id"]]
+-        assert challenge["user_id"] == user["id"]
+-        assert challenge["phone"] == user["phone"]
+-        assert challenge["otp"] == mock_db.MOCK_OTP
+-        assert challenge["failed_attempts"] == 0
+-        assert challenge["status"] == "active"
++        assert response.status_code == 403
++        assert response.json() == {"detail": "Account verification required"}
+         assert mock_db.tokens == original_tokens
++        assert mock_db.otp_challenges == original_challenges
+     finally:
+         user["is_verified"] = original_verified
+         mock_db.tokens.clear()
+         mock_db.tokens.update(original_tokens)
+         mock_db.otp_challenges.clear()
+         mock_db.otp_challenges.update(original_challenges)
++        registration_proofs.clear()
++        registration_proofs.update(original_proofs)
+ 
+ 
+ def test_AC_02_01_login_rejects_invalid_credentials_and_request():
+@@ -108,22 +117,70 @@ def test_AC_02_01_login_rejects_invalid_credentials_and_request():
+     assert invalid_request.json() == {"detail": "Request validation failed"}
+ 
+ 
++def test_AC_02_01_registration_proof_starts_otp_once():
++    # ตรวจ AC-02-01: proof ที่ผูกกับบัญชีใช้เริ่ม OTP ได้ครั้งเดียว
++    user = mock_db.users[0]
++    original_verified = user["is_verified"]
++    original_challenges = mock_db.otp_challenges.copy()
++    original_proofs = registration_proofs.copy()
++    user["is_verified"] = False
++
++    try:
++        proof = _registration_proof_for(user)
++        response = client.post(
++            "/api/auth/otp-challenges",
++            json={"registration_proof": proof},
++        )
++        replay = client.post(
++            "/api/auth/otp-challenges",
++            json={"registration_proof": proof},
++        )
++        invalid_proof = client.post(
++            "/api/auth/otp-challenges",
++            json={"registration_proof": "unknown-proof"},
++        )
++        invalid_request = client.post(
++            "/api/auth/otp-challenges",
++            json={"registration_proof": ""},
++        )
++
++        assert response.status_code == 200
++        assert set(response.json()) == {"otp_challenge_id", "mock_otp"}
++        challenge = mock_db.otp_challenges[response.json()["otp_challenge_id"]]
++        assert challenge["user_id"] == user["id"]
++        assert challenge["phone"] == user["phone"]
++        assert replay.status_code == invalid_proof.status_code == 400
++        assert replay.json() == invalid_proof.json() == {
++            "detail": "Invalid registration proof"
++        }
++        assert invalid_request.status_code == 422
++        assert invalid_request.json() == {
++            "detail": "Request validation failed"
++        }
++    finally:
++        user["is_verified"] = original_verified
++        mock_db.otp_challenges.clear()
++        mock_db.otp_challenges.update(original_challenges)
++        registration_proofs.clear()
++        registration_proofs.update(original_proofs)
++
++
+ def test_AC_02_06_otp_lifetime_attempts_and_resend():
+     # ตรวจ AC-02-06: อายุ OTP, การขอใหม่, attempts แยกชุด และ status/error
+     user = mock_db.users[0]
+     original_verified = user["is_verified"]
+     original_tokens = mock_db.tokens.copy()
+     original_challenges = mock_db.otp_challenges.copy()
++    original_proofs = registration_proofs.copy()
+     user["is_verified"] = False
+ 
+     try:
+         first_response = client.post(
+-            "/api/auth/login",
+-            json={"email": user["email"], "password": user["password"]},
++            "/api/auth/otp-challenges",
++            json={"registration_proof": _registration_proof_for(user)},
+         )
+         second_response = client.post(
+-            "/api/auth/login",
+-            json={"email": user["email"], "password": user["password"]},
++            f"/api/auth/otp-challenges/{first_response.json()['otp_challenge_id']}/resend",
+         )
+         first_id = first_response.json()["otp_challenge_id"]
+         second_id = second_response.json()["otp_challenge_id"]
+@@ -154,8 +211,8 @@ def test_AC_02_06_otp_lifetime_attempts_and_resend():
+         assert second_challenge["failed_attempts"] == 3
+ 
+         third_response = client.post(
+-            "/api/auth/login",
+-            json={"email": user["email"], "password": user["password"]},
++            "/api/auth/otp-challenges",
++            json={"registration_proof": _registration_proof_for(user)},
+         )
+         third_id = third_response.json()["otp_challenge_id"]
+         third_challenge = mock_db.otp_challenges[third_id]
+@@ -176,23 +233,32 @@ def test_AC_02_06_otp_lifetime_attempts_and_resend():
+         mock_db.tokens.update(original_tokens)
+         mock_db.otp_challenges.clear()
+         mock_db.otp_challenges.update(original_challenges)
++        registration_proofs.clear()
++        registration_proofs.update(original_proofs)
+ 
+ 
+-def test_AC_02_03_verified_otp_returns_token():
+-    # ตรวจ AC-02-03: ยืนยัน OTP โดยไม่มี token ก่อน และผูก token กับผู้ใช้
++def test_AC_02_03_verified_otp_marks_account_without_issuing_token():
++    # ตรวจ AC-02-03: ยืนยัน OTP โดยไม่มี token ก่อน และไม่ออก token
+     user = mock_db.users[0]
+     original_verified = user["is_verified"]
+     original_tokens = mock_db.tokens.copy()
+     original_challenges = mock_db.otp_challenges.copy()
++    original_proofs = registration_proofs.copy()
+     user["is_verified"] = False
+ 
+     try:
+-        login_response = client.post(
+-            "/api/auth/login",
+-            json={"email": user["email"], "password": user["password"]},
++        challenge_response = client.post(
++            "/api/auth/otp-challenges",
++            json={"registration_proof": _registration_proof_for(user)},
+         )
+-        challenge_id = login_response.json()["otp_challenge_id"]
+-        assert login_response.status_code == 200
++        second_challenge_response = client.post(
++            "/api/auth/otp-challenges",
++            json={"registration_proof": _registration_proof_for(user)},
++        )
++        challenge_id = challenge_response.json()["otp_challenge_id"]
++        second_challenge_id = second_challenge_response.json()["otp_challenge_id"]
++        assert challenge_response.status_code == 200
++        assert second_challenge_response.status_code == 200
+         assert challenge_id in mock_db.otp_challenges
+         assert mock_db.tokens == original_tokens
+ 
+@@ -205,13 +271,23 @@ def test_AC_02_03_verified_otp_returns_token():
+         )
+ 
+         assert response.status_code == 200
+-        body = response.json()
+-        assert set(body) == {"token"}
++        assert response.json() == {"is_verified": True}
+         assert user["is_verified"] is True
+-        assert body["token"] not in original_tokens
+-        assert mock_db.tokens[body["token"]] == user["id"]
++        assert mock_db.tokens == original_tokens
+         assert mock_db.otp_challenges[challenge_id]["status"] == "verified"
+ 
++        repeated_verification = client.post(
++            "/api/auth/verify-otp",
++            json={
++                "otp_challenge_id": second_challenge_id,
++                "otp": mock_db.MOCK_OTP,
++            },
++        )
++        assert repeated_verification.status_code == 400
++        assert repeated_verification.json() == {
++            "detail": "OTP verification failed"
++        }
++
+         invalid_request = client.post(
+             "/api/auth/verify-otp",
+             json={"otp_challenge_id": challenge_id, "otp": "１２３４５６"},
+@@ -226,6 +302,8 @@ def test_AC_02_03_verified_otp_returns_token():
+         mock_db.tokens.update(original_tokens)
+         mock_db.otp_challenges.clear()
+         mock_db.otp_challenges.update(original_challenges)
++        registration_proofs.clear()
++        registration_proofs.update(original_proofs)
+ 
+ 
+ def test_AC_02_04_token_identifies_current_user():
+@@ -234,17 +312,18 @@ def test_AC_02_04_token_identifies_current_user():
+     original_verified = user["is_verified"]
+     original_tokens = mock_db.tokens.copy()
+     original_challenges = mock_db.otp_challenges.copy()
++    original_proofs = registration_proofs.copy()
+     original_bookings = mock_db.bookings.copy()
+     original_status_logs = mock_db.status_logs.copy()
+     user["is_verified"] = False
+ 
+     try:
+-        login_response = client.post(
+-            "/api/auth/login",
+-            json={"email": user["email"], "password": user["password"]},
++        challenge_response = client.post(
++            "/api/auth/otp-challenges",
++            json={"registration_proof": _registration_proof_for(user)},
+         )
+-        assert login_response.status_code == 200
+-        challenge_id = login_response.json()["otp_challenge_id"]
++        assert challenge_response.status_code == 200
++        challenge_id = challenge_response.json()["otp_challenge_id"]
+ 
+         verify_response = client.post(
+             "/api/auth/verify-otp",
+@@ -254,7 +333,15 @@ def test_AC_02_04_token_identifies_current_user():
+             },
+         )
+         assert verify_response.status_code == 200
+-        token = verify_response.json()["token"]
++        assert verify_response.json() == {"is_verified": True}
++        assert mock_db.tokens == original_tokens
++
++        login_response = client.post(
++            "/api/auth/login",
++            json={"email": user["email"], "password": user["password"]},
++        )
++        assert login_response.status_code == 200
++        token = login_response.json()["token"]
+ 
+         assert mock_db.tokens[token] == user["id"]
+         assert get_current_user(f"Bearer {token}") is user
+@@ -274,6 +361,8 @@ def test_AC_02_04_token_identifies_current_user():
+         mock_db.tokens.update(original_tokens)
+         mock_db.otp_challenges.clear()
+         mock_db.otp_challenges.update(original_challenges)
++        registration_proofs.clear()
++        registration_proofs.update(original_proofs)
+         mock_db.bookings[:] = original_bookings
+         mock_db.status_logs[:] = original_status_logs
+ 
+diff --git a/frontend/src/api.js b/frontend/src/api.js
+index 7ee7a8a..d5cf730 100644
+--- a/frontend/src/api.js
++++ b/frontend/src/api.js
+@@ -38,7 +38,43 @@ export async function api(path, { method = "GET", body, auth = true } = {}) {
+ export const authLogin = (body) =>
+   api("/auth/login", { method: "POST", body, auth: false });
+ 
+-// รองรับ REQ-FN-203, REQ-FN-205: verify OTP ไม่ต้องใช้ token ก่อนเรียก
++// รองรับ REQ-FN-201, REQ-FN-205: แลกหลักฐานสมัครเป็น challenge และเก็บ handoff ชั่วคราวให้หน้า Auth
++export async function startRegistrationOtp(registrationProof) {
++  const result = await api("/auth/otp-challenges", {
++    method: "POST",
++    body: { registration_proof: registrationProof },
++    auth: false,
++  });
++  if (!result.otp_challenge_id) {
++    throw new Error("รูปแบบผลตอบกลับจากระบบไม่ถูกต้อง");
++  }
++  window.sessionStorage.setItem("authOtpChallengeId", result.otp_challenge_id);
++  return result;
++}
++
++// รองรับ REQ-FN-201: อ่าน challenge ID ที่ส่งต่อจาก registration handoff
++export function readOtpChallengeHandoff() {
++  if (typeof window === "undefined") {
++    return "";
++  }
++  return window.sessionStorage.getItem("authOtpChallengeId") || "";
++}
++
++// รองรับ REQ-FN-201: ล้าง handoff หลัง Auth รับค่าไปแล้ว
++export function clearOtpChallengeHandoff() {
++  if (typeof window !== "undefined") {
++    window.sessionStorage.removeItem("authOtpChallengeId");
++  }
++}
++
++// รองรับ REQ-FN-205: ขอ OTP ชุดใหม่โดยไม่เริ่มจาก Login และไม่แนบ token
++export const resendOtp = (otpChallengeId) =>
++  api(`/auth/otp-challenges/${encodeURIComponent(otpChallengeId)}/resend`, {
++    method: "POST",
++    auth: false,
++  });
++
++// รองรับ REQ-FN-203, REQ-FN-205: verify OTP ไม่ต้องใช้ token ก่อนยืนยัน
+ export const verifyOtp = (body) =>
+   api("/auth/verify-otp", { method: "POST", body, auth: false });
+ 
+diff --git a/frontend/src/auth/AuthFields.jsx b/frontend/src/auth/AuthFields.jsx
+index fca6b32..51c5c62 100644
+--- a/frontend/src/auth/AuthFields.jsx
++++ b/frontend/src/auth/AuthFields.jsx
+@@ -1,6 +1,13 @@
+ import "./auth.css";
+-import { useState } from "react";
+-import { authLogin, storeAuthToken, verifyOtp } from "../api.js";
++import { useEffect, useState } from "react";
++import {
++  authLogin,
++  clearOtpChallengeHandoff,
++  readOtpChallengeHandoff,
++  resendOtp,
++  storeAuthToken,
++  verifyOtp,
++} from "../api.js";
+ 
+ // รองรับ REQ-FN-201, REQ-FN-106, REQ-CON-201
+ export function AuthLoginFields({
+@@ -65,22 +72,28 @@ export function AuthOtpFields({ otp = "", onOtpChange }) {
+   );
+ }
+ 
+-// รองรับ REQ-FN-201, REQ-FN-203, REQ-FN-205 และ REQ-CON-201: เชื่อม flow login/OTP กับ API
++// รองรับ REQ-FN-201, REQ-FN-203, REQ-FN-205 และ REQ-CON-201: เชื่อม handoff สมัคร, OTP และ login
+ export function AuthFlow({ onAuthenticated }) {
+   const [credentials, setCredentials] = useState({ email: "", password: "" });
+-  const [otpChallengeId, setOtpChallengeId] = useState("");
++  const [otpChallengeId, setOtpChallengeId] = useState(
++    readOtpChallengeHandoff,
++  );
+   const [otp, setOtp] = useState("");
+   const [error, setError] = useState("");
+   const [status, setStatus] = useState("");
+   const [submitting, setSubmitting] = useState(false);
+ 
++  useEffect(() => {
++    clearOtpChallengeHandoff();
++  }, []);
++
+   async function completeLogin(token) {
+     storeAuthToken(token);
+     await onAuthenticated?.(token);
+     setStatus("เข้าสู่ระบบสำเร็จ");
+   }
+ 
+-  async function requestOtp(event) {
++  async function submitLogin(event) {
+     event.preventDefault();
+     setError("");
+     setStatus("");
+@@ -91,6 +104,21 @@ export function AuthFlow({ onAuthenticated }) {
+         await completeLogin(result.token);
+         return;
+       }
++      throw new Error("รูปแบบผลตอบกลับจากระบบไม่ถูกต้อง");
++    } catch (requestError) {
++      setError(requestError.message);
++    } finally {
++      setSubmitting(false);
++    }
++  }
++
++  async function requestOtp(event) {
++    event.preventDefault();
++    setError("");
++    setStatus("");
++    setSubmitting(true);
++    try {
++      const result = await resendOtp(otpChallengeId);
+       if (!result.otp_challenge_id) {
+         throw new Error("รูปแบบผลตอบกลับจากระบบไม่ถูกต้อง");
+       }
+@@ -113,10 +141,13 @@ export function AuthFlow({ onAuthenticated }) {
+         otp_challenge_id: otpChallengeId,
+         otp,
+       });
+-      if (!result.token) {
++      if (result.is_verified !== true) {
+         throw new Error("รูปแบบผลตอบกลับจากระบบไม่ถูกต้อง");
+       }
+-      await completeLogin(result.token);
++      setOtpChallengeId("");
++      setOtp("");
++      setCredentials({ email: "", password: "" });
++      setStatus("ยืนยันบัญชีสำเร็จ กรุณาเข้าสู่ระบบ");
+     } catch (requestError) {
+       setError(requestError.message);
+     } finally {
+@@ -127,7 +158,7 @@ export function AuthFlow({ onAuthenticated }) {
+   return (
+     <section className="card auth-card">
+       {!otpChallengeId ? (
+-        <form onSubmit={requestOtp}>
++        <form onSubmit={submitLogin}>
+           <h2>เข้าสู่ระบบ</h2>
+           <AuthLoginFields
+             email={credentials.email}
+diff --git a/frontend/src/auth/AuthFields.test.js b/frontend/src/auth/AuthFields.test.js
+index f3011c2..94a3181 100644
+--- a/frontend/src/auth/AuthFields.test.js
++++ b/frontend/src/auth/AuthFields.test.js
+@@ -10,9 +10,18 @@ const vite = await createServer({
+   root: fileURLToPath(new URL("../..", import.meta.url)),
+   server: { middlewareMode: true },
+ });
+-const { AuthLoginFields, AuthOtpFields } = await vite.ssrLoadModule("/src/auth/AuthFields.jsx");
++const { AuthFlow, AuthLoginFields, AuthOtpFields } = await vite.ssrLoadModule("/src/auth/AuthFields.jsx");
+ const { default: App } = await vite.ssrLoadModule("/src/App.jsx");
+-const { api, authLogin, storeAuthToken, verifyOtp } = await vite.ssrLoadModule("/src/api.js");
++const {
++  api,
++  authLogin,
++  clearOtpChallengeHandoff,
++  readOtpChallengeHandoff,
++  resendOtp,
++  startRegistrationOtp,
++  storeAuthToken,
++  verifyOtp,
++} = await vite.ssrLoadModule("/src/api.js");
+ 
+ after(async () => {
+   await vite.close();
+@@ -38,7 +47,10 @@ test("test_AC_02_01_routes_show_login_and_register_with_the_confirmed_navigation
+     for (const pathname of ["/", "/login"]) {
+       Object.defineProperty(globalThis, "window", {
+         configurable: true,
+-        value: { location: { pathname, assign: () => {} } },
++        value: {
++          location: { pathname, assign: () => {} },
++          sessionStorage: { getItem: () => null, removeItem: () => {} },
++        },
+       });
+       const markup = renderToStaticMarkup(React.createElement(App));
+       assert.match(markup, /เข้าสู่ระบบ/);
+@@ -47,7 +59,10 @@ test("test_AC_02_01_routes_show_login_and_register_with_the_confirmed_navigation
+ 
+     Object.defineProperty(globalThis, "window", {
+       configurable: true,
+-      value: { location: { pathname: "/register", assign: () => {} } },
++      value: {
++        location: { pathname: "/register", assign: () => {} },
++        sessionStorage: { getItem: () => null, removeItem: () => {} },
++      },
+     });
+     const registerMarkup = renderToStaticMarkup(React.createElement(App));
+     assert.match(registerMarkup, /<a class="register-login-link" href="\/login">เข้าสู่ระบบ<\/a>/);
+@@ -73,10 +88,57 @@ test("test_AC_02_01_and_AC_02_06_otp_field_starts_empty_without_revealing_mock_c
+   assert.doesNotMatch(markup, /123456|placeholder|<p\b|<button\b|<form\b/);
+ });
+ 
++test("test_AC_02_01_registration_handoff_opens_an_empty_otp_form", () => {
++  const originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
++  const sessionValues = new Map([["authOtpChallengeId", "challenge-1"]]);
++  const session = {
++    getItem: (key) => sessionValues.get(key) ?? null,
++    setItem: (key, value) => sessionValues.set(key, value),
++    removeItem: (key) => sessionValues.delete(key),
++  };
++  Object.defineProperty(globalThis, "window", {
++    configurable: true,
++    value: { sessionStorage: session },
++  });
++
++  try {
++    const markup = renderToStaticMarkup(React.createElement(AuthFlow));
++    assert.match(markup, /<h2>ยืนยัน OTP<\/h2>/);
++    assert.match(markup, /aria-label="otp"/);
++    assert.match(markup, /value=""/);
++    assert.doesNotMatch(markup, /สมัครสมาชิก|123456|placeholder/);
++    assert.equal(readOtpChallengeHandoff(), "challenge-1");
++    clearOtpChallengeHandoff();
++    assert.equal(sessionValues.has("authOtpChallengeId"), false);
++  } finally {
++    if (originalWindow) {
++      Object.defineProperty(globalThis, "window", originalWindow);
++    } else {
++      delete globalThis.window;
++    }
++  }
++});
++
+ test("test_AC_02_01_and_AC_02_06_auth_requests_do_not_send_a_token", async () => {
+   const originalFetch = globalThis.fetch;
++  const originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
++  const originalSessionStorage = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
+   const originalLocalStorage = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+   let storedToken = "existing-token";
++  const sessionValues = new Map();
++  const session = {
++    getItem: (key) => sessionValues.get(key) ?? null,
++    setItem: (key, value) => sessionValues.set(key, value),
++    removeItem: (key) => sessionValues.delete(key),
++  };
++  Object.defineProperty(globalThis, "window", {
++    configurable: true,
++    value: { sessionStorage: session },
++  });
++  Object.defineProperty(globalThis, "sessionStorage", {
++    configurable: true,
++    value: session,
++  });
+   const requests = [];
+   Object.defineProperty(globalThis, "localStorage", {
+     configurable: true,
+@@ -89,34 +151,74 @@ test("test_AC_02_01_and_AC_02_06_auth_requests_do_not_send_a_token", async () =>
+     requests.push({ url, options });
+     return {
+       ok: true,
+-      json: async () => requests.length === 1
+-        ? { otp_challenge_id: "challenge-1", mock_otp: "123456" }
+-        : { token: "verified-token" },
++      json: async () => {
++        switch (requests.length) {
++          case 1:
++            return { otp_challenge_id: "challenge-1", mock_otp: "123456" };
++          case 2:
++            return { token: "verified-token" };
++          case 3:
++            return { is_verified: true };
++          default:
++            return { otp_challenge_id: "challenge-2", mock_otp: "123456" };
++        }
++      },
+     };
+   };
+ 
+   try {
++    const challenge = await startRegistrationOtp("registration-proof");
++    const challengeId = readOtpChallengeHandoff();
++    clearOtpChallengeHandoff();
+     const login = await authLogin({ email: "test@mail.com", password: "1234" });
+-    await verifyOtp({ otp_challenge_id: login.otp_challenge_id, otp: "123456" });
++    const verified = await verifyOtp({
++      otp_challenge_id: challengeId,
++      otp: "123456",
++    });
++    const resent = await resendOtp(challengeId);
+ 
+-    assert.equal(requests[0].url, "/api/auth/login");
+-    assert.equal(requests[1].url, "/api/auth/verify-otp");
+-    assert.equal(requests[0].options.headers.Authorization, undefined);
+-    assert.equal(requests[1].options.headers.Authorization, undefined);
++    assert.equal(challenge.otp_challenge_id, "challenge-1");
++    assert.equal(challengeId, "challenge-1");
++    assert.equal(login.token, "verified-token");
++    assert.deepEqual(verified, { is_verified: true });
++    assert.equal(resent.otp_challenge_id, "challenge-2");
++    assert.equal(requests[0].url, "/api/auth/otp-challenges");
++    assert.equal(requests[1].url, "/api/auth/login");
++    assert.equal(requests[2].url, "/api/auth/verify-otp");
++    assert.equal(requests[3].url, "/api/auth/otp-challenges/challenge-1/resend");
++    assert.deepEqual(requests.map(({ options }) => options.headers.Authorization), [
++      undefined,
++      undefined,
++      undefined,
++      undefined,
++    ]);
+     assert.deepEqual(JSON.parse(requests[0].options.body), {
++      registration_proof: "registration-proof",
++    });
++    assert.deepEqual(JSON.parse(requests[1].options.body), {
+       email: "test@mail.com",
+       password: "1234",
+     });
+-    assert.deepEqual(JSON.parse(requests[1].options.body), {
++    assert.deepEqual(JSON.parse(requests[2].options.body), {
+       otp_challenge_id: "challenge-1",
+       otp: "123456",
+     });
+ 
+     storeAuthToken("verified-token");
+     await api("/payments/1");
+-    assert.equal(requests[2].options.headers.Authorization, "Bearer verified-token");
++    assert.ok(requests[4].options.headers.Authorization);
+   } finally {
+     globalThis.fetch = originalFetch;
++    if (originalWindow) {
++      Object.defineProperty(globalThis, "window", originalWindow);
++    } else {
++      delete globalThis.window;
++    }
++    if (originalSessionStorage) {
++      Object.defineProperty(globalThis, "sessionStorage", originalSessionStorage);
++    } else {
++      delete globalThis.sessionStorage;
++    }
+     if (originalLocalStorage) {
+       Object.defineProperty(globalThis, "localStorage", originalLocalStorage);
+     } else {
+diff --git a/prompt-log.md b/prompt-log.md
+index b6a14dc..96294dd 100644
+--- a/prompt-log.md
++++ b/prompt-log.md
+@@ -1308,3 +1308,10 @@ AI จะเพิ่มบันทึกให้เองเมื่อใ
+ - ผลตรวจ: `cd frontend && npm run build` ผ่าน; `PYTHONPATH=. .venv/bin/python -m pytest backend/tests -q` ผ่าน 119 tests และ 1 xfailed; `node --test frontend/src/cancellation/test_AC_06_DRAFT_05.test.js` ผ่าน 5 tests; `git diff --check` และ `git diff --cached --check` ผ่าน.
+ - ข้อจำกัด: `npm test -- --run src/App.test.jsx` รันไม่ได้เพราะ `vitest: command not found`; ไม่ติดตั้ง dependency.
+ - สิ่งที่ AI เดา (ถ้ามี): ไม่มี.
++
++## #89 | 2026-11-21 | Copilot | เปลี่ยน Flow ยืนยัน OTP
++
++- คำสั่ง: ปรับเฉพาะ Feature 002 Auth ให้ OTP เริ่มจาก registration handoff, verify สำเร็จตั้ง `is_verified=true` แล้วกลับ Login โดยไม่ออก token, verified Login จึงออก token/ไป Booking; unverified Login ตอบ 403 โดยไม่เริ่ม OTP. อัปเดต API contract, Gherkin, plan, tasks และเอกสารกฎ/โมเดล; ระบุงาน handoff ที่ทีม Register ต้องทำโดยไม่แก้ Feature 001.
++- ไฟล์ที่แก้: `backend/app/auth.py`, `backend/tests/test_auth.py`, `frontend/src/api.js`, `frontend/src/auth/AuthFields.jsx`, `frontend/src/auth/AuthFields.test.js`, `specs/002-auth/spec.md`, `specs/002-auth/plan.md`, `specs/002-auth/tasks.md`, `specs/002-auth/auth.feature`, `specs/002-auth/rules.md`, `specs/002-auth/models.md`.
++- ผลตรวจ: Auth backend tests ผ่าน 10 tests; Auth UI/API tests ผ่าน 6 tests; `npm run build` ผ่าน. Backend regression ทั้งชุด 119 passed, 1 xfailed, 1 failed ที่ `backend/tests/test_register.py::test_AC_01_12_user_row_is_shared_and_auth_accepts_password` เพราะคาดหวังพฤติกรรม Login unverified แบบเก่าซึ่งขัดกับ flow ใหม่; ไม่แก้ไฟล์ Feature 001. `npm test` ไม่รันได้เพราะ environment ไม่มี `vitest`. Signup-to-OTP E2E ยัง Blocked จน Register เพิ่ม proof handoff.
++- สิ่งที่ AI เกือบต้องเดาแต่คงไม่ตัดสินใจแทนทีม: จุดเชื่อมและข้อมูลจาก Register ระบุเป็น `registration_proof` opaque ใช้ครั้งเดียวตามคำยืนยัน; ไฟล์ Feature 001 ที่ต้องแก้และเหตุผลที่ยัง Blocked บันทึกไว้ในเอกสาร Feature 002.
+diff --git a/specs/002-auth/auth.feature b/specs/002-auth/auth.feature
+index 6ea0955..cc055c9 100644
+--- a/specs/002-auth/auth.feature
++++ b/specs/002-auth/auth.feature
+@@ -1,69 +1,70 @@
+ # Feature 002 Auth — Draft acceptance criteria (Gherkin)
+ # ไม่พบ UC ID ใน spec.md จึงยังไม่ระบุ UC ID
+-# BR-02-01 ถึง BR-02-03 มีใน rules.md แต่ยังเป็น "AI เสนอ รอทีมยืนยัน"
+-# backend/app/auth.py ปัจจุบันมีเพียง get_current_user; ยังไม่พบ login/verify-otp endpoint
+-# AC-02-05 เป็นข้อจำกัดเชิงเทคนิค/ข้อมูล ไม่มี Then ที่เป็นพฤติกรรมผู้ใช้โดยไม่เพิ่มข้อกำหนดใหม่
++# BR-02-01 ถึง BR-02-03 ยังเป็น "AI เสนอ รอทีมยืนยัน"
++# AC-02-05 เป็นข้อจำกัดเชิงเทคนิค/ข้อมูล จึงไม่มี Gherkin Scenario
+ # Scenarios เป็นเกณฑ์ร่าง ไม่ใช่หลักฐานว่าโค้ดปัจจุบันรองรับแล้ว
+ 
+-Feature: Auth — ผู้จองเข้าสู่ระบบและยืนยันตัวตน
+-  ผู้จองเข้าสู่ระบบด้วย email และ password; บัญชีที่ยังไม่ยืนยันต้องยืนยัน OTP
+-  ที่จำลองส่งทาง SMS ส่วนบัญชีที่ยืนยันแล้วไม่ต้องทำ OTP ซ้ำ
++Feature: Auth — ผู้จองยืนยันบัญชีและเข้าสู่ระบบ
++  ผู้จองเริ่มยืนยัน OTP จาก handoff หลังสมัคร; การยืนยันสำเร็จกลับไปหน้า Login
++  และจะออก token เฉพาะเมื่อ login ด้วยบัญชีที่ยืนยันแล้ว
+ 
+   Background:
+     Given มีบัญชีผู้จองใน mock data ที่มี email, password และ phone
+ 
+   @AC-02-01 @REQ-FN-201
+-  Scenario: Start at login and navigate to registration and back
+-    Given ผู้จองเปิดแอปที่หน้า "/"
+-    Then UI แสดงฟอร์ม Register
+-    And หน้า Register แสดงปุ่ม "เข้าสู่ระบบ" ไปที่ "/login"
+-    When ผู้จองเลือกปุ่ม "เข้าสู่ระบบ"
+-    Then UI ไปที่หน้า "/login" พร้อมฟอร์ม email และ password
+-    And ฟอร์ม Login แสดงปุ่ม "สมัครสมาชิก" ไปที่ "/register"
+-    When ผู้จองเลือกปุ่ม "สมัครสมาชิก"
+-    Then UI ไปที่หน้า "/register" พร้อมฟอร์ม Register
+-    And หน้า Register แสดงลิงก์ข้อความ "/login" ไปที่ "/login"
+-    When ผู้จองเลือกลิงก์ "/login"
+-    Then UI กลับไปที่หน้า "/login" พร้อมฟอร์ม email และ password
+-
+-  @AC-02-01 @REQ-FN-201 @REQ-FN-205 @BR-02-02
+-  Scenario: เริ่ม login และกรอก OTP โดยไม่เปิดเผยรหัส mock บน UI
+-    Given ผู้จองยังไม่ได้ยืนยัน OTP
+-    When ผู้จองส่ง email และ password ที่ใช้เข้าสู่ระบบ
++  Scenario: เริ่ม OTP จาก handoff หลังสมัครและกลับหน้า Login เมื่อยืนยันสำเร็จ
++    Given Register ส่ง registration_proof แบบ opaque ที่ผูกกับบัญชีและยังไม่เคยใช้
++    When Auth แลก registration_proof เป็น OTP challenge
+     Then ระบบจำลองการส่ง OTP ไปยัง phone ของผู้จองโดยไม่เรียก SMS provider ภายนอก
+-    And API ยังคงตอบ `mock_otp` ตาม contract
++    And API ตอบ otp_challenge_id และ mock_otp ตาม contract
+     And UI แสดงช่อง OTP ว่างโดยไม่แสดงค่ารหัสหรือคำใบ้/placeholder ที่เผยรหัส
+     When ผู้จองพิมพ์ OTP 6 หลักเองและกด Enter
+-    Then UI ส่ง `otp_challenge_id` และ OTP ที่กรอกไปยืนยันตาม API contract
++    Then Auth ตั้ง users.is_verified เป็น true โดยไม่ออก token
++    And UI กลับไปหน้า Login
+ 
+   @AC-02-01 @REQ-FN-201 @REQ-FN-203
+-  Scenario: Login สำเร็จโดยไม่ยืนยัน OTP ซ้ำเมื่อบัญชียืนยันแล้ว
++  Scenario: Login บัญชีที่ยืนยันแล้วและไปหน้า Booking
+     Given ผู้จองมีบัญชีที่ users.is_verified เป็น true
+-    When ผู้จองส่ง email และ password ที่ใช้เข้าสู่ระบบ
+-    Then ระบบให้ login สำเร็จและมี token สำหรับใช้ต่อ
+-    And ระบบไม่กำหนดให้ผู้จองยืนยัน OTP ซ้ำ
++    When ผู้จองส่ง email และ password ที่ถูกต้อง
++    Then ระบบออก token สำหรับบัญชี
++    And UI พาไปหน้า Booking โดยไม่ขอ OTP ซ้ำ
++
++  @AC-02-01 @REQ-FN-201
++  Scenario: ปฏิเสธ Login ของบัญชีที่ยังไม่ยืนยันโดยไม่เริ่ม OTP
++    Given ผู้จองมีบัญชีที่ users.is_verified ไม่เป็น true
++    When ผู้จองส่ง email และ password ที่ถูกต้อง
++    Then API ตอบ HTTP 403 และ detail "Account verification required"
++    And ระบบไม่ออก token และไม่สร้าง OTP challenge
++
++  @AC-02-01 @REQ-FN-201
++  Scenario: ปฏิเสธ registration proof ที่ผิดหรือใช้แล้ว
++    Given registration_proof ไม่ถูกต้องหรือเคยใช้เริ่ม OTP challenge แล้ว
++    When Auth รับคำขอเริ่ม OTP
++    Then API ตอบ HTTP 400 และ detail "Invalid registration proof"
++    And ระบบไม่สร้าง OTP challenge
+ 
+   @AC-02-02 @REQ-FN-202
+   Scenario: ตรวจ method และ path ของ endpoint Auth
+     Given ระบบ Auth ถูกเริ่มทำงาน
+     When ตรวจสอบรายการ route ที่ Auth ลงทะเบียน
+     Then พบ method และ path ต่อไปนี้
+-      | Method | Path                   |
+-      | POST   | /api/auth/login        |
+-      | POST   | /api/auth/verify-otp   |
+-      | GET    | /api/auth/me           |
++      | Method | Path                                                  |
++      | POST   | /api/auth/login                                       |
++      | POST   | /api/auth/otp-challenges                              |
++      | POST   | /api/auth/otp-challenges/{otp_challenge_id}/resend    |
++      | POST   | /api/auth/verify-otp                                  |
++      | GET    | /api/auth/me                                          |
+ 
+   @AC-02-03 @REQ-FN-203 @BR-02-01
+-  Scenario: ยืนยัน OTP สำเร็จโดยไม่ต้องมี token ก่อน
++  Scenario: ยืนยัน OTP สำเร็จโดยไม่ออก token
+     Given ผู้จองยังไม่เคยยืนยัน OTP, ยังไม่มี token และมี OTP ที่ยังไม่หมดอายุ
+     When ผู้จองส่ง OTP "123456" โดยไม่แนบ token
+-    Then ระบบยืนยันตัวตนสำเร็จ
+-    And ระบบตั้ง users.is_verified เป็น true
+-    And flow login สำเร็จและมี token สำหรับใช้ต่อ
++    Then ระบบตั้ง users.is_verified เป็น true
++    And API ตอบ {"is_verified":true} โดยไม่มี token
+ 
+   @AC-02-04 @REQ-FN-204
+-  Scenario: Feature อื่นใช้ token เพื่อตรวจผู้จองปัจจุบัน
+-    Given ผู้จองได้รับ token หลังยืนยัน OTP สำเร็จ
++  Scenario: Feature อื่นใช้ token ที่ได้จาก Login
++    Given ผู้จองได้รับ token หลัง login ด้วยบัญชีที่ยืนยันแล้ว
+     When Feature อื่นส่ง token ให้ระบบตรวจสอบผู้ใช้ปัจจุบัน
+     Then ระบบระบุผู้จองที่ผูกกับ token นั้นให้ Feature อื่นได้
+ 
+@@ -91,15 +92,12 @@ Feature: Auth — ผู้จองเข้าสู่ระบบและ
+     Given ผู้จองมี OTP ชุดเดิมที่ยังไม่หมดอายุ
+     When ผู้จองขอ OTP ใหม่
+     Then ระบบจำลองการส่ง OTP ไปยัง phone ของผู้จองโดยไม่เรียก SMS provider ภายนอก
++    And API ตอบ otp_challenge_id ใหม่และ mock_otp ตาม contract
+     And UI ยังคงแสดงช่อง OTP ว่างโดยไม่เปิดเผยค่ารหัส mock
+     And OTP ชุดเดิมยังยืนยันได้จนกว่าจะหมดอายุ
+     And ผู้จองยังยืนยันตัวตนได้ด้วย OTP ชุดใหม่โดยไม่ใช้จำนวนครั้งที่กรอกผิดของชุดเดิม
+ 
+-# คำถามค้าง (ห้ามเดา contract หรือผลตอบกลับ):
+-# - ไม่มี UC ID ที่ยืนยันแล้ว; BR-02-01 ถึง BR-02-03 ต้องรอทีมยืนยัน
+-# - ยังไม่มีข้อกำหนด HTTP status หรือข้อความ/รูปแบบ error สำหรับ OTP ที่ผิด หมดอายุ หรือใช้ครบจำนวนครั้ง
+-# - ยืนยันจุดเริ่มนับอายุ 15 นาทีเมื่อ mock SMS/OTP แสดงผลแล้ว; วิธีแยก OTP หลายคำขอและนับจำนวนครั้งผิดแยกชุดยังไม่กำหนด
+-# - Token ใช้ mapping ปัจจุบัน token → user_id; อายุ/หมดอายุและ lifecycle อื่นยังไม่กำหนด
+-# - รายละเอียด schema, validation, error response และ HTTP status ยังไม่กำหนด
+-# - Method/path ยืนยันแล้ว แต่ flow login/OTP ยังไม่มีในโค้ดปัจจุบัน
+-# - AC-02-05 ไม่มี Scenario ใน Gherkin เนื่องจากเป็นข้อจำกัดเชิงเทคนิค/ข้อมูล; ทีมยืนยันให้ตรวจ config/dependency และ mock data ใน RTM
++# ข้อมูลที่ Register ต้องส่งต่อ:
++# - backend registration response ต้องมี registration_proof opaque ที่ผูกกับ user_id และใช้ได้ครั้งเดียว
++# - RegisterPage ต้องส่ง proof ไป POST /api/auth/otp-challenges แล้วนำทางไป Auth พร้อม otp_challenge_id
++# - รายละเอียดไฟล์ฝั่ง Register ที่ต้องเปลี่ยนยังสรุปใน spec.md; ห้ามแก้ Feature 001 ในงานนี้
+diff --git a/specs/002-auth/models.md b/specs/002-auth/models.md
+index 2b939d5..0b23141 100644
+--- a/specs/002-auth/models.md
++++ b/specs/002-auth/models.md
+@@ -17,23 +17,24 @@ flowchart LR
+     Backend[Auth Backend]
+     MockSms["Mock SMS sender"]
+   end
++  Register[Register Feature]
+   Users[(Mock data: users)]
+   OtherFeatures[Feature อื่น]
+ 
+-  Booker -->|"email และรหัสผ่าน / กรอก OTP"| Frontend
+-  Frontend -->|"คำขอ Auth ผ่าน REST"| Backend
++  Booker -->|"email/password หรือกรอก OTP"| Frontend
++  Register -->|"registration_proof แบบ opaque"| Frontend
++  Frontend -->|"เริ่ม OTP ด้วย registration_proof"| Backend
++  Frontend -->|"Login, verify OTP, resend"| Backend
+   Backend -->|"อ่านข้อมูลผู้ใช้และ users.phone"| Users
+   Backend -->|"ขอส่ง OTP แบบจำลอง"| MockSms
+   MockSms -->|"จำลอง SMS ไป users.phone; ค่า OTP mock"| Backend
+-  Backend -->|"ส่ง challenge response รวม mock_otp ตาม API contract"| Frontend
+-  Backend -->|"ออก token เมื่อ flow login สำเร็จ"| Frontend
++  Backend -->|"challenge response รวม mock_otp ตาม API contract"| Frontend
++  Backend -->|"ออก token เมื่อ Login ของ verified สำเร็จ"| Frontend
+   Frontend -->|"ส่ง token ให้ใช้ต่อ"| OtherFeatures
+   OtherFeatures -->|"ใช้ token / get_current_user()"| Backend
+ ```
+ 
+-`Mock SMS sender` เป็นส่วนจำลองภายในระบบ Auth ไม่ใช่ SMS provider หรือระบบภายนอกจริง ไม่มี external SMS integration ในขอบเขตนี้ การวาดการส่ง token และ OTP เป็นภาพรวมเชิงแนวคิด ไม่ได้กำหนด API request/response หรือรูปแบบ token.
+-
+-Frontend รับ challenge response ตาม API contract รวม `mock_otp` แต่ไม่ render ค่ารหัส; ช่องกรอก OTP เริ่มว่างและผู้ใช้พิมพ์รหัสเอง.
++`Mock SMS sender` เป็นส่วนจำลองภายในระบบ Auth ไม่ใช่ SMS provider จริง. `registration_proof` เป็น opaque ใช้ครั้งเดียวและผูกกับบัญชี; Auth แลกเป็น challenge ID แต่ไม่รับ `user_id` อย่างเดียวเป็นหลักฐาน. Frontend ไม่ render ค่า `mock_otp`; ช่อง OTP เริ่มว่าง.
+ 
+ ผู้ใช้ mock ที่มีอยู่ทั้งหมดใน `backend/app/mock_db.py` ได้รับอนุมัติจากทีมให้ใช้เป็น fixtures (Q-02-08).
+ 
+@@ -50,82 +51,88 @@ classDiagram
+     is_verified
+   }
+ 
+-  class OTP {
++  class RegistrationProof {
++    opaque_value
++    user_id
++    used_once
++  }
++
++  class OTPChallenge {
++    otp_challenge_id
+     code
+     failed_attempt_count
+     status
++    created_at
+   }
+ 
+-  class VerificationFlow {
+-    status
++  class AuthToken {
++    token
++    user_id
+   }
+ 
+-  class AuthToken
+-  class OtherFeature
++  RegistrationProof --> User : ผูกกับบัญชี; ใช้เมื่อสร้าง challenge
++  User --> OTPChallenge : receives mock SMS at phone
++  User --> AuthToken : token is issued only on verified Login
+ 
+-  User --> OTP : receives mock SMS at phone
+-  OTP --> VerificationFlow : checked in Auth flow
+-  VerificationFlow --> AuthToken : after successful login flow
+-  AuthToken --> OtherFeature : used by other features
+-
+-  note for User "ยืนยันการใช้: email สำหรับ login; password เป็น credential สำหรับ login โดยไม่กำหนดรูปแบบหรือการจัดเก็บ; phone เป็นปลายทาง SMS OTP และเป็นข้อมูลส่วนบุคคล. OTP ที่ถูกต้องครั้งแรกตั้ง is_verified เป็น true; login ครั้งต่อไปเมื่อ is_verified=true ไม่ต้องยืนยัน OTP ซ้ำ. GET /api/auth/me ส่งเฉพาะ id, name, email. ค่าเริ่มต้น/ชนิดข้อมูลและสถานะหลัง backend restart ยังไม่กำหนด."
+-  note for OTP "ยืนยันแล้ว: code เป็นตัวเลข 6 หลัก ค่า mock คงที่ 123456; เริ่มนับอายุ 15 นาทีเมื่อ mock SMS/OTP แสดงผล; กรอกผิดครบ 3 ครั้งแล้ว code นั้นใช้ไม่ได้. ขอใหม่ได้ทันทีไม่จำกัดจำนวนครั้ง และ code เดิมใช้ได้จนหมดอายุ. วิธีแยกหลาย issuance และนับจำนวนครั้งผิดแยกชุดยังเป็นคำถาม Q-02-04."
+-  note for VerificationFlow "OTP ที่ถูกต้องครั้งแรกทำให้ users.is_verified เป็น true; บัญชีที่เป็น true ไม่ต้องยืนยัน OTP ซ้ำเมื่อ login."
+-  note for AuthToken "ใช้ mapping ปัจจุบัน token → user_id. ออกหลัง flow login สำเร็จ: ต้องผ่าน OTP หากยังไม่ verified; หาก verified แล้ว login ด้วย email/password สำเร็จได้ token. อายุ/หมดอายุและ lifecycle อื่นยังไม่กำหนด (Q-02-05)."
++  note for User "OTP ที่ถูกต้องครั้งแรกตั้ง is_verified=true; การยืนยัน OTP ไม่ออก token. Login ครั้งต่อไปเมื่อ is_verified=true ใช้ email/password และออก token. GET /api/auth/me ส่งเฉพาะ id, name, email."
++  note for RegistrationProof "Opaque proof ผูกกับบัญชีและใช้เริ่ม OTP ได้ครั้งเดียว; proof ผิด/ใช้แล้วไม่สร้าง challenge."
++  note for OTPChallenge "code เป็นตัวเลข 6 หลัก ค่า mock 123456; อายุ 15 นาที; กรอกผิดครบ 3 ครั้งปิดเฉพาะชุดนั้น. Resend สร้าง challenge ID ใหม่และไม่ยกเลิก challenge เก่าที่ยังไม่หมดอายุ."
++  note for AuthToken "Mapping token → user_id; ออกเฉพาะหลัง Login สำเร็จของบัญชี verified. อายุเท่า process backend; ไม่มี refresh/revoke endpoint; ใช้ไม่ได้หลัง restart."
+ ```
+ 
++คำว่า `RegistrationProof` เป็นแนวคิดของ opaque proof ที่ทีมยืนยัน ไม่ได้เพิ่ม field ลงใน entity `users`. รูปแบบ/การจัดเก็บ password และ token ไม่กำหนดเพิ่มเติมนอก API contract.
++
+ ### สถานะ attribute
+ 
+-| Entity | ยืนยันแล้ว | พบในภาพรวมแต่ความหมาย/การใช้ใน Auth ยังไม่ยืนยัน |
++| Entity | ยืนยันแล้ว | ขอบเขต / สิ่งที่ยังไม่กำหนด |
+ |---|---|---|
+-| `User` | `email` ใช้ login; `password` ใช้เป็น credential สำหรับ login โดยไม่กำหนดรูปแบบหรือการจัดเก็บ; `phone` เป็นปลายทางรับ SMS OTP และเป็นข้อมูลส่วนบุคคล; `id`, `name`, `email` ส่งกลับจาก `/api/auth/me`; OTP ที่ถูกต้องครั้งแรกตั้ง `is_verified=true`, การ login ต่อไปเมื่อเป็น `true` ไม่ต้องทำ OTP ซ้ำ | ค่าเริ่มต้นและชนิดข้อมูลของ `is_verified`; สถานะ `is_verified` หลัง backend restart |
+-| `OTP` | `code` เป็น `123456`; UI ไม่แสดงค่าและให้ผู้ใช้กรอกเอง; เริ่มนับอายุ 15 นาทีเมื่อ flow กรอก OTP แสดงผล; กรอกผิดครบ 3 ครั้งแล้ว code นั้นใช้ไม่ได้ | วิธีระบุหลายคำขอและนับจำนวนครั้งผิดแยกชุด เมื่อ OTP ทุกชุดใช้ code เดียวกัน |
+-| `VerificationFlow` | OTP ที่ถูกต้องและยังไม่หมดอายุทำให้ flow สำเร็จและตั้ง `users.is_verified=true`; บัญชีที่ `is_verified=true` ไม่ต้องยืนยัน OTP ซ้ำเมื่อ login | ค่าเริ่มต้นและชนิดข้อมูลของ `users.is_verified` |
+-| `AuthToken` | ใช้ mapping ปัจจุบัน `token → user_id` และใช้ต่อกับ Feature อื่น; ออกเมื่อ flow login สำเร็จ (OTP สำเร็จสำหรับบัญชีที่ยังไม่ verified หรือ email/password ถูกต้องสำหรับบัญชีที่ verified) | อายุ/หมดอายุและ lifecycle อื่นของ token |
+-
+-ไม่กำหนดชนิดข้อมูล, รูปแบบหรือการจัดเก็บของ `password`, อายุ/หมดอายุและ lifecycle อื่นของ token, หรือรายละเอียดอื่นที่ไม่มีหลักฐานใน `spec.md` และคำตอบทีม.
++| `User` | `email` และ `password` ใช้ Login; `phone` เป็นปลายทางรับ SMS OTP; OTP ถูกต้องครั้งแรกตั้ง `is_verified=true`; `/me` ส่งเฉพาะ `id`, `name`, `email` | ค่าเริ่มต้น `is_verified` หลัง backend restart เป็นไปตาม fixture ตาม AS-02-01; ชนิดข้อมูล/validation ตาม API contract |
++| `RegistrationProof` | opaque, ผูกกับบัญชี, ใช้ครั้งเดียว; proof ผิดหรือใช้แล้วตอบ 400 และไม่สร้าง challenge | format และการส่งผ่าน Register response ยังเป็นงานเชื่อมต่อของ Feature 001 |
++| `OTPChallenge` | code `123456`; อายุ 15 นาที; ID แยกชุด; ผิดครบ 3 ครั้งปิดเฉพาะชุด; resend สร้าง ID ใหม่และ challenge เก่ายังใช้ได้จนหมดอายุ | ไม่มี SMS provider จริง |
++| `AuthToken` | mapping `token → user_id`; ออกเฉพาะ Login สำเร็จของบัญชี verified; ใช้ได้ตลอดอายุ process backend; ไม่มี refresh/revoke endpoint | ใช้ไม่ได้หลัง restart; `/me` รับ `Authorization: Bearer <token>` |
+ 
+ `GET /api/auth/me` ส่งเฉพาะ `id`, `name`, `email`; ไม่ส่ง `phone`, `password`, OTP, token หรือ `is_verified` (Q-02-06).
+ 
+ ## MD-02-03 (AI เสนอ รอทีมยืนยัน): State Diagram
+ 
+-### วงจรชีวิต OTP
++### วงจรชีวิต OTP challenge
+ 
+ ```mermaid
+ stateDiagram-v2
+-  [*] --> Active: แสดง flow กรอก OTP โดยไม่แสดงค่ารหัส; เริ่มนับอายุ
++  [*] --> Active: proof ถูกต้อง; แสดง OTP flow และเริ่มนับอายุ
+   Active --> Active: กรอกผิดครั้งที่ 1 หรือ 2
+   Active --> Verified: กรอกถูกก่อนหมดอายุ
+-  Active --> Invalid: กรอกผิดครบ 3 ครั้ง
++  Active --> Locked: กรอกผิดครบ 3 ครั้ง
+   Active --> Expired: อายุครบ 15 นาที
+   Verified --> [*]
+-  Invalid --> [*]
++  Locked --> [*]
+   Expired --> [*]
+ ```
+ 
+-อายุ 15 นาทีเริ่มนับเมื่อ mock SMS/OTP แสดงผลแล้ว. การขอรหัสใหม่ทำได้ทันทีและไม่จำกัดจำนวนครั้ง; OTP เดิมยังใช้ได้จนหมดอายุ. วิธีแยก instance/state ของ OTP หลายรายการที่ใช้ค่า `123456` และนับจำนวนครั้งผิดแยกชุดยังไม่กำหนด (Q-02-04) จึงไม่แสดงการขอใหม่เป็นการเปลี่ยนสถานะของ OTP เดิม.
++Resend สร้าง challenge ใหม่ที่มี ID และจำนวนครั้งผิดแยกจากชุดเดิม; challenge เดิมยังใช้ได้จนหมดอายุหรือถูกปิดตามกติกา.
+ 
+-### สถานะการยืนยันใน Auth flow
++### ลำดับยืนยันบัญชีและ Login
+ 
+ ```mermaid
+ stateDiagram-v2
+-  [*] --> Login: เริ่ม login ด้วย email/password
+-  Login --> AwaitingOTP: users.is_verified ไม่เป็น true
+-  Login --> LoginAccepted: users.is_verified เป็น true และ email/password ถูกต้อง; ออก token
+-  AwaitingOTP --> VerifiedInFlow: OTP ถูกต้องและยังไม่หมดอายุ / ตั้ง users.is_verified=true
+-  AwaitingOTP --> Login: OTP หมดอายุหรือใช้ไม่ได้
+-  VerifiedInFlow --> LoginAccepted: ยืนยันครั้งแรกสำเร็จ
+-  LoginAccepted --> [*]
++  [*] --> AwaitingHandoff: สมัครสำเร็จ
++  AwaitingHandoff --> AwaitingOTP: proof ถูกต้อง; สร้าง challenge
++  AwaitingOTP --> Verified: OTP ถูกต้อง / ตั้ง users.is_verified=true
++  Verified --> Login: กลับหน้า Login โดยไม่มี token
++  Login --> Authenticated: credentials ถูกต้องและ is_verified=true / ออก token
++  Login --> VerificationRequired: credentials ถูกต้องและ is_verified ไม่เป็น true / 403, ไม่มี token
++  Authenticated --> [*]: ไปหน้า Booking
++  VerificationRequired --> [*]
+ ```
+ 
+-บัญชีที่มี `users.is_verified=true` ข้ามขั้น OTP ในการ login ครั้งต่อไป; การ login ครั้งแรกที่ OTP ถูกต้องต้องบันทึกค่านี้เป็น `true`. ค่าเริ่มต้นและชนิดข้อมูลของ field และการคงค่า `is_verified` หลัง backend restart ยังไม่ยืนยัน. รายละเอียด token ยังไม่กำหนดครบ.
++หลัง backend restart ให้ `is_verified` กลับเป็นค่าเริ่มต้นของ mock fixture โดยไม่เพิ่ม persistence (AS-02-01).
+ 
+ ## MD-02-04 (AI เสนอ รอทีมยืนยัน): External Sequence
+ 
+-ไม่มี external sequence ที่ต้องกำหนดสำหรับ Auth ในขอบเขตนี้ เพราะการส่ง SMS เป็น mock ภายในระบบและไม่มีการเชื่อมต่อ SMS provider ภายนอกจริง. รายละเอียดลำดับภายในระหว่าง Frontend, Auth Backend และ mock sender ยังไม่กำหนดเป็น API/sequence contract.
++ไม่มี external sequence ที่ต้องกำหนดสำหรับ Auth ในขอบเขตนี้ เพราะการส่ง SMS เป็น mock ภายในระบบและไม่มีการเชื่อมต่อ SMS provider ภายนอกจริง. การเชื่อม Register เป็น handoff ระหว่าง Feature: Register ส่ง opaque `registration_proof` ให้ Frontend; Frontend เรียก Auth endpoint เพื่อรับ `otp_challenge_id` แล้วเปิดหน้า OTP. การแก้ Feature 001 อยู่นอกขอบเขตงานนี้.
+ 
+ ## ประเด็นอ้างอิงที่ยังเปิด
+ 
+-- Q-02-04: วิธีระบุ OTP หลายคำขอที่ใช้ค่า `123456` พร้อมกัน และนับจำนวนครั้งผิดแยกชุด
+-- Q-02-05: อายุ/หมดอายุและ lifecycle อื่นของ token
+-- ค่าเริ่มต้นและชนิดข้อมูลของ `users.is_verified` และการคงค่านี้หลัง backend restart ยังไม่ยืนยัน
++- Q-02-01: แหล่ง Requirement ต้นฉบับ, PB/EV และรหัสทางการยังตรวจสอบไม่ได้
++- Q-02-10: Labels, layout, UI ID และ mockup ของ Auth นอกเหนือจาก flow ที่ยืนยันแล้วยังเปิด
++- Q-02-11: owner/PO/ผู้ตรวจและวันอนุมัติ Baseline ยังไม่กำหนด
+diff --git a/specs/002-auth/plan.md b/specs/002-auth/plan.md
+index 26a0c35..b91cf9a 100644
+--- a/specs/002-auth/plan.md
++++ b/specs/002-auth/plan.md
+@@ -1,17 +1,17 @@
+ # แผนงาน Feature 002: Auth
+ 
+-อ้างอิง: [spec.md](spec.md) v1.5 (draft), [auth.feature](auth.feature) (Draft), [rules.md](rules.md) (Draft), [models.md](models.md) (Draft)
+-วันที่: 2026-11-20
++อ้างอิง: [spec.md](spec.md) v1.6 (draft), [auth.feature](auth.feature) (Draft), [rules.md](rules.md) (Draft), [models.md](models.md) (Draft)
++วันที่: 2026-11-21
+ สถานะ: Draft — แผนนี้ยังไม่ใช่ Baseline และไม่ได้รับการอนุมัติ
+-ขอบเขต: ผู้จอง login ด้วย email/password และยืนยัน OTP แบบจำลอง; ไม่เชื่อม SMS provider จริง
++ขอบเขต: Auth รองรับ OTP handoff หลังสมัครและ Login ของบัญชี verified; ไม่เชื่อม SMS provider จริงหรือแก้ Feature 001
+ 
+ ## 1. สรุปแนวทาง
+ 
+-Feature 002 ให้ผู้จอง login ด้วย email/password; บัญชีที่ยังไม่ยืนยันต้องทำ OTP ครั้งแรกและบัญชีที่ `users.is_verified=true` ไม่ต้องทำ OTP ซ้ำ (REQ-FN-201, REQ-FN-203; Q-02-07 ตอบแล้ว).
+-Backend ใช้ OTP mock `123456` และคงส่ง `mock_otp` ใน API response; UI แสดงช่อง OTP ว่างโดยไม่เผยค่ารหัสหรือคำใบ้/placeholder ผู้ใช้พิมพ์ 6 หลักเองและส่งด้วย Enter; ไม่มี SMS provider จริง (REQ-FN-201, REQ-FN-205).
+-Backend จะต่อยอด `backend/app/auth.py`, `backend/app/main.py` และข้อมูลผู้ใช้ใน `backend/app/mock_db.py`; method/path, contract, validation และ status/error ของทั้งสาม endpoint ยืนยันแล้ว (REQ-FN-201 ถึง REQ-FN-205, Q-02-03, Q-02-09).
+-Frontend จะต่อยอดแอป React/Vite ที่มีอยู่: หน้า `/` และ `/login` แสดง Login, หน้า `/register` แสดง Register; ฟอร์ม Login มีปุ่มจริง “สมัครสมาชิก” ไป `/register` เฉพาะขั้น email/password และไม่แสดงในขั้น OTP; Register กลับ Login ด้วยลิงก์ข้อความ “เข้าสู่ระบบ” ตาม UI-01-01. ส่ง login/OTP ด้วย Enter, แสดง API `detail` ในฟอร์มปัจจุบัน และเมื่อ login สำเร็จไปจุดเริ่ม Feature 003-Booking; ใช้เฉพาะ visual theme ของ Feature 004-Payment. รายละเอียด labels/layout/UI ID และ mockup อื่นยังไม่ยืนยัน (REQ-FN-201, Q-02-10; navigation ตามคำยืนยันล่าสุด).
+-แผนนี้สะท้อนคำตอบล่าสุดของทีมและระบุ Q-02-01 กับรายละเอียด UI ที่ยังเปิดไว้; Requirements และ AC ยังคงเป็น Draft (AC-02-01 ถึง AC-02-06, Q-02-01 ถึง Q-02-11).
++Feature 002 รับ `registration_proof` opaque ใช้ครั้งเดียวจาก handoff หลังสมัครเพื่อสร้าง OTP challenge; proof ผิด/ใช้แล้วไม่สร้าง challenge. OTP success ตั้ง `users.is_verified=true` และกลับ Login โดยไม่ออก token; Login ของ verified account จึงออก token และไป Booking. Login unverified ตอบ 403 โดยไม่เริ่ม OTP (REQ-FN-201, REQ-FN-203; Q-02-07 และคำยืนยันล่าสุด).
++Backend ใช้ OTP mock `123456`; create/resend API คงส่ง `mock_otp`, ส่วน UI เริ่มช่องว่างไม่เผยรหัส/คำใบ้และให้พิมพ์ 6 หลักเองแล้ว Enter; ไม่มี SMS provider จริง (REQ-FN-201, REQ-FN-205).
++Backend ต่อ `backend/app/auth.py` และ routes เดิม; เพิ่ม endpoint create/resend OTP. Frontend Auth ใช้ `startRegistrationOtp()` เก็บ challenge ID ชั่วคราวใน `sessionStorage` ให้หน้า Login เปิด OTP form; หลัง verify สำเร็จกลับไป Login. ทีม Register ต้องเพิ่ม proof ใน response และเรียก endpoint Auth; ไม่มีการแก้ Feature 001 ในขอบเขตนี้.
++Frontend คง routes `/`, `/login`, `/register`, ปุ่ม “สมัครสมาชิก” และลิงก์กลับตาม UI-01-01; login/OTP ส่งด้วย Enter, แสดง API `detail`, Login verified ไป Feature 003-Booking, ใช้ visual theme ของ Payment เท่านั้น. รายละเอียด labels/layout/UI ID/mockup อื่นยังไม่ยืนยัน (REQ-FN-201, Q-02-10).
++แผนนี้สะท้อนคำยืนยันล่าสุด; Q-02-01, รายละเอียด UI และ integration ที่ต้องทำโดยทีม Register ยังคงเปิด/blocked; Requirements และ AC ยังเป็น Draft (AC-02-01 ถึง AC-02-06, Q-02-01 ถึง Q-02-11).
+ 
+ ## 2. เทคโนโลยีที่ใช้
+ 
+@@ -65,23 +65,26 @@ npm run build
+ 
+ | Entity / ข้อมูล | ฟิลด์หรือข้อมูลที่ยืนยันแล้ว | รองรับ | ขอบเขต / สิ่งที่ยังไม่กำหนด |
+ |---|---|---|---|
+-| User ใน `mock_db.users` | `email` ใช้ login, `password` เป็น credential, `phone` เป็นปลายทาง mock SMS OTP; OTP ถูกต้องครั้งแรกตั้ง `is_verified=true` และ login ครั้งต่อไปไม่ต้องทำ OTP ซ้ำ; `/me` ส่งเฉพาะ `id`, `name`, `email` | REQ-FN-201, REQ-CON-201; Q-02-03/Q-02-06/Q-02-07 ตอบแล้ว | หลัง restart `is_verified` กลับเป็นค่าเริ่มต้นของ mock fixture ตาม AS-02-01; validation ดู API contract ใน spec |
+-| OTP ต่อคำขอ | รหัส mock ตัวเลข 6 หลัก `123456`; อายุ 15 นาทีเริ่มเมื่อ mock SMS/OTP แสดงผล; `otp_challenge_id` แยกชุด; ผิดครบ 3 ครั้งปิดเฉพาะชุดนั้น | REQ-FN-201, REQ-FN-205; Q-02-03/Q-02-04 ตอบแล้ว | challenge ID ผ่าน login response และ verify request; OTP issuance อื่นคงตามกติกาที่ทีมยืนยัน |
+-| Token | ใช้ mapping ปัจจุบัน `token → user_id`; ออกเมื่อ flow login สำเร็จ; ใช้ได้ตลอดอายุ process ของ backend และใช้ไม่ได้หลัง restart; ไม่มี refresh หรือ server-side revoke/logout endpoint | REQ-FN-203, REQ-FN-204; Q-02-05 ตอบแล้ว | `/me` รับ `Authorization: Bearer <token>`; `mock_db.tokens` มี mapping ปัจจุบันในโค้ด |
+-| Mock SMS sender | จำลองการส่ง OTP ไป `users.phone`; API ยังคงตอบ `mock_otp` แต่ UI ไม่แสดงค่าและแสดงช่องกรอกว่าง | REQ-FN-201, REQ-FN-205; Q-02-08 ตอบแล้ว | เป็นส่วนจำลองภายในระบบ ไม่มี provider ภายนอก; ผู้ใช้ mock ที่มีอยู่ใน `backend/app/mock_db.py` อนุมัติเป็น fixtures; ไม่กำหนด delivery จริง |
++| User ใน `mock_db.users` | `email`/`password` ใช้ Login; `phone` เป็นปลายทาง mock SMS; OTP ถูกต้องครั้งแรกตั้ง `is_verified=true`; `/me` ส่งเฉพาะ `id`, `name`, `email` | REQ-FN-201, REQ-CON-201; Q-02-03/Q-02-06/Q-02-07 ตอบแล้ว | หลัง restart `is_verified` กลับเป็นค่าเริ่มต้นของ mock fixture ตาม AS-02-01 |
++| Registration proof | opaque proof ผูกกับบัญชีและใช้เริ่ม challenge ได้ครั้งเดียว; ไม่รับ `user_id` อย่างเดียว | REQ-FN-201; คำยืนยันล่าสุด | Register backend ต้องเพิ่ม proof ใน response และ RegisterPage ต้องส่งให้ Auth; Feature 001 ไม่แก้ในงานนี้ |
++| OTP ต่อคำขอ | รหัส mock `123456`; อายุ 15 นาที; `otp_challenge_id` แยกชุด; ผิดครบ 3 ครั้งปิดเฉพาะชุด; resend ส่ง challenge ID ใหม่โดย challenge เก่ายังใช้ได้จนหมดอายุ | REQ-FN-201, REQ-FN-205; Q-02-03/Q-02-04 ตอบแล้ว | Create/resend ส่ง ID กลับ; verify รับ ID |
++| Token | mapping `token → user_id`; ออกหลัง Login สำเร็จของ verified account เท่านั้น; ใช้ได้ตลอดอายุ process backend; ไม่มี refresh/revoke endpoint; ใช้ไม่ได้หลัง restart | REQ-FN-203, REQ-FN-204; Q-02-05 ตอบแล้ว | `/me` รับ `Authorization: Bearer <token>` |
++| Mock SMS sender | จำลองส่ง OTP ไป `users.phone`; API ยังคงตอบ `mock_otp` แต่ UI ไม่แสดงค่าและช่องเริ่มว่าง | REQ-FN-201, REQ-FN-205; Q-02-08 ตอบแล้ว | ไม่มี provider ภายนอก; mock users ทั้งหมดเป็น fixtures ที่ทีมอนุมัติ |
+ 
+ `phone` เป็นข้อมูลส่วนบุคคลตาม spec; ไม่เพิ่ม field ข้อมูลส่วนบุคคลอื่น และไม่แต่งรายละเอียด password/token (REQ-FN-201, Q-02-05).
+ 
+ ## 4. API / หน้าจอ
+ 
+-ทีมยืนยัน method/path, request/response, validation และ status/error ของ endpoint ทั้งสามแล้ว (Q-02-03, Q-02-09). `GET /api/auth/me` รับ `Authorization: Bearer <token>` และส่งเฉพาะ `id`, `name`, `email` (Q-02-03, Q-02-06).
++ทีมยืนยัน method/path, request/response, validation และ status/error ของ endpoints ในตารางแล้ว (Q-02-03, Q-02-09). `GET /api/auth/me` รับ `Authorization: Bearer <token>` และส่งเฉพาะ `id`, `name`, `email` (Q-02-03, Q-02-06).
+ 
+ | รายการ | Input / Output หลัก | รองรับ | สถานะ |
+ |---|---|---|---|
+-| `POST /api/auth/login` | JSON `{email, password}`; verified ตอบ `{token}`; unverified ตอบ `{otp_challenge_id, mock_otp: "123456"}` | REQ-FN-201, REQ-FN-202; AC-02-01, AC-02-02 | Contract/validation/status/error ตาม spec Q-02-03/Q-02-09 |
+-| `POST /api/auth/verify-otp` | JSON `{otp_challenge_id, otp}`; ไม่ต้องมี token ก่อนยืนยัน; เมื่อสำเร็จตั้ง `is_verified=true` และตอบ `{token}` | REQ-FN-203, REQ-FN-205; AC-02-02, AC-02-03, AC-02-06 | Contract/validation/status/error ตาม spec Q-02-03/Q-02-09; token lifecycle ตาม Q-02-05 |
++| `POST /api/auth/login` | JSON `{email, password}`; verified ตอบ `{token}`; unverified ตอบ 403 `Account verification required` โดยไม่สร้าง challenge | REQ-FN-201, REQ-FN-202; AC-02-01, AC-02-02 | Contract/validation/status/error ตาม spec Q-02-03/Q-02-09 |
++| `POST /api/auth/otp-challenges` | JSON `{registration_proof}`; สำเร็จตอบ `{otp_challenge_id, mock_otp}`; proof ผิด/ใช้แล้ว 400 `Invalid registration proof` | REQ-FN-201, REQ-FN-202; AC-02-01, AC-02-02 | Proof opaque ใช้ครั้งเดียว; Register ต้องเพิ่ม handoff |
++| `POST /api/auth/otp-challenges/{otp_challenge_id}/resend` | ไม่มี body; สำเร็จตอบ ID ใหม่และ `mock_otp`; challenge ใช้ไม่ได้ตอบ 400 | REQ-FN-201, REQ-FN-205; AC-02-02, AC-02-06 | Challenge เก่ายังใช้ได้จนหมดอายุ |
++| `POST /api/auth/verify-otp` | JSON `{otp_challenge_id, otp}`; ไม่ต้องมี token ก่อนยืนยัน; สำเร็จตั้ง `is_verified=true` และตอบ `{"is_verified":true}` โดยไม่มี token | REQ-FN-203, REQ-FN-205; AC-02-02, AC-02-03, AC-02-06 | Token จะออกภายหลังจาก Login สำเร็จของ verified account |
+ | `GET /api/auth/me` | `Authorization: Bearer <token>`; ส่งเฉพาะ `id`, `name`, `email` | REQ-FN-202, REQ-FN-204; AC-02-02, AC-02-04; Q-02-03/Q-02-06 ตอบแล้ว | Status/error ตาม Q-02-09 |
+-| หน้า Login และ OTP | `/` และ `/login` แสดง Login; มีปุ่ม “สมัครสมาชิก” ไป `/register` เฉพาะขั้น email/password; OTP ไม่มีปุ่มนี้; ใช้ Login/OTP flow ตามที่ยืนยันและเฉพาะ visual theme ของ Feature 004-Payment | REQ-FN-201, REQ-FN-205; AC-02-01, AC-02-06 | Register กลับ Login ด้วยลิงก์ข้อความ “เข้าสู่ระบบ” ตาม UI-01-01; UI ID/mockup Auth และรายละเอียดอื่นยังไม่ยืนยัน; ห้ามยืมองค์ประกอบหรือพฤติกรรม Payment (Q-02-10) |
++| หน้า Login และ OTP | `/` และ `/login` แสดง Login; OTP เริ่มจาก registration handoff, ช่องเริ่มว่าง; verify สำเร็จกลับ Login โดยไม่ออก token; verified Login ไป Booking | REQ-FN-201, REQ-FN-205; AC-02-01, AC-02-06 | Register กลับ Login ด้วยลิงก์ข้อความ “เข้าสู่ระบบ” ตาม UI-01-01; UI ID/mockup Auth ยังไม่ยืนยัน; ห้ามยืมองค์ประกอบหรือพฤติกรรม Payment (Q-02-10) |
+ | การใช้ token ใน Feature อื่น | Frontend ส่ง token ด้วย `Authorization: Bearer <token>` ให้ `get_current_user()` ระบุตัวผู้จองโดยใช้ mapping `token → user_id` | REQ-FN-203, REQ-FN-204; AC-02-03, AC-02-04 | Mapping และ lifecycle ยืนยันตาม Q-02-05 |
+ 
+ รายละเอียด status code, validation และ error body ใช้ตาม API contract ใน [spec.md](spec.md) (Q-02-03, Q-02-09); `/me` ส่งเฉพาะ `id`, `name`, `email` และไม่มี `phone`, `password`, OTP, token หรือ `is_verified` (Q-02-06).
+@@ -98,31 +101,31 @@ npm run build
+ 
+ ## 6. แผนทดสอบจาก Acceptance Criteria
+ 
+-ชื่อ test เป็นข้อเสนอการตั้งชื่อ; พฤติกรรมที่ตรวจต้องยึด AC และ API contract ที่ยืนยันแล้ว. โค้ด Auth ปัจจุบันยังไม่มี route login/OTP; tests เหล่านี้เป็นงานภายหลังการ implement.
++ชื่อ test เป็นข้อเสนอการตั้งชื่อ; พฤติกรรมที่ตรวจต้องยึด AC และ API contract ที่ยืนยันแล้ว. หลัง implementation ให้ตรวจ handoff Register แยกจาก Auth tests เพราะ Feature 001 ไม่อยู่ในขอบเขตการแก้ไขรอบนี้.
+ 
+ | AC ID | ชื่อ test | ทดสอบอย่างไร |
+ |---|---|---|
+-| AC-02-01 | `test_AC_02_01_login_starts_mock_otp` | ตรวจว่าบัญชีที่ยังไม่ยืนยันได้รับ challenge, UI แสดงช่อง OTP ว่างโดยไม่เปิดเผย `mock_otp` และผู้ใช้ส่ง OTP ที่พิมพ์เองด้วย Enter; บัญชีที่ `users.is_verified=true` login สำเร็จ ได้ token สำหรับใช้ต่อโดยไม่ต้องทำ OTP ซ้ำ; ไม่ตรวจ provider จริง |
++| AC-02-01 | `test_AC_02_01_registration_handoff_and_verified_login` | ตรวจ proof หนึ่งครั้งแลกเป็น challenge; OTP success ตั้ง verified, ไม่มี token และกลับ Login; verified Login ออก token/ไป Booking; unverified Login ตอบ 403 โดยไม่สร้าง challenge; UI OTP ว่างและไม่เผย mock code |
+ | AC-02-02 | `test_AC_02_02_auth_routes_match_confirmed_contract` | ตรวจ routes, request/response, validation, HTTP status/error body และ `/me` Bearer auth ตาม API contract ที่ยืนยันแล้ว |
+-| AC-02-03 | `test_AC_02_03_verified_otp_returns_token` | ส่ง OTP ที่ถูกต้องโดยไม่แนบ token; ตรวจ `users.is_verified=true`, token mapping และ lifecycle ที่ยืนยันใน Q-02-05 |
++| AC-02-03 | `test_AC_02_03_verified_otp_marks_account_without_issuing_token` | ส่ง OTP ที่ถูกต้องโดยไม่แนบ token; ตรวจ `users.is_verified=true`, response ไม่มี token และไม่มี mapping ใหม่ |
+ | AC-02-04 | `test_AC_02_04_token_identifies_current_user` | ใช้ token ที่ออกจาก flow สำเร็จเรียกการตรวจผู้ใช้ปัจจุบัน; ตรวจว่าได้ผู้จองที่สัมพันธ์กับ token ตาม contract ที่ยืนยันแล้ว |
+ | AC-02-05 | `audit_AC_02_05_auth_technology_and_mock_data` (หลักฐานนอก Gherkin) | ไม่มี Gherkin Scenario เพราะเป็นข้อจำกัดเชิงเทคนิค/ข้อมูล; ทีมยืนยันให้ตรวจหลักฐาน dependency/config และ mock data ใน RTM โดยไม่สร้าง Scenario; หลักฐานบันทึกใน `rtm.md` เป็นการตรวจเอกสาร/ไฟล์ปัจจุบัน ไม่ใช่ผลทดสอบหรือหลักฐานว่า Auth implement ครบแล้ว |
+ | AC-02-06 | `test_AC_02_06_otp_lifetime_attempts_and_resend` | ทดสอบ OTP `123456`, อายุ 15 นาทีเริ่มเมื่อแสดงผล, ผิดครบ 3 ครั้งต่อชุด, ขอใหม่ทันทีไม่จำกัดและรหัสเดิมใช้ได้จนหมดอายุ โดยแยกด้วย `otp_challenge_id` |
+ 
+ AC-02-05 เป็นข้อจำกัดเชิงเทคนิค/ข้อมูล จึงไม่มี Gherkin Scenario หรือ Then ที่เป็นพฤติกรรมผู้ใช้โดยไม่เพิ่มข้อกำหนดใหม่; ทีมยืนยันวิธี traceability โดยตรวจหลักฐาน dependency/config และ mock data ใน RTM. หลักฐานนี้ไม่ใช่ผลทดสอบหรือการยืนยันว่า Auth implement ครบแล้ว.
+-Frontend UI test harness ยังไม่มี; การเลือก test runner แยกจาก Q-02-10. เริ่มออกแบบ UI ตาม flow ที่ยืนยันได้โดยอิงเฉพาะ visual theme ของ Payment และห้ามยืมองค์ประกอบหรือพฤติกรรม; รายละเอียดหน้าจอ, UI ID และ mockup ยังรอทีมยืนยัน (Q-02-10). ไม่รันทดสอบในขั้นจัดทำแผน.
++Frontend test harness ที่ใช้อยู่ตรวจ API helper และ rendered UI; รายละเอียดหน้าจอ, UI ID และ mockup นอกเหนือจาก flow ที่ยืนยันยังเปิด (Q-02-10). ไม่รันทดสอบในขั้นจัดทำแผน.
+ 
+ ## 7. ลำดับงานเสนอ
+ 
+ 1. **บันทึก contract ที่ยืนยันแล้ว** — request/response, validation, status/error และ Bearer header ของ `/me` อยู่ใน spec; รายละเอียด labels/layout/UI IDs/mockup ยังเปิดและไม่ขวาง flow ขั้นต่ำ (REQ-FN-201 ถึง REQ-FN-204; Q-02-03, Q-02-09, Q-02-10).
+ 2. **บันทึก model ของ OTP และ token ที่ยืนยันแล้ว** — ใช้ `otp_challenge_id` แยก OTP issuance และนับความผิดตามชุด; token mapping, lifecycle และพฤติกรรม `is_verified` หลัง backend restart ระบุตาม Q-02-04, Q-02-05 และ AS-02-01.
+ 3. **เตรียม Auth backend บนโครงเดิม** — ต่อ router/service เข้ากับ `backend/app/main.py`, `backend/app/auth.py` และ `backend/app/mock_db.py` ตาม contract ที่ทีมยืนยัน (REQ-FN-201 ถึง REQ-FN-205, REQ-CON-201; AC-02-01, AC-02-02).
+-4. **ทำ flow login และ mock SMS/OTP** — เชื่อม credential กับผู้ใช้ mock; ถ้า `is_verified` ยังไม่เป็น `true` ให้จำลองส่ง OTP ไป `users.phone`, คง `mock_otp: "123456"` ใน API response แต่ไม่แสดงค่านี้หรือคำใบ้/placeholder บน UI; แสดงช่องกรอกว่างให้ผู้ใช้พิมพ์ 6 หลักและส่งด้วย Enter; ใช้ `otp_challenge_id` แยกชุดและนับความผิดแยกต่อชุด; ถ้า `is_verified=true` ให้ข้าม OTP เมื่อ login ด้วย email/password สำเร็จ (REQ-FN-201, REQ-FN-205; Q-02-03/Q-02-04; AC-02-01, AC-02-06).
+-5. **ทำการยืนยัน OTP และออก token** — ยกเว้น token check ก่อน verify; ออก token เมื่อ flow login สำเร็จสำหรับบัญชีที่ยังไม่ verified หลัง OTP ถูกต้อง และบัญชี verified หลัง email/password ถูกต้อง; token ใช้ได้ตลอดอายุ process และใช้ mapping `token → user_id` (REQ-FN-203, REQ-FN-204; Q-02-05; AC-02-03, AC-02-04).
+-6. **ทำ UI Login/OTP และเชื่อม API** — หน้า Login อยู่ที่ `/` และ `/login`; ปุ่มจริง “สมัครสมาชิก” ไป `/register` เฉพาะฟอร์ม email/password และไม่แสดงในขั้น OTP; navigation จาก Register กลับ Login ใช้ลิงก์ข้อความ “เข้าสู่ระบบ” ตาม Register T-10; ช่อง OTP เริ่มว่าง ไม่แสดง `mock_otp` หรือคำใบ้/placeholder ที่เผยรหัส และผู้ใช้พิมพ์รหัส 6 หลักเองก่อนส่งด้วย Enter; แสดง API `detail` ในฟอร์มปัจจุบันและเมื่อสำเร็จไป Feature 003-Booking; ใช้เฉพาะ visual theme ของ Payment (REQ-FN-201, REQ-FN-205; AC-02-01, AC-02-06; Q-02-10).
+-7. **เพิ่ม Backend tests ตาม AC และตรวจ integration** — เพิ่ม tests ใน backend test suite, ตรวจ token กับ Feature อื่น และทดสอบ frontend build; เลือก/เพิ่ม frontend test tooling เฉพาะหลังทีมอนุมัติ (AC-02-01 ถึง AC-02-06; REQ-CON-201).
++4. **ทำ create/resend OTP และ verify** — create รับ registration proof ใช้ครั้งเดียว; resend ออก ID ใหม่โดยคงกติกาอายุ/attempts ต่อชุด; verify ตั้ง `is_verified=true` และไม่ออก token; Login unverified ตอบ 403 โดยไม่สร้าง challenge (REQ-FN-201, REQ-FN-205; Q-02-03/Q-02-04/Q-02-09; AC-02-01, AC-02-03, AC-02-06).
++5. **ออก token เฉพาะ verified Login** — หลัง credentials ถูกต้องของบัญชี verified ให้ออก token ด้วย mapping `token → user_id`; token ใช้ได้ตลอดอายุ process และไม่ refresh/revoke (REQ-FN-203, REQ-FN-204; Q-02-05; AC-02-01, AC-02-04).
++6. **ทำ UI Login/OTP และเชื่อม API** — Auth รับ challenge ID จาก registration handoff, แสดงช่อง OTP ว่าง, resend ใช้ endpoint แยกและอัปเดต ID, verify success กลับ Login โดยไม่เก็บ token; verified Login ส่ง token ผ่าน `onAuthenticated` ให้ Booking. RegisterPage ต้องเรียก helper หลังรับ registration proof; งานแก้ Feature 001 แยกจาก Auth (REQ-FN-201, REQ-FN-205; AC-02-01, AC-02-06; Q-02-10).
++7. **เพิ่ม tests และตรวจ integration** — ตรวจ Auth tests, verified Login ไป Booking, token กับ Feature อื่น และ frontend build. Flow สมัครถึง OTP จะตรวจได้หลัง Register ส่ง proof และ challenge ID ตาม handoff (AC-02-01 ถึง AC-02-06; REQ-CON-201).
+ 
+-ความสัมพันธ์: งาน 1 และ 2 บันทึกข้อสรุปแล้วและเป็น prerequisite ที่ปิดให้ implementation; งาน 3 มาก่อน 4–5; งาน 4 มาก่อน 5 และ 6; งาน 7 ตรวจผลหลังงาน implementation ที่เกี่ยวข้องครบ. งาน UI test tooling เป็น dependency เพิ่มเติมที่ยังไม่มีการตัดสินใจ และไม่ใช่ประเด็นใน Q-02-10.
++ความสัมพันธ์: งาน contract/model บันทึกข้อสรุปแล้ว; งาน backend มาก่อน UI integration; งานตรวจ flow สมัครถึง OTP ต้องรอ Feature 001 เพิ่ม handoff. Q-02-10 ที่ยังเปิดเฉพาะรายละเอียด visual ไม่ได้แทน dependency ที่ขาด.
+ 
+ ## 8. สิ่งที่ยังไม่ทำ
+ 
+@@ -131,15 +134,15 @@ Frontend UI test harness ยังไม่มี; การเลือก test
+ | ID | คำถามจาก spec.md | สถานะ / สิ่งที่รอ |
+ |---|---|---|
+ | Q-02-01 | REQ ต้นฉบับ, PB/EV และรหัสทางการอยู่ที่ใด? `docs/srs/catalogue.md` ไม่มีใน workspace | ยังเปิด; ไม่สร้าง `catalogue.md` และไม่ถือข้อความสรุปเป็น requirement ต้นฉบับ |
+-| Q-02-02 | ทีมยืนยันชื่อ/HTTP method/path ทั้งสาม endpoint หรือจะปรับจากข้อเสนอในภาพรวม? | ตอบแล้ว: `POST /api/auth/login`, `POST /api/auth/verify-otp`, `GET /api/auth/me` |
++| Q-02-02 | ทีมยืนยันชื่อ/HTTP method/path ของ endpoint หรือจะปรับจากข้อเสนอในภาพรวม? | ตอบแล้ว: login, create/resend OTP, verify OTP และ `/me` ตาม API inventory |
+ | Q-02-03 | Contract request/response, validation และผลลัพธ์กรณี login/verify สำเร็จหรือไม่สำเร็จเป็นอย่างไร? | ตอบแล้ว: contract login/verify และ `/me` Bearer auth อยู่ใน API inventory ของ spec |
+ | Q-02-04 | วิธีแยก OTP หลายคำขอที่ใช้ `123456` พร้อมกันและนับจำนวนครั้งผิดแยกชุดเป็นอย่างไร? | ตอบแล้ว: ใช้ `otp_challenge_id`; นับผิดแยกชุดและปิดเฉพาะชุดที่ผิดครบ 3 ครั้ง |
+-| Q-02-05 | อายุ/หมดอายุและ lifecycle ของ token ที่ใช้ mapping `token → user_id` เป็นอย่างไร? | ตอบแล้ว: อายุเท่า process backend, ไม่มี refresh/revoke; restart ทำให้ token ใช้ไม่ได้ |
++| Q-02-05 | อายุ/หมดอายุและ lifecycle ของ token ที่ใช้ mapping `token → user_id` เป็นอย่างไร? | ตอบแล้ว: token ออกหลัง verified Login เท่านั้น; อายุเท่า process backend, ไม่มี refresh/revoke; restart ทำให้ token ใช้ไม่ได้ |
+ | Q-02-06 | `GET /api/auth/me` ส่ง field ใดและมี field ใดห้ามส่งกลับ? | ตอบแล้ว: ส่งเฉพาะ `id`, `name`, `email`; ไม่ส่ง `phone`, `password`, OTP, token หรือ `is_verified` |
+ | Q-02-07 | `is_verified` หมายถึงอะไร, เปลี่ยนค่าเมื่อใด และมีผลต่อการเข้าสู่ระบบหรือไม่? | ตอบแล้ว: OTP ถูกต้องครั้งแรกตั้ง `users.is_verified=true`; login ครั้งต่อไปเมื่อเป็น `true` ใช้ email/password โดยไม่ทำ OTP ซ้ำ |
+ | Q-02-08 | อนุมัติ mock users รายการใดเป็น fixtures? | ตอบแล้ว: ผู้ใช้ mock ที่มีอยู่ทั้งหมดใน `backend/app/mock_db.py` |
+-| Q-02-09 | HTTP status/error body ที่ใช้ร่วมกัน map กับกรณี login, OTP และ `/me` อย่างไร? | ตอบแล้ว: ใช้ status และ `detail` body ตาม API inventory ใน spec |
+-| Q-02-10 | มี UI mockup/UI ID และรายละเอียดหน้าจอที่ตกลงกับผู้ใช้/PO หรือไม่? | ตอบบางส่วน: flow ขั้นต่ำยืนยันแล้ว; labels, layout, UI ID และ mockup ยังเปิดแต่ไม่ขวาง T-13/T-16 |
++| Q-02-09 | HTTP status/error body ที่ใช้ร่วมกัน map กับกรณี login, OTP และ `/me` อย่างไร? | ตอบแล้ว: 403 สำหรับ Login unverified, 400 proof ผิด/ใช้แล้ว และ status/error อื่นตาม API inventory ใน spec |
++| Q-02-10 | มี UI mockup/UI ID และรายละเอียดหน้าจอที่ตกลงกับผู้ใช้/PO หรือไม่? | ตอบบางส่วน: flow ขั้นต่ำยืนยันแล้ว; labels, layout, UI ID และ mockup ยังเปิด. T-13/T-16 รอ Register handoff ไม่ใช่เพราะ Q-02-10 |
+ | Q-02-11 | ใครเป็น owner/PO/ผู้ตรวจ และเมื่อใดจึงอนุมัติ version/baseline? | ยังเปิด; ไม่ระบุชื่อผู้รับผิดชอบหรืออนุมัติ Baseline |
+ 
+ ### Assumptions สำหรับการวางแผน
+diff --git a/specs/002-auth/rules.md b/specs/002-auth/rules.md
+index 644ea56..d5dc5d1 100644
+--- a/specs/002-auth/rules.md
++++ b/specs/002-auth/rules.md
+@@ -1,6 +1,6 @@
+ # กฎธุรกิจ Auth — Feature 002
+ 
+-สถานะ: draft — ยังไม่เข้า Baseline | version: 1.0 (แม่แบบ)
++สถานะ: draft — ยังไม่เข้า Baseline
+ ที่มา: `specs/002-auth/spec.md` และคำตอบทีมในขั้น `/clarify`
+ 
+ **รหัส BR-02-01 ถึง BR-02-03 เป็น AI เสนอ รอทีมยืนยัน** ไม่มีรูปแบบ BR ID ที่ทีมอนุมัติไว้ในเอกสารที่ตรวจ
+@@ -9,47 +9,38 @@
+ 
+ Decision Table: ประเมินตามแถวจากบนลงล่าง แถวแรกที่ตรงเป็นผลของการตรวจรหัส
+ 
+-| แถว | เหตุการณ์ / เงื่อนไข | ผลที่ยืนยันแล้ว | สถานะ / หมายเหตุ |
++| แถว | เหตุการณ์ / เงื่อนไข | ผลที่ระบุใน contract | หมายเหตุ |
+ |---|---|---|---|
+-| R1 | ขอ OTP ใหม่ | จำลองส่ง SMS ไปยัง `users.phone` และใช้ OTP mock `123456`; API ส่งค่า `mock_otp` ตาม contract แต่ UI ไม่เปิดเผยรหัส; ช่องกรอกเริ่มว่าง; ขอได้ทันทีและไม่จำกัดจำนวนครั้ง; OTP เดิมยังใช้ได้จนหมดอายุ | กฎที่ยืนยันแล้ว; อายุของแต่ละ issuance เริ่มนับเมื่อแสดง flow กรอก OTP; ไม่มีการเชื่อม SMS provider จริง; การแยกหลาย issuance และจำนวนครั้งผิดแยกชุดยังเปิด (Q-02-04) |
+-| R2 | ตรวจรหัสที่หมดอายุแล้ว | ปฏิเสธการยืนยันด้วยรหัสนั้น | อายุ 15 นาทีเริ่มนับเมื่อ mock SMS/OTP แสดงผลแล้ว; วิธีระบุและตรวจหลายรหัสที่ยังใช้ได้ยังเปิด (Q-02-04) |
+-| R3 | ตรวจรหัสที่ตรงและยังไม่หมดอายุ | ยืนยัน OTP สำเร็จ; หากเป็นการยืนยันครั้งแรกให้ตั้ง `users.is_verified` เป็น `true` | กฎยืนยันจากคำตอบ Q-02-07; บัญชีที่ `is_verified=true` ไม่ต้องยืนยัน OTP ซ้ำเมื่อ login; สำหรับบัญชีที่ยังไม่ verified token ออกเมื่อ flow login สำเร็จ แต่รูปแบบและ lifecycle ยังไม่กำหนด |
+-| R4 | ตรวจรหัสไม่ตรง และครั้งนี้เป็นการกรอกผิดครั้งที่ 3 | ปฏิเสธการกรอกและทำให้รหัสปัจจุบันใช้ต่อไม่ได้; เริ่มขอ/กรอกรหัสใหม่ได้ | กฎที่ยืนยันแล้ว |
+-| R5 | ตรวจรหัสไม่ตรง และครั้งนี้เป็นการกรอกผิดครั้งที่ 1 หรือ 2 | ปฏิเสธการกรอกครั้งนี้; ยังไม่ครบจำนวนครั้งที่ทำให้รหัสใช้ไม่ได้ | กฎที่ยืนยันแล้ว; พฤติกรรมแสดงผลหรือ HTTP status ยังไม่กำหนด |
+-| R6 | ตรวจรหัสที่ถูกปฏิเสธหลังกรอกผิดครบ 3 ครั้ง | ปฏิเสธการใช้รหัสนั้น | กฎที่ยืนยันแล้ว |
++| R1 | แลก registration proof ที่ถูกต้องและยังไม่เคยใช้ | จำลองส่ง OTP ไป `users.phone`; สร้าง challenge แยกชุดและตอบ `otp_challenge_id` กับ `mock_otp` | Proof เป็น opaque, ผูกกับบัญชี, ใช้ได้ครั้งเดียว; ไม่มี SMS provider จริง |
++| R2 | Proof ผิดหรือใช้แล้ว | ตอบ HTTP 400 `Invalid registration proof`; ไม่สร้าง challenge | คำยืนยันทีม |
++| R3 | OTP ถูกต้องและยังไม่หมดอายุ | ตั้ง `users.is_verified=true`; ตอบ `{"is_verified":true}` โดยไม่มี token; กลับหน้า Login | Token จะออกภายหลังเมื่อ Login สำเร็จด้วย credentials |
++| R4 | OTP หมดอายุหรือ ID ใช้ไม่ได้ | ปฏิเสธด้วย HTTP 400 `OTP verification failed` | อายุ 15 นาที |
++| R5 | OTP ผิดและครั้งนี้เป็นครั้งที่ 3 ของชุดนั้น | ปฏิเสธและปิดเฉพาะชุดนั้น | ชุดอื่นไม่เปลี่ยนสถานะ |
++| R6 | OTP ผิดครั้งที่ 1 หรือ 2 | ปฏิเสธครั้งนี้; ชุดยังยืนยันได้ก่อนหมดอายุ/ครบจำนวนครั้ง | Error body ตาม API contract |
+ 
+-Trace: REQ-FN-201, REQ-FN-205; AC-02-01, AC-02-06.
++Trace: REQ-FN-201, REQ-FN-203, REQ-FN-205; AC-02-01, AC-02-03, AC-02-06.
+ 
+ ## BR-02-02 (AI เสนอ รอทีมยืนยัน): ค่าและอายุ OTP
+ 
+-OTP เป็นตัวเลข 6 หลัก โดย Backend ใช้ค่าจำลองคงที่ `123456`; API contract คงส่ง `mock_otp` แต่ UI ไม่แสดงค่า คำใบ้ หรือ placeholder ที่เปิดเผยรหัส และช่องกรอกเริ่มว่าง. อายุ OTP คือ 15 นาที การส่ง SMS เป็นการจำลองเท่านั้น ไม่มีการเชื่อมต่อ SMS provider จริง
++OTP เป็นตัวเลข 6 หลัก โดย Backend ใช้ค่าจำลองคงที่ `123456`; API contract ตอบ `mock_otp` แต่ UI ไม่แสดงค่า คำใบ้ หรือ placeholder ที่เปิดเผยรหัส และช่องกรอกเริ่มว่าง. อายุ OTP คือ 15 นาทีเริ่มเมื่อ mock SMS/OTP แสดงผล. การส่ง SMS เป็นการจำลองเท่านั้น ไม่มีการเชื่อมต่อ SMS provider จริง.
+ 
+-สถานะ: รายละเอียดข้างต้นและจุดเริ่มนับอายุเมื่อ mock SMS/OTP แสดงผลทีมยืนยันแล้ว; วิธีแยก OTP หลายคำขอและนับจำนวนครั้งผิดแยกชุดยังต้องถามตาม Q-02-04.
++แต่ละ challenge ระบุด้วย `otp_challenge_id`; จำนวนครั้งที่กรอกผิดนับแยกต่อ ID. เมื่อ OTP ชุดหนึ่งผิดครบ 3 ครั้งให้ปิดเฉพาะชุดนั้น.
+ 
+ Trace: REQ-FN-201, REQ-FN-205; AC-02-01, AC-02-06.
+ 
+ ## BR-02-03 (AI เสนอ รอทีมยืนยัน): การขอ OTP ใหม่
+ 
+-ผู้จองขอ OTP ใหม่ได้ทันทีโดยไม่จำกัดจำนวนครั้ง รหัสก่อนหน้ายังคงใช้ได้จนหมดอายุ การขอใหม่จำลองการส่ง SMS และใช้ค่า OTP mock คงที่ `123456`; UI แสดงช่องกรอกว่างโดยไม่เปิดเผยค่านั้น.
+-
+-สถานะ: จำนวนครั้ง การไม่มีช่วงรอ การคงอายุรหัสเดิม และการเริ่มนับอายุรหัสใหม่เมื่อแสดงผลยืนยันแล้ว; วิธีแยก OTP หลายรายการที่ยังไม่หมดอายุและนับจำนวนครั้งผิดแยกชุดยังต้องถามตาม Q-02-04.
++ผู้จองขอ OTP ใหม่ได้ทันทีโดยไม่จำกัดจำนวนครั้งผ่าน `POST /api/auth/otp-challenges/{otp_challenge_id}/resend`. การขอใหม่จำลองการส่ง SMS และใช้ค่า OTP mock คงที่ `123456`; response มี challenge ID ใหม่. รหัสก่อนหน้ายังคงใช้ได้จนหมดอายุ และจำนวนครั้งที่กรอกผิดแยกกันตาม challenge ID.
+ 
+ Trace: REQ-FN-201, REQ-FN-205; AC-02-01, AC-02-06.
+ 
+-## รายละเอียดที่ยังไม่กำหนด
+-
+-- วิธีระบุ OTP หลายคำขอที่ใช้ค่า `123456` พร้อมกัน และนับจำนวนครั้งผิดแยกต่อชุด (Q-02-04)
+-- พฤติกรรม response หรือ HTTP status ในกรณี OTP ถูกต้อง ผิด หมดอายุ หรือผิดครบ 3 ครั้ง (Q-02-09)
+-- รายละเอียด token ที่ออกหลังยืนยันสำเร็จ (Q-02-05)
+-- request/response, validation และ error/status ของ login, verify OTP และ `/me` (Q-02-03, Q-02-09)
+-- การคงค่า `is_verified` หลัง backend restart; ยังไม่มีคำตอบหรือการตัดสินใจเรื่อง persistence
+-
+-## คำยืนยันทีมที่เกี่ยวข้องกับ Auth
++## กติกาบัญชีและ Login ที่ทีมยืนยัน
+ 
+-รายการนี้บันทึกคำตอบทีมโดยตรง ไม่ได้เปลี่ยนสถานะ BR-02-01 ถึง BR-02-03 จาก “AI เสนอ รอทีมยืนยัน”:
++- `is_verified` หมายถึงเบอร์โทรผ่าน OTP mock และตั้งเป็น `true` เมื่อ OTP ถูกต้องครั้งแรก
++- การยืนยัน OTP ไม่ออก token; ผู้จองกลับไปหน้า Login
++- Login ที่ credentials ถูกต้องของบัญชี verified ออก token และพาไปหน้า Booking
++- Login ของบัญชี unverified ตอบ HTTP 403 `Account verification required` โดยไม่ออก token และไม่เริ่ม OTP
++- token ใช้ mapping `token → user_id`, มีอายุตาม process backend, ไม่มี refresh/revoke endpoint และใช้ไม่ได้หลัง restart (Q-02-05)
++- Proof จาก Register ต้อง opaque ผูกกับบัญชีและใช้ได้ครั้งเดียว; ไม่ใช้ `user_id` อย่างเดียวเป็นหลักฐาน
+ 
+-- ผู้จองที่ `is_verified=true` login ด้วย email/password ได้โดยไม่ทำ OTP ซ้ำ; ได้ token เมื่อ flow login สำเร็จ. ผู้จองที่ยังไม่ verified ต้องผ่าน OTP ก่อนออก token (Q-02-05, Q-02-07).
+-- `is_verified` หมายถึงเบอร์โทรผ่าน OTP mock และตั้งเป็น `true` หลังยืนยันครั้งแรกสำเร็จ; ไม่เกี่ยวกับการตรวจบัตรประชาชนหรือใบหน้า (Q-02-07).
+-- `/api/auth/me` ส่งเฉพาะ `id`, `name`, `email`; ไม่ส่ง `phone`, `password`, OTP, token หรือ `is_verified` (Q-02-06).
+-- ผู้ใช้ mock ที่มีอยู่ทั้งหมดใน `backend/app/mock_db.py` ได้รับอนุมัติเป็น fixtures (Q-02-08).
+-- การตรวจ AC-02-05 ใช้หลักฐาน config/dependency และ mock data ใน RTM โดยไม่มี Gherkin Scenario; การบันทึกหลักฐานไม่ใช่ผลทดสอบหรือการยืนยันว่า implementation ครบแล้ว.
++รายการนี้ไม่เปลี่ยนสถานะ BR จาก “AI เสนอ รอทีมยืนยัน” และยังคง Draft.
+diff --git a/specs/002-auth/spec.md b/specs/002-auth/spec.md
+index 6e975ca..0b86c2f 100644
+--- a/specs/002-auth/spec.md
++++ b/specs/002-auth/spec.md
+@@ -1,6 +1,6 @@
+ # SPEC-002-auth | Auth
+ 
+-version: 1.5 | status: draft | owner: รอกำหนด | PO: รอกำหนด | date: 2026-11-20
++version: 1.6 | status: draft | owner: รอกำหนด | PO: รอกำหนด | date: 2026-11-21
+ baseline: ไม่มีหลักฐานการอนุมัติ baseline | supersedes: รอกำหนด | related: Feature 001 ลงทะเบียน | feature file: `auth.feature` (Draft)
+ Constraint กลาง: ไม่พบ `specs/000-shared/constraints.md` จึงใช้แบบ ก | mockups: ไม่พบ mockup ที่ยืนยันกับผู้ใช้หรือ PO
+ 
+@@ -24,27 +24,29 @@ Constraint กลาง: ไม่พบ `specs/000-shared/constraints.md` จ
+ | 1.3 | 2026-11-20 | เปลี่ยนหน้าเริ่มต้นกลับเป็น Login ที่ `/`; เพิ่มปุ่มจริง “สมัครสมาชิก” ไป `/register` เฉพาะฟอร์ม email/password; Register ใช้ลิงก์ข้อความ “เข้าสู่ระบบ” กลับ `/login` | บันทึกคำยืนยันล่าสุด โดยคง Auth/OTP flow และ API contract เดิมเป็น Draft | Copilot ตามคำยืนยันของทีม |
+ | 1.4 | 2026-11-20 | คง label ลิงก์ Register เป็น `/login` ตาม mockup; คง Login ที่ `/` และปุ่ม “สมัครสมาชิก” จาก Login ไป `/register` | ทีมเลือกให้ข้อความลิงก์ตรงกับ mockup แทน “เข้าสู่ระบบ”; ไม่เปลี่ยน Auth/OTP flow หรือ API contract | Copilot ตามคำยืนยันของทีม |
+ | 1.5 | 2026-11-20 | ใช้ label ลิงก์ Register เป็น “เข้าสู่ระบบ” และปรับ mockup ให้ตรง; ปลายทางยังเป็น `/login` | ทีมยืนยันข้อความที่ผู้ใช้เห็นและอนุญาตให้ปรับ mockup HTML; ไม่เปลี่ยน Auth/OTP flow หรือ API contract | Copilot ตามคำยืนยันของทีม |
++| 1.6 | 2026-11-21 | เปลี่ยน flow เป็นสมัครสำเร็จ → Auth OTP handoff → กลับ Login → verified login ออก token; เพิ่ม contract registration proof และ resend | ตามคำยืนยันล่าสุดของทีม; Feature 001 ยังคงเป็นข้อมูลอ้างอิงและต้องทำ handoff แยก | Copilot ตามคำยืนยันของทีม |
+ 
+ | draft | 2026-11-20 | ปรับ UI OTP ให้ไม่เปิดเผยรหัส mock; ช่องเริ่มว่างและผู้ใช้กรอกรหัสเองแล้วส่งด้วย Enter | ตามคำขอทีม; คง API contract และการตรวจ mock OTP ฝั่ง Backend เดิม | ทีม |
+ 
+ ## 1. Intent
+ 
+-Feature นี้ให้ผู้จองเข้าสู่ระบบด้วย email และรหัสผ่าน แล้วจำลองการส่ง OTP ทาง SMS ไปยัง `users.phone` เพื่อยืนยันตัวตน โดยไม่เชื่อมต่อ SMS provider จริง UI ไม่แสดงรหัส OTP mock หรือคำใบ้/placeholder ที่เผยรหัส; ช่องกรอกรหัสเริ่มว่างและผู้จองพิมพ์รหัส 6 หลักเอง
+-เมื่อ flow login สำเร็จ ผู้จองได้รับ token ที่ผูกกับ `user_id` สำหรับใช้กับระบบและส่งต่อให้ Feature อื่น: บัญชีที่ยังไม่ verified ต้องผ่าน OTP ก่อน ส่วนบัญชีที่ verified ข้าม OTP และได้รับ token หลัง email/password ถูกต้อง. Token ใช้ได้ตลอดอายุ process ของ backend; ไม่มี refresh หรือ server-side revoke/logout endpoint และใช้ไม่ได้หลัง backend restart (Q-02-05).
++Feature นี้รับ handoff หลังสมัครด้วย `registration_proof` แบบ opaque ใช้ครั้งเดียวเพื่อเริ่ม OTP ไปยัง `users.phone`; ไม่เชื่อม SMS provider จริง. UI ไม่แสดงรหัส OTP mock หรือคำใบ้/placeholder ที่เผยรหัส และช่องกรอกรหัสเริ่มว่างให้ผู้จองพิมพ์ 6 หลักเอง.
++เมื่อ OTP ถูกต้อง Auth ตั้ง `users.is_verified=true` และกลับหน้า Login โดยไม่ออก token. Login ที่สำเร็จสำหรับบัญชี verified จึงออก token ที่ผูกกับ `user_id` และพาไปหน้า Booking; บัญชี unverified ถูกปฏิเสธโดยไม่เริ่ม OTP. Token ใช้ได้ตลอดอายุ process ของ backend; ไม่มี refresh หรือ server-side revoke/logout endpoint และใช้ไม่ได้หลัง backend restart (Q-02-05).
+ Feature อื่นใช้ token และ `get_current_user()` เพื่อตรวจสอบผู้ใช้ปัจจุบัน
+ ที่มา: ภาพรวมระบบ Khonย้าย ส่วนเส้นทางผู้จองและ architecture; รหัส PB/EV ที่มารองรับยังไม่มีใน workspace
+ 
+ ## 2. Scope และ Non-goals
+ 
+ **In**
+-- ผู้จอง login ด้วย email/password ตาม request และ validation ที่ระบุใน Q-02-03; บัญชีที่ verified ข้าม OTP ส่วนบัญชีที่ยังไม่ verified ยืนยัน OTP ครั้งแรก
+-- ผู้จองยืนยัน OTP เฉพาะครั้งแรกของบัญชี; เมื่อ OTP ถูกต้องให้ตั้ง `users.is_verified` เป็น `true` และการ login ครั้งถัดไปของบัญชีที่มีค่านี้เป็น `true` ใช้ email/password ตามปกติโดยไม่ยืนยัน OTP ซ้ำ (Q-02-07 ตอบแล้ว)
+-- มี endpoint `POST /api/auth/login`, `POST /api/auth/verify-otp` และ `GET /api/auth/me` ตาม method/path และ contract ที่ทีมยืนยันในส่วน 7
++- ผู้จองที่ผ่านการสมัครเริ่ม OTP ผ่าน handoff จาก Register โดย Auth รับ `registration_proof` แบบ opaque ใช้ได้ครั้งเดียวและผูกกับบัญชี; Auth ไม่รับ `user_id` อย่างเดียวเป็นหลักฐาน (คำยืนยันล่าสุด)
++- ผู้จองยืนยัน OTP เฉพาะครั้งแรกของบัญชี; เมื่อ OTP ถูกต้องให้ตั้ง `users.is_verified` เป็น `true` แล้วกลับหน้า Login โดยไม่ออก token; Login ที่ credentials ถูกต้องของบัญชี verified จึงออก token และไปหน้า Booking (Q-02-07 และคำยืนยันล่าสุด)
++- Login ของบัญชีที่ยังไม่ verified ตอบ `403 {"detail":"Account verification required"}`; Login ไม่เริ่ม OTP challenge. Proof ผิดหรือใช้แล้ว ตอบ `400 {"detail":"Invalid registration proof"}` และไม่สร้าง challenge
++- มี endpoint `POST /api/auth/login`, `POST /api/auth/otp-challenges`, `POST /api/auth/otp-challenges/{otp_challenge_id}/resend`, `POST /api/auth/verify-otp` และ `GET /api/auth/me` ตาม contract ในส่วน 7
+ - `GET /api/auth/me` อยู่ในขอบเขต Feature นี้; รับ token ผ่าน `Authorization: Bearer <token>` และตอบเฉพาะ `id`, `name`, `email`; ไม่ส่ง `phone`, `password`, OTP, token หรือ `is_verified` (Q-02-03, Q-02-06)
+ - จำลองการส่ง SMS OTP ไปยัง `users.phone` โดยไม่เชื่อม SMS provider จริง; API ยังคงตอบ `mock_otp: "123456"` ตาม contract แต่ UI ไม่แสดงรหัสหรือคำใบ้/placeholder ที่เผยรหัส; ช่อง OTP เริ่มว่างและผู้ใช้กรอกรหัสเอง
+ - OTP เป็นตัวเลข 6 หลัก มีอายุ 15 นาทีโดยเริ่มนับเมื่อ mock SMS/OTP แสดงผลแล้ว; กรอกผิดได้ 3 ครั้งต่อรหัส จากนั้นปฏิเสธรหัสปัจจุบันและให้เริ่มขอ/กรอกรหัสใหม่ได้
+-- ขอรหัสใหม่ได้ทันทีโดยไม่จำกัดจำนวนครั้ง; รหัสเดิมยังใช้ได้จนหมดอายุ
+-- แต่ละคำขอ OTP มี ID ประจำชุด `otp_challenge_id`; นับความผิดแยกชุดและเมื่อผิดครบ 3 ครั้งให้ปิดเฉพาะชุดนั้น; login ส่ง ID กลับและ verify รับ ID นี้ (Q-02-03, Q-02-04)
++- ขอรหัสใหม่ได้ทันทีโดยไม่จำกัดจำนวนครั้ง; รหัสเดิมยังใช้ได้จนหมดอายุ โดยเรียก endpoint resend และใช้ `otp_challenge_id` ใหม่สำหรับชุดใหม่
++- แต่ละคำขอ OTP มี ID ประจำชุด `otp_challenge_id`; นับความผิดแยกชุดและเมื่อผิดครบ 3 ครั้งให้ปิดเฉพาะชุดนั้น; create/resend ตอบ ID และ verify รับ ID นี้ (Q-02-03, Q-02-04)
+ - ใช้ข้อมูลผู้ใช้ mock ใน `users` ตามฟิลด์ที่ระบุในส่วน 7
+ - เมื่อ flow login สำเร็จ token ใช้ mapping ปัจจุบัน `token → user_id`; token ใช้ได้ตลอดอายุ process ของ backend และใช้ไม่ได้หลัง restart; ไม่มี refresh หรือ server-side revoke/logout endpoint (Q-02-05)
+ - UI ใช้เฉพาะ visual theme ของ Feature 004-Payment; หน้าเริ่มต้น `/` และหน้า `/login` แสดง Login; Register อยู่ที่ `/register` และมีลิงก์ข้อความ “เข้าสู่ระบบ” กลับ `/login` ตาม UI-01-01. ฟอร์ม Login สำหรับ email/password มีปุ่มจริง “สมัครสมาชิก” ไป `/register`; ไม่แสดงปุ่มนี้ในหน้ากรอก OTP. ส่ง login/OTP ด้วย Enter, แสดง API `detail` ในฟอร์มปัจจุบัน และเมื่อ login สำเร็จไปจุดเริ่ม Feature 003-Booking. Labels อื่น, layout, UI ID และ mockup ของ Auth ยังไม่ยืนยัน (REQ-FN-201, AC-02-01, Q-02-10; Register UI ตาม UI-01-01)
+@@ -72,9 +74,9 @@ Feature อื่นใช้ token และ `get_current_user()` เพื่
+ 
+ | ID (สถานะ) | สรุป | MoSCoW / Conf. | AC (สถานะ) | หลักฐาน / หมายเหตุ |
+ |---|---|---|---|---|
+-| REQ-FN-201 (รหัสทีมยืนยัน; ข้อความ draft) | ผู้จองเริ่มที่ Login และไป-กลับหน้า Register ได้ | ยังไม่จัดระดับ / ภาพรวมและคำตอบทีมในขั้น /clarify | AC-02-01 (รหัสทีมยืนยัน; AC draft) | เส้นทาง Login/Register ตามคำตอบ Q-02-10; flow login/OTP ตาม `docs/Khonย้าย-ภาพรวมระบบ.html:343-345`; validation ตาม Q-02-03; SMS ไม่เชื่อม provider จริง |
+-| REQ-FN-202 (รหัสทีมยืนยัน; ข้อความ draft) | Auth มี endpoint `POST /api/auth/login`, `POST /api/auth/verify-otp` และ `GET /api/auth/me` | ยังไม่จัดระดับ / ภาพรวมและคำยืนยันทีม | AC-02-02 (รหัสทีมยืนยัน; AC draft) | `docs/Khonย้าย-ภาพรวมระบบ.html:343-346`; method/path และ contract ที่ทีมยืนยันอยู่ใน API inventory |
+-| REQ-FN-203 (รหัสทีมยืนยัน; ข้อความ draft) | Flow ยืนยันตัวตนแบบจำลองให้ผลลัพธ์ token สำหรับใช้ต่อ โดยใช้ mapping ปัจจุบัน `token → user_id` | ยังไม่จัดระดับ / ภาพรวมและคำยืนยันทีม | AC-02-03, AC-02-04 (รหัสทีมยืนยัน; AC draft) | `docs/Khonย้าย-ภาพรวมระบบ.html:194-197,343-346`; อายุและ lifecycle token ตาม Q-02-05 |
++| REQ-FN-201 (รหัสทีมยืนยัน; ข้อความ draft) | ผู้จองรับ OTP handoff หลังสมัครและกลับหน้า Login หลังยืนยัน; มีเส้นทาง Login/Register ตาม UI ที่ยืนยัน | ยังไม่จัดระดับ / ภาพรวมและคำตอบทีมในขั้น /clarify | AC-02-01 (รหัสทีมยืนยัน; AC draft) | Registration proof และ handoff เป็นคำยืนยันล่าสุด; validation ตาม Q-02-03; SMS ไม่เชื่อม provider จริง |
++| REQ-FN-202 (รหัสทีมยืนยัน; ข้อความ draft) | Auth มี endpoint สำหรับ Login, เริ่ม/resend OTP, verify OTP และ `/me` ตาม API inventory | ยังไม่จัดระดับ / ภาพรวมและคำยืนยันทีม | AC-02-02 (รหัสทีมยืนยัน; AC draft) | `docs/Khonย้าย-ภาพรวมระบบ.html:343-346`; method/path และ contract ที่ทีมยืนยันอยู่ใน API inventory |
++| REQ-FN-203 (รหัสทีมยืนยัน; ข้อความ draft) | การยืนยัน OTP ตั้งสถานะบัญชีแต่ไม่ออก token; Login บัญชี verified ออก token ด้วย mapping ปัจจุบัน `token → user_id` | ยังไม่จัดระดับ / ภาพรวมและคำยืนยันทีม | AC-02-03, AC-02-04 (รหัสทีมยืนยัน; AC draft) | `docs/Khonย้าย-ภาพรวมระบบ.html:194-197,343-346`; อายุและ lifecycle token ตาม Q-02-05 |
+ | REQ-FN-204 (รหัสทีมยืนยัน; ข้อความ draft) | Feature อื่นตรวจผู้ใช้ด้วย token และ `get_current_user()` | ยังไม่จัดระดับ / หลักฐานภาพรวม | AC-02-04 (รหัสทีมยืนยัน; AC draft) | `docs/Khonย้าย-ภาพรวมระบบ.html:343-346`; contract ภายในของฟังก์ชันยังไม่มี |
+ | REQ-CON-201 (รหัสทีมยืนยัน; ข้อความ draft) | ใช้ React, Python และ mock data ไม่มี database | ยังไม่จัดระดับ / หลักฐานภาพรวม | AC-02-05 (รหัสทีมยืนยัน; AC draft) | `docs/Khonย้าย-ภาพรวมระบบ.html:53-57`; เป็นข้อจำกัดระดับระบบ ไม่ใช่ข้อความจาก catalogue |
+ | REQ-FN-205 (รหัสทีมยืนยัน; ข้อความ draft) | OTP และการส่ง SMS เป็น mock โดยไม่เชื่อม SMS provider จริง | ยังไม่จัดระดับ / ภาพรวมและคำตอบทีมในขั้น /clarify | AC-02-06 (รหัสทีมยืนยัน; AC draft) | `docs/Khonย้าย-ภาพรวมระบบ.html:56-57`; รายละเอียด OTP ตามคำตอบทีมในขั้น /clarify |
+@@ -83,14 +85,14 @@ Feature อื่นใช้ token และ `get_current_user()` เพื่
+ 
+ ### Flow ที่มีหลักฐาน
+ 
+-1. ผู้จอง login ด้วย email/password; ใช้ request/response และ validation ตาม API inventory ในส่วน 7
+-2. ถ้า `users.is_verified` ไม่เป็น `true` ให้เข้าสู่การยืนยันครั้งแรก: Auth มี endpoint `POST /api/auth/login`, จำลองส่ง OTP ทาง SMS ไปยัง `users.phone` โดยไม่เรียก SMS provider จริง; API คงตอบ `mock_otp` ตาม contract แต่ UI แสดงช่อง OTP ว่างโดยไม่เปิดเผยค่า/คำใบ้/placeholder และให้ผู้ใช้พิมพ์รหัสเอง; ถ้า `users.is_verified` เป็น `true` ให้ login ด้วย email/password ตามปกติโดยไม่ยืนยัน OTP ซ้ำ
++1. หลัง Register สำเร็จ Frontend ส่ง `registration_proof` ที่ได้รับจาก backend Register ไป `POST /api/auth/otp-challenges`; proof เป็น opaque ผูกกับบัญชีและใช้ได้ครั้งเดียว ไม่รับ `user_id` อย่างเดียวเป็นหลักฐาน.
++2. Auth แลก proof ที่ถูกต้องเป็น OTP challenge แล้วจำลองส่ง SMS ไป `users.phone` โดยไม่เรียก SMS provider จริง; API ตอบ `otp_challenge_id` และ `mock_otp` ตาม contract แต่ UI ไม่แสดงค่า/คำใบ้/placeholder และให้ผู้ใช้กรอกรหัสเอง.
+ 3. OTP mock เป็นตัวเลข 6 หลัก `123456`; เริ่มนับอายุ 15 นาทีเมื่อ mock SMS/OTP แสดงผลแล้ว
+ 4. ผู้จองกรอก OTP โดยระบุ `otp_challenge_id`; กรอกผิดครบ 3 ครั้งให้ปิดเฉพาะชุดนั้น ชุดอื่นที่ยังไม่หมดอายุใช้ต่อได้
+-5. ขอรหัสใหม่ได้ทันทีโดยไม่จำกัดจำนวนครั้ง; รหัสก่อนหน้ายังคงใช้ได้จนหมดอายุ
+-6. Auth มี endpoint `POST /api/auth/verify-otp`; endpoint นี้ไม่ต้องใช้ token ก่อนยืนยัน OTP; เมื่อ OTP ถูกต้องให้ตั้ง `users.is_verified=true` และตอบ token ตาม API inventory
++5. ขอรหัสใหม่ได้ทันทีโดยไม่จำกัดจำนวนครั้งผ่าน `POST /api/auth/otp-challenges/{otp_challenge_id}/resend`; รหัสก่อนหน้ายังคงใช้ได้จนหมดอายุและ response ให้ challenge ID ใหม่.
++6. `POST /api/auth/verify-otp` ไม่ต้องใช้ token ก่อนเรียก; เมื่อ OTP ถูกต้อง Auth ตั้ง `users.is_verified=true`, API ตอบ `{"is_verified":true}` โดยไม่มี token, UI กลับหน้า Login.
+ 7. แต่ละคำขอ OTP มี ID `otp_challenge_id` ประจำชุด เพื่อแยกคำขอและนับจำนวนครั้งที่กรอกผิดต่อชุด (Q-02-03, Q-02-04)
+-8. เมื่อ flow login สำเร็จให้ออก token ที่ผูกกับ `user_id`: บัญชีที่ยังไม่ยืนยันต้องผ่าน OTP ก่อน ส่วนบัญชีที่ `users.is_verified=true` ข้าม OTP และออก token หลัง email/password ถูกต้อง. Token ใช้ได้ตลอดอายุ process ของ backend; ไม่มี refresh หรือ server-side revoke/logout endpoint และใช้ไม่ได้หลัง restart (Q-02-05)
++8. Login ด้วย credentials ที่ถูกต้อง: บัญชี verified ได้ token ที่ผูกกับ `user_id` และ UI ไปหน้า Booking; บัญชี unverified ได้ `403 {"detail":"Account verification required"}` โดยไม่ออก token และไม่เริ่ม OTP. Token ใช้ได้ตลอดอายุ process ของ backend; ไม่มี refresh หรือ server-side revoke/logout endpoint และใช้ไม่ได้หลัง restart (Q-02-05)
+ 9. Auth มี `GET /api/auth/me` ตาม method/path ที่ทีมยืนยันและอยู่ในขอบเขต Feature; รับ token ผ่าน Authorization Bearer header และส่งเฉพาะ `id`, `name`, `email` ไม่ส่ง `phone`, `password`, OTP, token หรือ `is_verified`; status/error ใช้ตาม API inventory (Q-02-03, Q-02-06, Q-02-09)
+ 
+ หลัง backend restart ให้ `is_verified` กลับเป็นค่าเริ่มต้นของ mock fixture โดยไม่เพิ่ม persistence; หากค่าเริ่มต้นเป็น `false` ต้องยืนยัน OTP อีกครั้ง (AS-02-01).
+@@ -109,9 +111,9 @@ Feature อื่นใช้ token และ `get_current_user()` เพื่
+ 
+ | ID (สถานะ) | Given | When | Then ที่ตรวจสอบได้ | Trace |
+ |---|---|---|---|---|
+-| AC-02-01 (รหัสทีมยืนยัน; เนื้อหา draft) | ผู้จองเปิดแอปที่ `/` | ใช้ปุ่มนำทางระหว่าง Login/Register แล้วทำ login ตามสถานะบัญชี | หน้า `/` แสดง Login; ปุ่มจริง “สมัครสมาชิก” ไป `/register` เฉพาะฟอร์ม email/password; หน้า Register มีลิงก์ข้อความ “เข้าสู่ระบบ” กลับ `/login`; ปุ่มสมัครสมาชิกไม่แสดงในหน้ากรอก OTP; บัญชีที่ยังไม่ยืนยันได้รับ challenge และ UI แสดงช่อง OTP ว่างโดยไม่เปิดเผย `mock_otp`; ผู้จองกรอกรหัส 6 หลักและส่งด้วย Enter; บัญชีที่ยืนยันแล้ว login สำเร็จได้ token โดยไม่ยืนยัน OTP ซ้ำ | REQ-FN-201, REQ-FN-203; Q-02-10; `docs/Khonย้าย-ภาพรวมระบบ.html:343-345`; Q-02-07 |
+-| AC-02-02 (รหัสทีมยืนยัน; เนื้อหา draft) | Backend ของ Auth เริ่มทำงาน | ตรวจรายการ route ที่ Auth เปิดให้เรียก | พบ `POST /api/auth/login`, `POST /api/auth/verify-otp` และ `GET /api/auth/me` | REQ-FN-202; คำยืนยันทีม; `docs/Khonย้าย-ภาพรวมระบบ.html:343-346` |
+-| AC-02-03 (รหัสทีมยืนยัน; เนื้อหา draft) | ผู้จองยังไม่เคยยืนยัน OTP และกรอก OTP ที่ถูกต้อง | Auth ตรวจ OTP และส่งผลสำเร็จให้ frontend | ตั้ง `users.is_verified` เป็น `true` และตอบ token ผูกกับ `user_id` พร้อมให้ frontend ใช้ต่อ; token ใช้ได้ตลอดอายุ process ของ backend และใช้ไม่ได้หลัง restart | REQ-FN-203; `docs/Khonย้าย-ภาพรวมระบบ.html:194-197`; Q-02-05, Q-02-07 |
++| AC-02-01 (รหัสทีมยืนยัน; เนื้อหา draft) | Register ส่ง proof ใช้ครั้งเดียว หรือบัญชีผู้จอง verified แล้ว | เริ่ม OTP จาก proof, ยืนยัน OTP หรือ login ตามสถานะบัญชี | OTP สำเร็จตั้ง `is_verified=true`, ไม่มี token และกลับ Login; login verified ออก token และไป Booking; login unverified ตอบ 403 โดยไม่ออก token/challenge; UI เริ่ม OTP ว่างและไม่เผย mock OTP | REQ-FN-201, REQ-FN-203; Q-02-10; คำยืนยันล่าสุด |
++| AC-02-02 (รหัสทีมยืนยัน; เนื้อหา draft) | Backend ของ Auth เริ่มทำงาน | ตรวจรายการ route ที่ Auth เปิดให้เรียก | พบ Login, create/resend OTP challenge, verify OTP และ `/me` ตาม API inventory | REQ-FN-202; คำยืนยันทีม; `docs/Khonย้าย-ภาพรวมระบบ.html:343-346` |
++| AC-02-03 (รหัสทีมยืนยัน; เนื้อหา draft) | ผู้จองยังไม่เคยยืนยัน OTP และกรอก OTP ที่ถูกต้อง | Auth ตรวจ OTP และส่งผลสำเร็จให้ frontend | ตั้ง `users.is_verified=true`, ตอบ `{"is_verified":true}` โดยไม่มี token และให้ UI กลับหน้า Login | REQ-FN-203; คำยืนยัน Q-02-07 และคำยืนยันล่าสุด |
+ | AC-02-04 (รหัสทีมยืนยัน; เนื้อหา draft) | มี token ที่ออกจาก flow สำเร็จ | Feature อื่นส่ง token ให้ `get_current_user()` ตรวจสอบ | มีการใช้ token ระบุตัวผู้ใช้ตามหน้าที่ของฟังก์ชันที่ภาพรวมกำหนด | REQ-FN-203, REQ-FN-204; `docs/Khonย้าย-ภาพรวมระบบ.html:343-346` |
+ | AC-02-05 (รหัสทีมยืนยัน; เนื้อหา draft) | เปิดใช้งาน Feature ② | ตรวจ dependency/config และ mock data พร้อมบันทึกหลักฐานใน RTM | หลักฐานแสดง Frontend ใช้ React, Backend ใช้ Python และ Auth ใช้ mock data โดยไม่มี database; ไม่มี Gherkin Scenario ตามวิธี traceability ที่ทีมยืนยัน | REQ-CON-201; `docs/Khonย้าย-ภาพรวมระบบ.html:53-57,369-392`; `rtm.md` |
+ | AC-02-06 (รหัสทีมยืนยัน; เนื้อหา draft) | ผู้จองอยู่ใน flow ยืนยันตัวตนและมี `otp_challenge_id` ของชุดที่กำลังตรวจ | ขอและกรอก OTP mock | Backend ตรวจค่า mock `123456` ตามเดิม; UI ไม่แสดงค่า OTP หรือคำใบ้/placeholder และช่องเริ่มว่าง; อายุ 15 นาทีเริ่มเมื่อ mock SMS/OTP แสดงผล; ผิดครบ 3 ครั้งปิดเฉพาะชุดนั้น; ขอใหม่ได้ทันทีไม่จำกัดจำนวนครั้งและรหัสเดิมยังใช้ได้จนหมดอายุ | REQ-FN-205; `docs/Khonย้าย-ภาพรวมระบบ.html:56-57`; Q-02-04 |
+@@ -145,23 +147,41 @@ Feature อื่นใช้ token และ `get_current_user()` เพื่
+ 
+ | Method / path | Request และ validation | Response เมื่อสำเร็จ | Auth |
+ |---|---|---|---|
+-| `POST /api/auth/login` | JSON `{email, password}`; ทั้งคู่เป็น string และ required; `email` ต้องเป็นรูปแบบ email; `password` ยาวอย่างน้อย 1 ตัวอักษรโดยไม่ trim และไม่เพิ่มกฎความซับซ้อน | `is_verified=true`: `{token}`; ยังไม่ verified: `{otp_challenge_id, mock_otp: "123456"}` | ไม่ต้องมี token ก่อน login |
+-| `POST /api/auth/verify-otp` | JSON `{otp_challenge_id, otp}`; ทั้งคู่ required; `otp_challenge_id` เป็น string ไม่ว่าง; `otp` เป็น string ตัวเลข 0–9 จำนวน 6 ตัว; ตรวจ challenge ตาม ID และกติกาของชุดนั้น | เมื่อสำเร็จให้ตั้ง `users.is_verified=true` และตอบ `{token}` | ไม่ต้องมี token ก่อนยืนยัน OTP |
++| `POST /api/auth/login` | JSON `{email, password}`; ทั้งคู่เป็น string และ required; `email` ต้องเป็นรูปแบบ email; `password` ยาวอย่างน้อย 1 ตัวอักษรโดยไม่ trim และไม่เพิ่มกฎความซับซ้อน | `is_verified=true`: `{token}`; ยังไม่ verified: HTTP 403 `{"detail":"Account verification required"}` โดยไม่สร้าง challenge | ไม่ต้องมี token ก่อน login |
++| `POST /api/auth/otp-challenges` | JSON `{registration_proof}`; string required และไม่ว่าง; proof opaque ใช้ได้ครั้งเดียวและผูกกับบัญชี | สำเร็จ: `{otp_challenge_id, mock_otp: "123456"}`; proof ผิด/ใช้แล้ว: HTTP 400 `{"detail":"Invalid registration proof"}` | ไม่ต้องมี token; รับเฉพาะ proof ที่ออกจาก registration handoff |
++| `POST /api/auth/otp-challenges/{otp_challenge_id}/resend` | ไม่มี request body; ID ระบุ challenge ต้นทาง | สำเร็จ: `{otp_challenge_id, mock_otp: "123456"}` โดยใช้ ID ใหม่; challenge ใช้ไม่ได้: HTTP 400 `{"detail":"OTP verification failed"}` | ไม่ต้องมี token ก่อนยืนยัน |
++| `POST /api/auth/verify-otp` | JSON `{otp_challenge_id, otp}`; ทั้งคู่ required; `otp_challenge_id` เป็น string ไม่ว่าง; `otp` เป็น string ตัวเลข 0–9 จำนวน 6 ตัว; ตรวจ challenge ตาม ID และกติกาของชุดนั้น | เมื่อสำเร็จตั้ง `users.is_verified=true` และตอบ `{"is_verified":true}` โดยไม่มี token | ไม่ต้องมี token ก่อนยืนยัน OTP |
+ | `GET /api/auth/me` | รับ token ผ่าน `Authorization: Bearer <token>` | ส่งเฉพาะ `id`, `name`, `email`; ไม่ส่ง `phone`, `password`, OTP, token หรือ `is_verified` | ต้องมี token ที่ยังใช้ได้ |
+ 
+ #### HTTP status และ error response ที่ยืนยันแล้ว (Q-02-09)
+ 
+ | Endpoint / กรณี | Status | Error body |
+ |---|---:|---|
+-| Login สำเร็จ ทั้งบัญชี verified และบัญชีที่ต้องยืนยัน OTP | 200 | ไม่มี; ใช้ response ตามตาราง API |
++| Login สำเร็จสำหรับบัญชี verified | 200 | ไม่มี; ใช้ response ตามตาราง API |
++| Login ด้วย credentials ถูกต้องแต่บัญชียังไม่ verified | 403 | `{"detail":"Account verification required"}` |
+ | Credential ไม่ถูกต้อง | 401 | `{"detail":"Invalid email or password"}` |
+ | Login request ขาด field หรือรูปแบบไม่ถูกต้อง รวม email format ไม่ถูกต้อง | 422 | `{"detail":"Request validation failed"}` |
+-| Verify OTP สำเร็จ | 200 | ไม่มี; ใช้ response ตามตาราง API |
++| เริ่ม OTP ด้วย registration proof ที่ถูกต้อง | 200 | ไม่มี; ใช้ response ตามตาราง API |
++| Registration proof ผิดหรือใช้แล้ว | 400 | `{"detail":"Invalid registration proof"}` |
++| Create OTP request ขาด field หรือรูปแบบไม่ถูกต้อง | 422 | `{"detail":"Request validation failed"}` |
++| Resend OTP สำเร็จ | 200 | ไม่มี; ใช้ response ตามตาราง API และสร้าง challenge ID ใหม่ |
++| Challenge ID สำหรับ resend ใช้ไม่ได้ | 400 | `{"detail":"OTP verification failed"}` |
++| Verify OTP สำเร็จ | 200 | ไม่มี; ตอบ `{"is_verified":true}` โดยไม่มี token |
+ | OTP ผิด, challenge ID ใช้ไม่ได้/หมดอายุ หรือกรอกผิดครบจำนวนครั้ง | 400 | `{"detail":"OTP verification failed"}` |
+ | Verify request ขาด field หรือรูปแบบไม่ถูกต้อง | 422 | `{"detail":"Request validation failed"}` |
+ | `/me` token ถูกต้อง | 200 | ไม่มี; ส่งเฉพาะ fields ที่กำหนดข้างต้น |
+ | `/me` ไม่มี token หรือ token ใช้ไม่ได้ | 401 | `{"detail":"Authentication required"}` |
+ 
++### Handoff ที่ทีม Register ต้องทำ (ยังไม่อยู่ใน Feature 002)
++
++จุดเชื่อมปัจจุบันจาก Register ยังไม่มี: `frontend/src/register/RegisterPage.jsx` หลังสมัครสำเร็จนำทางไป `/login` โดยไม่ส่ง proof. เพื่อให้ flow สมัครถึง OTP ทำงาน ทีม Register ต้องปรับ:
++
++- `backend/app/register/service.py`: หลังสร้างบัญชีสำเร็จ ให้สร้าง `registration_proof` แบบ opaque แล้วผูกกับ `user_id` ผ่าน `bind_registration_proof(registration_proof, user_id)` จาก Auth
++- `backend/app/register/schemas.py`: เพิ่ม `registration_proof` ใน response model; ปรับ `backend/app/register/router.py` เฉพาะเมื่อจำเป็นให้ field ผ่าน response
++- `frontend/src/register/RegisterPage.jsx`: อ่าน proof จาก response แล้วเรียก `startRegistrationOtp(registration_proof)`; เมื่อสำเร็จนำทางไป `/login`. Helper Auth ส่ง proof ไป endpoint ด้านบนและเก็บ `otp_challenge_id` ชั่วคราวใน `sessionStorage` key `authOtpChallengeId`, ซึ่งหน้า Auth ใช้เปิด OTP form
++
++ห้ามส่ง password หรือใช้ `user_id` อย่างเดียวเป็น proof. ไฟล์เหล่านี้อยู่ใน Feature 001 และไม่ได้แก้ในงานนี้; signup-to-OTP E2E จึงยัง Blocked จนทีม Register เชื่อมข้อมูลครบ.
++
+ **สถานะร่วมที่ภาพรวมกล่าวถึง:** `401` = ยังไม่ login, `404` = ไม่พบ, `409` = สถานะ/เวลาไม่ถูกต้อง (`docs/Khonย้าย-ภาพรวมระบบ.html:426`). ตาราง API inventory ข้างต้นเป็น mapping ที่ทีมยืนยันสำหรับ Auth โดยเฉพาะ.
+ 
+ ## 8. Constraints
+@@ -173,8 +193,8 @@ Feature อื่นใช้ token และ `get_current_user()` เพื่
+ - ภาพรวมระบุ frontend เก็บ token ฝั่งเว็บ และ backend ตรวจ token ทุก request ยกเว้น registration กับ login ของ Feature ② (`docs/Khonย้าย-ภาพรวมระบบ.html:109-120`); ทีมยืนยันว่า `POST /api/auth/verify-otp` ไม่ต้องใช้ token ก่อนยืนยัน และ `GET /api/auth/me` อยู่ใน scope.
+ - ใช้ token mapping ปัจจุบัน `token → user_id`; token ใช้ได้ตลอดอายุ process ของ backend ไม่มี refresh หรือ server-side revoke/logout endpoint และใช้ไม่ได้หลัง restart (Q-02-05).
+ - เริ่มนับอายุ OTP 15 นาทีเมื่อ mock SMS/OTP แสดงผล; แต่ละคำขอใช้ `otp_challenge_id` แยกชุด; การกรอกผิดครบ 3 ครั้งปิดเฉพาะชุดนั้น ชุดอื่นยังใช้ได้จนหมดอายุ (Q-02-03, Q-02-04).
+-- `/me` ใช้ `Authorization: Bearer <token>` ตามโค้ดเดิม; `login` และ `verify-otp` ไม่ต้องใช้ token ก่อนเรียก.
+-- UI ใช้เฉพาะ visual theme ของ Feature 004-Payment; หน้า Login เป็นหน้าเริ่มต้นที่ `/` และเปิดได้ที่ `/login`; Register อยู่ที่ `/register` และกลับ Login ด้วยลิงก์ข้อความ “เข้าสู่ระบบ” ตาม UI-01-01. ฟอร์ม Login สำหรับ email/password มีปุ่มจริง “สมัครสมาชิก” ไป `/register` โดยไม่แสดงในหน้ากรอก OTP. ส่งฟอร์ม login/OTP ด้วย Enter, แสดง API `detail` ในฟอร์ม และหลัง login สำเร็จไปจุดเริ่ม Feature 003-Booking. หน้ากรอก OTP เริ่มว่างและไม่แสดงรหัส mock หรือคำใบ้/placeholder ที่เผยรหัส. Labels/layout/UI ID/mockup อื่นยังไม่ยืนยันแต่ไม่ขวาง flow ขั้นต่ำ (REQ-FN-201, AC-02-01, Q-02-10).
++- `/me` ใช้ `Authorization: Bearer <token>`; `login`, create/resend OTP และ `verify-otp` ไม่ต้องใช้ token ก่อนเรียก.
++- UI ใช้เฉพาะ visual theme ของ Feature 004-Payment; หน้า Login เป็นหน้าเริ่มต้นที่ `/` และเปิดได้ที่ `/login`; Register อยู่ที่ `/register` และกลับ Login ด้วยลิงก์ข้อความ “เข้าสู่ระบบ” ตาม UI-01-01. ฟอร์ม Login สำหรับ email/password มีปุ่มจริง “สมัครสมาชิก” ไป `/register` โดยไม่แสดงในหน้ากรอก OTP. OTP เริ่มจาก registration handoff, ส่ง OTP ด้วย Enter, verify success กลับ Login โดยไม่ออก token; Login verified สำเร็จไปหน้า Booking และแสดง API `detail` ในฟอร์มเมื่อผิด. หน้ากรอก OTP เริ่มว่างและไม่แสดงรหัส mock หรือคำใบ้/placeholder ที่เผยรหัส. Labels/layout/UI ID/mockup อื่นยังไม่ยืนยัน (REQ-FN-201, AC-02-01, Q-02-10).
+ - ไม่พบ REQ-CON/REQ-SEC/REQ-PRV/REQ-CMP ต้นฉบับ จึงไม่กำหนด ID หรือข้อจำกัดเพิ่มเติม.
+ - ยังไม่มี D-00-nn ที่อนุมัติให้เลือกหรือระบุรายละเอียด framework/library, storage, token format หรือ OTP behavior นอกเหนือจากข้อความข้างต้น.
+ 
+@@ -191,15 +211,15 @@ Feature อื่นใช้ token และ `get_current_user()` เพื่
+ | ID (สถานะ) | คำถาม / สิ่งที่ต้องยืนยัน | เจ้าของ | กำหนด | พฤติกรรมชั่วคราว |
+ |---|---|---|---|---|
+ | Q-02-01 (รหัสทีมยืนยัน) | REQ ต้นฉบับ, PB/EV และรหัสทางการอยู่ที่ใด? `docs/srs/catalogue.md` ไม่มีใน workspace | ทีม | 2026-11-20 | ทีมยังตรวจสอบไม่ได้ว่ามีแหล่ง Requirement ต้นฉบับอื่นหรือไม่; การไม่พบใน workspace ไม่ใช่หลักฐานยืนยันว่าไม่มี จึงคง T-01 Blocked |
+-| Q-02-02 (รหัสทีมยืนยัน; ตอบแล้ว) | ทีมยืนยันชื่อ/HTTP method/path ทั้งสาม endpoint หรือจะปรับจากข้อเสนอในภาพรวม? | ทีม | 2026-11-20 | ยืนยัน `POST /api/auth/login`, `POST /api/auth/verify-otp` และ `GET /api/auth/me`; ไม่ครอบคลุม schema หรือ contract ส่วนอื่น |
+-| Q-02-03 (รหัสทีมยืนยัน; ตอบแล้ว) | Contract request/response และ validation ของ login, verify OTP และการส่ง token ให้ `/me` เป็นอย่างไร? | ทีม | 2026-11-20 | Login รับ `{email, password}` เป็น string required; ตรวจ email format; password ยาวอย่างน้อย 1 ตัวอักษร ไม่ trim/ไม่เพิ่มกฎความซับซ้อน. บัญชี verified ตอบ `{token}`; บัญชีที่ยังไม่ verified ตอบ `{otp_challenge_id, mock_otp: "123456"}`. Verify รับ `{otp_challenge_id, otp}` โดย ID เป็น string ไม่ว่างและ OTP เป็น string ตัวเลข 6 หลัก; สำเร็จแล้วตั้ง `is_verified=true` และตอบ `{token}`. `/me` รับ `Authorization: Bearer <token>` และส่งเฉพาะ `id`, `name`, `email`. Status/error อยู่ใน Q-02-09 |
++| Q-02-02 (รหัสทีมยืนยัน; ตอบแล้ว) | ทีมยืนยันชื่อ/HTTP method/path ของ endpoint Auth หรือจะปรับจากข้อเสนอในภาพรวม? | ทีม | 2026-11-20; เพิ่ม endpoints ตามคำยืนยันล่าสุด 2026-11-21 | ยืนยัน `POST /api/auth/login`, `POST /api/auth/otp-challenges`, `POST /api/auth/otp-challenges/{otp_challenge_id}/resend`, `POST /api/auth/verify-otp` และ `GET /api/auth/me`; ไม่ครอบคลุม schema หรือ contract ส่วนอื่น |
++| Q-02-03 (รหัสทีมยืนยัน; ตอบแล้ว; contract ปรับตามคำยืนยันล่าสุด) | Contract request/response และ validation ของ login, verify OTP และการส่ง token ให้ `/me` เป็นอย่างไร? | ทีม | 2026-11-20; flow ปรับ 2026-11-21 | Login รับ `{email, password}` เป็น string required; ตรวจ email format; password ยาวอย่างน้อย 1 ตัวอักษร ไม่ trim/ไม่เพิ่มกฎความซับซ้อน. Verified ตอบ `{token}`; unverified ตอบ 403 โดยไม่เริ่ม OTP. `POST /otp-challenges` รับ `{registration_proof}` string ไม่ว่าง; สำเร็จตอบ `{otp_challenge_id, mock_otp}`. Resend รับ ID ใน path และตอบ challenge ID ใหม่พร้อม mock OTP. Verify รับ `{otp_challenge_id, otp}` โดย ID ไม่ว่างและ OTP เป็นเลข 6 หลัก; สำเร็จตั้ง `is_verified=true` และตอบ `{"is_verified":true}` โดยไม่มี token. `/me` รับ `Authorization: Bearer <token>` และส่งเฉพาะ `id`, `name`, `email`. Status/error อยู่ใน Q-02-09 |
+ | Q-02-04 (รหัสทีมยืนยัน; ตอบแล้ว) | วิธีแยก OTP หลายคำขอที่ใช้ `123456` พร้อมกันและนับจำนวนครั้งผิดเป็นอย่างไร? | ทีม | 2026-11-20 | แต่ละคำขอมี ID ประจำชุด; นับผิดแยกตามชุด และเมื่อครบ 3 ครั้งให้ปิดเฉพาะชุดนั้น; OTP ชุดอื่นที่ยังไม่หมดอายุใช้ต่อได้. Field `otp_challenge_id` และการส่งผ่าน login response/verify request ระบุใน Q-02-03 |
+-| Q-02-05 (รหัสทีมยืนยัน; ตอบแล้ว) | จุดออก token, mapping และอายุ/หมดอายุ/ต่ออายุ/เพิกถอน token เป็นอย่างไร? | ทีม | 2026-11-20 | ใช้ mapping `token → user_id`; ออก token เมื่อ flow login สำเร็จ (OTP สำเร็จสำหรับบัญชีที่ยังไม่ verified หรือ email/password ถูกต้องสำหรับบัญชี verified). Token ใช้ได้ตลอดอายุ process ของ backend; ไม่มี refresh หรือ server-side revoke/logout endpoint; backend restart ทำให้ token เดิมใช้ไม่ได้. วิธีส่ง token ให้ `/me` อยู่ใน Q-02-03. `is_verified` หลัง restart ตาม AS-02-01 |
++| Q-02-05 (รหัสทีมยืนยัน; ตอบแล้ว) | จุดออก token, mapping และอายุ/หมดอายุ/ต่ออายุ/เพิกถอน token เป็นอย่างไร? | ทีม | 2026-11-20; จุดออก token ยืนยันเพิ่มเติม 2026-11-21 | ใช้ mapping `token → user_id`; token ออกเฉพาะเมื่อ Login สำเร็จด้วย credentials ของบัญชี verified. OTP verify ไม่ออก token. Token ใช้ได้ตลอดอายุ process ของ backend; ไม่มี refresh หรือ server-side revoke/logout endpoint; backend restart ทำให้ token เดิมใช้ไม่ได้. วิธีส่ง token ให้ `/me` อยู่ใน Q-02-03. `is_verified` หลัง restart ตาม AS-02-01 |
+ | Q-02-06 (รหัสทีมยืนยัน; ตอบแล้ว) | `GET /api/auth/me` ส่ง field ใดและมี field ใดห้ามส่งกลับ? | ทีม | 2026-11-20 | ส่งเฉพาะ `id`, `name`, `email`; ไม่ส่ง `phone`, `password`, OTP, token หรือ `is_verified`. Error response/status อยู่ใน Q-02-09 |
+ | Q-02-07 (รหัสทีมยืนยัน; ตอบแล้ว) | `is_verified` หมายถึงอะไร, เปลี่ยนค่าเมื่อใด และมีผลต่อการเข้าสู่ระบบหรือไม่? | ทีม | 2026-11-20 | หมายถึงเบอร์โทรได้รับการยืนยันด้วย OTP mock; ตั้งเป็น `true` หลังยืนยัน OTP ครั้งแรกสำเร็จ; login ครั้งต่อไปเมื่อเป็น `true` ข้าม OTP. ไม่หมายถึงการตรวจบัตรประชาชนหรือใบหน้า |
+ | Q-02-08 (รหัสทีมยืนยัน; ตอบแล้ว) | อนุมัติ mock users รายการใดเป็น fixtures? | ทีม | 2026-11-20 | อนุมัติผู้ใช้ mock ที่มีอยู่ทั้งหมดใน `backend/app/mock_db.py` เป็น fixtures |
+-| Q-02-09 (รหัสทีมยืนยัน; ตอบแล้ว) | HTTP status/error body ที่ใช้ร่วมกัน map กับกรณี login, OTP และ `/me` อย่างไร? | ทีม | 2026-11-20 | ยืนยันตารางใน API inventory: login success 200, credential ผิด 401; verify success 200, challenge/OTP ใช้ไม่ได้หรือหมดอายุ/ครบครั้ง 400; `/me` success 200, ไม่มี/ใช้ token ไม่ได้ 401; request ไม่ครบหรือรูปแบบผิด 422. ยืนยัน error body แบบ `detail` ตามตาราง |
+-| Q-02-10 (รหัสทีมยืนยัน; ตอบบางส่วน) | รายละเอียด UI ใดที่ยืนยันแล้ว และส่วนใดต้องกำหนดเพิ่ม? | ทีม | 2026-11-20 | ยืนยันให้ `/` เป็นหน้า Login; Login มีปุ่มจริง “สมัครสมาชิก” ไป `/register` เฉพาะฟอร์ม email/password และไม่แสดงในหน้ากรอก OTP; Register มีลิงก์ข้อความ “เข้าสู่ระบบ” กลับ `/login` ตาม UI-01-01. ส่ง login/OTP ด้วย Enter; หลัง login สำเร็จไปจุดเริ่ม Feature 003-Booking; แสดง API `detail` ในฟอร์ม; ใช้เฉพาะ visual theme ของ Payment. UI ไม่แสดง OTP mock หรือคำใบ้/placeholder และช่อง OTP เริ่มว่าง. Labels/layout/UI ID/mockup ของ Auth ยังไม่ยืนยัน |
++| Q-02-09 (รหัสทีมยืนยัน; ตอบแล้ว; ปรับตามคำยืนยันล่าสุด) | HTTP status/error body ที่ใช้ร่วมกัน map กับกรณี login, OTP และ `/me` อย่างไร? | ทีม | 2026-11-20; เพิ่ม status สำหรับ handoff 2026-11-21 | ยืนยันตารางใน API inventory: login verified success 200, credential ผิด 401, unverified 403; proof ผิด/ใช้แล้ว 400; create request invalid 422; resend/verify challenge หรือ OTP ใช้ไม่ได้ 400; verify success 200 โดยไม่มี token; `/me` success 200, ไม่มี/ใช้ token ไม่ได้ 401; request ไม่ครบหรือรูปแบบผิด 422. Error body ตามตาราง |
++| Q-02-10 (รหัสทีมยืนยัน; ตอบบางส่วน) | รายละเอียด UI ใดที่ยืนยันแล้ว และส่วนใดต้องกำหนดเพิ่ม? | ทีม | 2026-11-20; flow OTP ปรับ 2026-11-21 | ยืนยันให้ `/` เป็นหน้า Login; Login มีปุ่มจริง “สมัครสมาชิก” ไป `/register` เฉพาะฟอร์ม email/password และไม่แสดงในหน้ากรอก OTP; Register มีลิงก์ข้อความ “เข้าสู่ระบบ” กลับ `/login` ตาม UI-01-01. OTP เริ่มจาก registration handoff, ช่องเริ่มว่าง, ส่ง OTP ด้วย Enter; verify สำเร็จกลับ Login โดยไม่ออก token; Login verified สำเร็จไป Feature 003-Booking; แสดง API `detail` ในฟอร์ม; ใช้เฉพาะ visual theme ของ Payment. Labels/layout/UI ID/mockup Auth ยังไม่ยืนยัน |
+ | Q-02-11 (รหัสทีมยืนยัน) | ใครเป็น owner/PO/ผู้ตรวจ และเมื่อใดจึงอนุมัติ version/baseline? | รอกำหนด | รอกำหนด | ยังไม่กำหนด; สถานะคงเป็น draft |
+ 
+ ## 10. Decision Log
+@@ -212,6 +232,8 @@ Feature อื่นใช้ token และ `get_current_user()` เพื่
+ 
+ คำยืนยันเพิ่มเติมใน /clarify รอบล่าสุด: Q-02-03 ระบุ request/response และ validation ของ login/verify รวมถึง `Authorization: Bearer <token>` สำหรับ `/me`; Q-02-04 ปิดเฉพาะ OTP issuance ที่กรอกผิดครบ 3 ครั้ง; Q-02-05 กำหนด token อายุเท่า process โดยไม่มี refresh/revoke; Q-02-09 ยืนยัน status/error table; Q-02-10 ยืนยันหน้า Login เริ่มต้น, submit ด้วย Enter, error ในฟอร์ม และปลายทาง Feature 003-Booking. Q-02-01 ยังคงเปิดหลังตรวจพบเพียงเอกสารภาพรวม/ตัวอย่าง ไม่พบต้นฉบับ Auth ที่ยืนยันได้.
+ 
++คำยืนยันล่าสุดจากทีมวันที่ 2026-11-21 ใช้แทน flow ก่อนหน้าที่ Login เริ่ม OTP และ Verify ออก token: Register handoff ส่ง `registration_proof` opaque ใช้ครั้งเดียวที่ผูกกับบัญชี; Auth create/resend OTP ผ่าน endpoints แยก; verify success ตั้ง `is_verified=true`, ไม่ออก token และกลับ Login; verified Login เท่านั้นจึงออก tokenและไป Booking; unverified Login ตอบ 403 โดยไม่เริ่ม OTP. Proof ผิดหรือใช้แล้วตอบ 400 และไม่สร้าง challenge. จุดเชื่อม Register ยังไม่มีในโค้ดอ้างอิง; งาน Feature 001 ที่ต้องทำระบุไว้ใน API inventory handoff และ T-13.
++
+ | ID | ตัดสินใจอะไร | ทางเลือกที่ปฏิเสธ | ผู้ตัดสิน | วันที่ |
+ |---|---|---|---|---|
+ | ยังไม่กำหนด | ยืนยัน method/path ทั้งสาม endpoint; ให้ `GET /api/auth/me` อยู่ใน scope; ใช้ token mapping ปัจจุบัน `token → user_id`; เริ่มนับอายุ OTP 15 นาทีเมื่อ mock SMS/OTP แสดงผล; อนุญาตให้ออกแบบ UI โดยใช้เฉพาะ visual theme ของ Feature 004-Payment | เปลี่ยน endpoint, นำ `/me` ออกจาก scope, เปลี่ยน mapping ปัจจุบัน, เริ่มนับ OTP ก่อนแสดงผล, ยืมองค์ประกอบหรือพฤติกรรมของ Payment | ทีม | 2026-11-20 |
+diff --git a/specs/002-auth/tasks.md b/specs/002-auth/tasks.md
+index 0dda37c..8cba069 100644
+--- a/specs/002-auth/tasks.md
++++ b/specs/002-auth/tasks.md
+@@ -4,7 +4,7 @@
+ - อ้างอิง: [spec.md](spec.md), [plan.md](plan.md), [auth.feature](auth.feature), [rules.md](rules.md), [models.md](models.md)
+ - วันที่อ้างอิง: 2026-11-20 (ตามเอกสารแผน; เอกสารนี้ยังเป็น Draft)
+ - สถานะ: Draft — ยังไม่ใช่ Baseline และไม่ได้รับการอนุมัติ
+-- สรุป: 16 tasks; 1 Blocked, 14 Done และ 1 เสร็จรอทีมตรวจ. T-02 ถึง T-15 Done; T-16 เสร็จรอทีมตรวจ; T-01 Blocked.
++- สรุป: 16 tasks; 3 Blocked และ 13 Done. T-02 ถึง T-12 และ T-14/T-15 Done; T-01 รอ Q-02-01, T-13/T-16 รอ Register handoff
+ - รหัส T-01 ถึง T-16 เป็นรหัสงานที่เสนอ ไม่ใช่ Requirement, AC, BR หรือ MD ID
+ 
+ ## สถานะสิ่งที่มีอยู่แล้ว
+@@ -13,10 +13,10 @@
+ 
+ | มีอยู่แล้ว | สถานะและขอบเขต |
+ |---|---|
+-| `backend/app/auth.py` มี `get_current_user()` | เป็น stub ตรวจ token จาก `mock_db.tokens` และหา user จาก `mock_db.users`; ยังไม่มี login, OTP หรือ `/me` routes |
++| `backend/app/auth.py` | มี login, registration-proof OTP challenge, resend, verify และ `/me`; verify ตั้ง `is_verified=true` โดยไม่ออก token; Login ออก token เฉพาะบัญชี verified |
+ | `backend/app/mock_db.py` มี `users`, `tokens` และ `MOCK_OTP` | ผู้ใช้ mock ที่มีอยู่ทั้งหมดได้รับอนุมัติจากทีมเป็น fixtures (Q-02-08); ไม่กำหนด schema/validation เพิ่ม |
+ | Frontend React/Vite, `frontend/src/api.js` และหน้าจอ Payment | เป็นโครงสร้างที่มีอยู่; API helper แนบ default token อยู่ในปัจจุบัน; ยังไม่มี Auth UI |
+-| Backend test suite และคำสั่ง `pytest` / `npm run build` | ใช้ตรวจงานตามแผนได้; ยังไม่มี Auth tests และ Frontend ไม่มี test script/runner |
++| Backend test suite และ Auth UI tests | มี tests สำหรับ API contract, proof one-time, login/verify, OTP lifecycle, handoff rendering และ no-auth requests |
+ | `auth.feature` | มี Gherkin Draft สำหรับ AC-02-01 ถึง AC-02-04 และ AC-02-06; AC-02-05 ไม่มี Scenario ตามวิธี traceability ที่ทีมยืนยัน |
+ | `rules.md` และ `models.md` | มี BR-02-01 ถึง BR-02-03 และ MD-02-01 ถึง MD-02-04 แต่ทั้งหมดติดป้าย “AI เสนอ รอทีมยืนยัน” ไม่ถือเป็นกฎหรือโมเดลที่อนุมัติ |
+ 
+@@ -36,7 +36,7 @@
+ - เป้าหมายและผลลัพธ์: บันทึก request/response, validation, HTTP status/error response และวิธีส่ง token ให้ `/me` ตามคำยืนยันทีม ก่อน implement contract
+ - รองรับ: REQ-FN-201, REQ-FN-202, REQ-FN-203, REQ-FN-204
+ - ตรวจด้วย: ไม่มี AC ตรง ๆ เป็น prerequisite ของ handler behavior ใน T-09 ถึง T-14; method/path ที่ยืนยันแล้วต้องคงเดิม
+-- ไฟล์/ส่วนระบบที่เกี่ยวข้อง: `specs/002-auth/spec.md`, API contract ของ `POST /api/auth/login`, `POST /api/auth/verify-otp`, `GET /api/auth/me`
++- ไฟล์/ส่วนระบบที่เกี่ยวข้อง: `specs/002-auth/spec.md`, API contract ของ Login, create/resend OTP, verify OTP และ `/me`
+ - แบบหน้าจอ: ไม่มี
+ - ต้องทำก่อน: ไม่มี
+ - เสร็จเมื่อ: บันทึก contract ของ Q-02-03/Q-02-09 ครบทั้ง request/response, validation, status/error และ `Authorization: Bearer <token>` สำหรับ `/me`; fields ใช้ตาม Q-02-06
+@@ -100,25 +100,25 @@
+ ## Backend
+ 
+ ### T-08 ลงทะเบียน Auth Routes
+-- เป้าหมายและผลลัพธ์: ลงทะเบียน route ทั้งสามรายการและตรวจ method/path ที่ทีมยืนยันแล้วเท่านั้น; งานนี้แยกจากการทำ handler behavior และไม่ได้ implement request/response schema, validation หรือ HTTP status
++- เป้าหมายและผลลัพธ์: ลงทะเบียน route ทั้งห้ารายการและตรวจ method/path ที่ทีมยืนยันแล้วเท่านั้น; งานนี้แยกจากการทำ handler behavior และไม่ได้ implement request/response schema, validation หรือ HTTP status
+ - รองรับ: REQ-FN-202
+ - ตรวจด้วย: AC-02-02
+ - ไฟล์/ส่วนระบบที่เกี่ยวข้อง: `backend/app/auth.py`, `backend/app/main.py`, `backend/tests/test_auth.py`
+ - แบบหน้าจอ: ไม่มี
+ - ต้องทำก่อน: ไม่มี
+-- เสร็จเมื่อ: การตรวจ route พบ `POST /api/auth/login`, `POST /api/auth/verify-otp` และ `GET /api/auth/me`; tests ของ task นี้ตรวจเฉพาะ method/path ไม่ assert handler behavior หรือ schema
++- เสร็จเมื่อ: การตรวจ route พบ Login, create/resend OTP, verify OTP และ `/me` ตาม API inventory; tests ของ task นี้ตรวจเฉพาะ method/path ไม่ assert handler behavior หรือ schema
+ - สถานะ: Done
+ 
+ ### T-09 ทำ Login และ Mock SMS Sender
+-- เป้าหมายและผลลัพธ์: เชื่อม login ด้วย email/password กับผู้ใช้ mock ตาม validation/status ที่ยืนยัน; หาก `is_verified=true` ให้ข้าม OTP และตอบ token; หากยังไม่ verified ให้จำลองสร้าง/ส่ง OTP ไป `users.phone` พร้อม challenge ID; ไม่เชื่อม SMS provider จริง
++- เป้าหมายและผลลัพธ์: เชื่อม login ด้วย email/password กับผู้ใช้ mock; บัญชี verified ได้ token, บัญชี unverified ตอบ 403 โดยไม่สร้าง challenge; รับ registration proof แบบ opaque ใช้ครั้งเดียวเพื่อเริ่ม OTP ไป `users.phone`; ไม่เชื่อม SMS provider จริง
+ - รองรับ: REQ-FN-201, REQ-FN-205, REQ-CON-201
+ - ตรวจด้วย: AC-02-01
+ - กฎ/โมเดลที่เกี่ยวข้อง: BR-02-02, MD-02-01, MD-02-02 (AI เสนอ รอทีมยืนยัน)
+ - ไฟล์/ส่วนระบบที่เกี่ยวข้อง: `backend/app/auth.py`, `backend/app/mock_db.py`, `backend/app/main.py`, `backend/tests/test_auth.py`
+ - แบบหน้าจอ: ไม่มี; การตรวจ UI ว่าช่อง OTP ว่างและไม่เปิดเผยรหัส mock รวมถึง end-to-end อยู่ใน T-13
+ - ต้องทำก่อน: T-02, T-03, T-05, T-08
+-- เสร็จเมื่อ: การตรวจ Backend ยืนยันว่าเริ่ม login flow, จำลองสร้าง/ส่ง OTP ไปยัง `users.phone` และไม่เรียก SMS provider จริง; งานนี้ครอบคลุมเฉพาะส่วน Backend ของ AC-02-01 ไม่ถือว่า AC ผ่านครบจน T-13 ตรวจช่อง OTP ว่างที่ไม่เปิดเผยค่า mock และ flow แบบ end-to-end
+-- สถานะ: Done
++- เสร็จเมื่อ: Backend ยืนยัน verified Login ออก token, unverified Login ตอบ 403 โดยไม่สร้าง challenge, proof ที่ถูกต้องแลกเป็น OTP challenge ได้ครั้งเดียวและจำลองส่งไปยัง `users.phone`; ไม่มี SMS provider จริง
++- สถานะ: Done — targeted tests ครอบคลุม verified/unverified Login, proof valid/replay และ OTP challenge creation; signup handoff จาก Register ยังรอ Feature 001
+ 
+ ### T-10 ทำบริการวงจรชีวิต OTP
+ - เป้าหมายและผลลัพธ์: ทำการตรวจ OTP โดยอ้าง `otp_challenge_id` ตามกติกาที่ทีมยืนยัน ได้แก่ `123456`, 15 นาทีเริ่มเมื่อแสดงผล, ผิดครบ 3 ครั้งต่อชุด, ขอใหม่ได้ทันทีไม่จำกัด และรหัสเดิมใช้ได้จนหมดอายุ
+@@ -131,16 +131,16 @@
+ - เสร็จเมื่อ: `test_AC_02_06_otp_lifetime_attempts_and_resend` ตรวจอายุ, จำนวนครั้ง, การขอใหม่, สถานะของแต่ละ OTP และ status/error ตาม Q-02-03/Q-02-04/Q-02-09
+ - สถานะ: Done
+ 
+-### T-11 ทำการยืนยัน OTP และออก Token
+-- เป้าหมายและผลลัพธ์: ให้ `POST /api/auth/verify-otp` รับการยืนยันโดยไม่ต้องมี token ก่อน และใช้ mapping ปัจจุบัน `token → user_id` หลังยืนยันสำเร็จ
++### T-11 ยืนยัน OTP และตั้งสถานะบัญชี
++- เป้าหมายและผลลัพธ์: ให้ `POST /api/auth/verify-otp` รับการยืนยันโดยไม่ต้องมี token ก่อน; เมื่อสำเร็จตั้ง `users.is_verified=true` และไม่ออก token
+ - รองรับ: REQ-FN-203, REQ-FN-205
+ - ตรวจด้วย: AC-02-03
+ - กฎ/โมเดลที่เกี่ยวข้อง: BR-02-01, MD-02-02, MD-02-03 (AI เสนอ รอทีมยืนยัน)
+ - ไฟล์/ส่วนระบบที่เกี่ยวข้อง: `backend/app/auth.py`, `backend/app/mock_db.py`, `backend/tests/test_auth.py`
+ - แบบหน้าจอ: ไม่มี
+ - ต้องทำก่อน: T-02, T-03, T-04, T-08, T-10
+-- เสร็จเมื่อ: `test_AC_02_03_verified_otp_returns_token` ยืนยัน OTP โดยไม่มี token ใน request; ตรวจ `is_verified=true`, token mapping และ status/response ตาม contract; ตรวจ token lifecycle ตาม Q-02-05
+-- สถานะ: Done
++- เสร็จเมื่อ: `test_AC_02_03_verified_otp_marks_account_without_issuing_token` ยืนยัน OTP โดยไม่มี token ใน request; ตรวจ `is_verified=true`, response ไม่มี token และไม่มี mapping ใหม่
++- สถานะ: Done — targeted test ยืนยันสถานะ verified, response `{is_verified: true}` และไม่มี token; Token ออกเฉพาะจาก Login ของบัญชี verified
+ 
+ ### T-12 ทำ Endpoint ข้อมูลผู้ใช้ปัจจุบัน
+ - เป้าหมายและผลลัพธ์: ทำ `GET /api/auth/me` ในขอบเขต Auth โดยใช้ `get_current_user()` ที่มีอยู่ แทนการสร้างกลไกตรวจ token ซ้ำ; รับ `Authorization: Bearer <token>` และส่งเฉพาะ `id`, `name`, `email` ตามคำยืนยันทีม
+@@ -156,15 +156,21 @@
+ ## Integration และ Verification
+ 
+ ### T-13 เชื่อม UI Auth กับ API
+-- เป้าหมายและผลลัพธ์: เชื่อม UI login/OTP กับ API ที่ยืนยันแล้ว; คำขอ login/verify ต้องไม่พึ่ง token ก่อนยืนยัน และ token ที่ได้หลังยืนยันจึงนำไปใช้ต่อ; รักษาพฤติกรรม API ของ Payment
++- เป้าหมายและผลลัพธ์: เชื่อม OTP handoff จากการสมัคร, verify ที่ไม่ออก token, กลับหน้า Login และ verified Login ที่ออก token แล้วไป Booking; Login unverified แจ้งให้ยืนยันก่อนโดยไม่เริ่ม OTP; รักษาพฤติกรรม API ของ Payment
+ - รองรับ: REQ-FN-201, REQ-FN-203, REQ-FN-205, REQ-CON-201
+ - ตรวจด้วย: AC-02-01, AC-02-06
+ - กฎที่เกี่ยวข้อง: BR-02-03 (AI เสนอ รอทีมยืนยัน)
+-- ไฟล์/ส่วนระบบที่เกี่ยวข้อง: `frontend/src/auth/`, `frontend/src/api.js`, `frontend/src/App.jsx`, `frontend/src/main.jsx`
+-- แบบหน้าจอ: UI ID/mockup Auth ยังไม่ยืนยัน; ใช้ flow ที่ยืนยันแล้ว (Login อยู่ที่ `/` และ `/login`; ปุ่มจริง “สมัครสมาชิก” ไป `/register` เฉพาะฟอร์ม email/password และไม่แสดงใน OTP; Register กลับ Login ด้วยลิงก์ข้อความ “เข้าสู่ระบบ” ตาม Register T-10; submit ด้วย Enter, แสดง API `detail`, ช่อง OTP เริ่มว่างและไม่เปิดเผยรหัส mock หรือคำใบ้/placeholder, ผู้ใช้พิมพ์รหัส 6 หลักเอง, success ส่ง token ผ่าน `onAuthenticated(token)` ให้ Feature 003 เชื่อมภายหลัง) และ visual theme ของ Payment เท่านั้น
+-- ต้องทำก่อน: T-07, T-09, T-10, T-11; T-10 ของ Register ดูแล navigation ปุ่มสมัครสมาชิก ส่วน task นี้ดูแล login/OTP flow
+-- เสร็จเมื่อ: ตรวจ login/OTP แบบ end-to-end ใน browser ตาม AC-02-01 ส่วน login/OTP และ AC-02-06; UI ไม่แสดง mock OTP `123456`, คำใบ้ หรือ placeholder ที่เผยรหัส; ช่องเริ่มว่างและผู้ใช้พิมพ์รหัส 6 หลักเองแล้วกด Enter เพื่อยืนยัน; login/verify ทำงานโดยไม่แนบ token ก่อนยืนยัน, แสดง error ตาม contract และ request ของ Payment ไม่เปลี่ยนพฤติกรรม. การนำทาง Register/Login ตรวจใน Register T-10
+-- สถานะ: Done — browser ตรวจ flow จริง: login และขอ OTP ใหม่ตอบ 200 พร้อม `otp_challenge_id` คนละชุด; ช่อง OTP เริ่มว่าง/ว่างหลังขอใหม่และไม่เผยรหัส; กรอกรหัสเองแล้ว Enter ส่ง verify ด้วย ID ชุดใหม่และได้ 200; login/verify ไม่แนบ Authorization. Auth UI tests ผ่านและ Payment default Authorization คงเดิม
++- ไฟล์/ส่วนระบบที่เกี่ยวข้อง: `frontend/src/auth/`, `frontend/src/api.js`, `frontend/src/App.jsx`, `frontend/src/main.jsx`, `frontend/src/auth/AuthFields.test.js`
++- แบบหน้าจอ: UI ID/mockup Auth ยังไม่ยืนยัน; ใช้ flow ที่ยืนยันแล้ว: Login อยู่ที่ `/` และ `/login`; ปุ่มจริง “สมัครสมาชิก” ไป `/register` เฉพาะฟอร์ม email/password; Registration handoff เปิด OTP ช่องว่างและไม่เผย `mock_otp`; submit ด้วย Enter; verify success กลับ Login โดยไม่มี token; verified Login ส่ง token ผ่าน `onAuthenticated(token)` ไปหน้า Booking; unverified Login แสดง API error; ใช้ visual theme ของ Payment เท่านั้น
++- ต้องทำก่อน: T-07, T-09, T-10, T-11 และการเชื่อม handoff โดยทีม Feature 001; Register ปัจจุบันยังไม่ส่ง `registration_proof`
++- เสร็จเมื่อ: Browser E2E ยืนยัน registration proof → OTP challenge → verify success ตั้ง verified/ไม่มี token/กลับ Login → verified Login ออก token/ไป Booking; unverified Login ไม่สร้าง challenge; resend ใช้ ID ใหม่; error ตาม contract; OTP ช่องว่าง/no mock display; Payment API behavior unchanged
++- สถานะ: Blocked — Auth endpoints และ UI handoff พร้อม แต่ Register ปัจจุบัน redirect ไป `/login` โดยไม่ส่ง `registration_proof`. รอทีม Register เพิ่ม response proof และเรียก `startRegistrationOtp()` ก่อนตรวจ signup-to-OTP E2E
++
++#### สิ่งที่รอจากทีม Register (อยู่นอกขอบเขตการแก้ไขรอบนี้)
++- `backend/app/register/service.py` ต้องสร้าง opaque `registration_proof` หลังสร้าง user สำเร็จ แล้วผูกกับบัญชีผ่าน `bind_registration_proof(registration_proof, user_id)`
++- `backend/app/register/schemas.py` ต้องประกาศ field `registration_proof` ใน response; `backend/app/register/router.py` ปรับเฉพาะเมื่อจำเป็นให้ field ผ่าน response model
++- `frontend/src/register/RegisterPage.jsx` ต้องนำ proof จาก response เรียก `startRegistrationOtp(registration_proof)` แล้วเปิด `/login`; helper ส่ง `{registration_proof}` ไป `POST /api/auth/otp-challenges`, เก็บ `otp_challenge_id` ชั่วคราวใน `sessionStorage` key `authOtpChallengeId`, และ Auth ใช้ ID นี้แสดงฟอร์ม OTP
++- ห้ามส่ง password หรือใช้ `user_id` อย่างเดียวแทน proof; จนกว่าจะเชื่อมครบให้คง signup-to-OTP E2E เป็น Blocked
+ 
+ ### T-14 ตรวจการใช้ Token กับ Feature อื่น
+ - เป้าหมายและผลลัพธ์: ตรวจ token ที่ได้จาก flow Auth กับ `get_current_user()` และผู้ใช้ที่ผูกใน mapping ปัจจุบัน โดยไม่เขียน helper ตรวจ token ซ้ำหรือเปลี่ยน contract ของ Feature อื่น
+@@ -195,7 +201,7 @@
+ - แบบหน้าจอ: ไม่มี; ตรวจ UI ตาม AC-02-01/AC-02-06 ใน browser ตามวิธีที่ทีมยืนยัน
+ - ต้องทำก่อน: T-08 ถึง T-15
+ - เสร็จเมื่อ: Auth/Regression tests ผ่าน, `npm run build` สำเร็จ, flow UI ที่กำหนดตรวจได้ และไม่มีการอ้างว่า AC-02-05 ผ่านก่อน T-15 เสร็จ
+-- สถานะ: เสร็จ รอทีมตรวจ — `PYTHONPATH=backend:. python -m pytest backend/tests -q` ผ่าน 45 tests; `node --test src/auth/AuthFields.test.js` ผ่าน 4 tests; `npm run build` ผ่าน. Browser E2E: login/resend ตอบ 200 และได้ challenge ID ต่างกัน, ช่อง OTP ว่างและไม่เผยรหัส, verify ด้วย ID ใหม่หลังกรอกรหัสเองและกด Enter ตอบ 200; request login/verify ไม่มี Authorization. ตรวจ token ต่อกับ `/me` (200) และ Feature 003 consumer (201, booking ผูก user ถูกต้อง). T-15 Done แล้ว จึงอ้างหลักฐาน AC-02-05 จาก RTM ตามวิธีที่ยืนยัน; ไม่สร้าง Gherkin Scenario
++- สถานะ: Blocked — หลักฐาน build/E2E เดิมใช้ flow ที่ถูกแทนที่ จึงไม่ยืนยัน AC หลังเปลี่ยน contract. Backend regression ล่าสุด: 119 passed, 1 xfailed, 1 failed โดย `backend/tests/test_register.py::test_AC_01_12_user_row_is_shared_and_auth_accepts_password` ยังคาดหวังว่า Login ของ unverified สำเร็จ ซึ่งขัดกับ flow ใหม่; ไฟล์ Feature 001 ไม่แก้ตามขอบเขต. `npm test` ใช้ไม่ได้เพราะ environment ไม่มี `vitest`; Auth tests ผ่านด้วย `node --test` และ `npm run build` ผ่าน. รอทีม Register ปรับ handoff/test แล้วจึงตรวจ regression และ Browser E2E ใหม่
+ 
+  |
+ 
+@@ -215,7 +221,7 @@ AC-02-05 ไม่มี Gherkin Scenario เพราะเป็นข้อ
+ 
+ | AC ID | task ที่ตรวจ AC นี้ |
+ |---|---|
+-| AC-02-01 | T-09 (ส่วน Backend เท่านั้น), T-10 ของ Register (navigation), T-13 (login/OTP UI), T-16 |
++| AC-02-01 | T-09 (API behavior), T-10 ของ Register (navigation เท่านั้น), T-13 (Auth UI/handoff), T-16 |
+ | AC-02-02 | T-08, T-12, T-16 |
+ | AC-02-03 | T-11, T-16 |
+ | AC-02-04 | T-14, T-16 |
+@@ -235,13 +241,13 @@ AC-02-05 ไม่มี Gherkin Scenario เพราะเป็นข้อ
+ | ID | คำถาม/สถานะจาก spec.md | task ที่รอ |
+ |---|---|---|
+ | Q-02-01 | แหล่ง REQ ต้นฉบับ, PB/EV และรหัสทางการอยู่ที่ใด; `docs/srs/catalogue.md` ไม่มีใน workspace | T-01 |
+-| Q-02-02 | ตอบแล้ว: method/path คือ `POST /api/auth/login`, `POST /api/auth/verify-otp`, `GET /api/auth/me`; `/me` อยู่ใน scope | ไม่มี blocker |
++| Q-02-02 | ตอบแล้ว: method/path คือ Login, create/resend OTP, verify OTP และ `/me` ตาม API inventory | ไม่มี blocker |
+ | Q-02-03 | ตอบแล้ว: contract/validation ของ login และ verify OTP; `/me` ใช้ Bearer token และส่งเฉพาะ fields ที่ยืนยัน | T-02 Done; ใช้เป็น contract สำหรับ T-09 ถึง T-14 |
+ | Q-02-04 | ตอบแล้ว: `otp_challenge_id` แยกชุด; นับผิดแยกชุดและผิดครบ 3 ครั้งปิดเฉพาะชุดนั้น | T-03 Done; ใช้เป็นเกณฑ์ T-10/T-11 |
+-| Q-02-05 | ตอบแล้ว: token mapping `token → user_id`, อายุเท่า process, ไม่มี refresh/revoke และใช้ไม่ได้หลัง restart | T-04 Done; ใช้ใน T-11/T-12/T-14 |
++| Q-02-05 | ตอบแล้ว: token ออกหลัง verified Login เท่านั้น; mapping `token → user_id`, อายุเท่า process, ไม่มี refresh/revoke และใช้ไม่ได้หลัง restart | T-04 Done; ใช้ใน T-09/T-12/T-14 |
+ | Q-02-06 | ตอบแล้ว: `/api/auth/me` ส่งเฉพาะ `id`, `name`, `email`; ไม่ส่ง `phone`, `password`, OTP, token หรือ `is_verified` | ใช้ใน T-02/T-12 |
+-| Q-02-07 | ตอบแล้ว: OTP ที่ถูกต้องครั้งแรกตั้ง `users.is_verified=true`; login ครั้งต่อไปเมื่อเป็น `true` ใช้ email/password โดยไม่ทำ OTP ซ้ำ | T-05 บันทึกคำตอบแล้ว |
++| Q-02-07 | ตอบแล้ว: OTP ที่ถูกต้องครั้งแรกตั้ง `users.is_verified=true`; verified Login ใช้ email/password โดยไม่ทำ OTP ซ้ำ | T-05 บันทึกคำตอบแล้ว |
+ | Q-02-08 | ตอบแล้ว: อนุมัติผู้ใช้ mock ที่มีอยู่ทั้งหมดใน `backend/app/mock_db.py` เป็น fixtures | ไม่มี blocker จาก Q-02-08; ใช้ใน T-05/T-09 |
+ | Q-02-09 | ตอบแล้ว: status และ `detail` error body ของ login, OTP และ `/me` ระบุใน API contract ของ spec | T-02 Done; ใช้ใน T-09 ถึง T-13 |
+-| Q-02-10 | ตอบบางส่วน: Login เป็นหน้าแรก; ปุ่มสมัครสมาชิกและลิงก์กลับ Login (label “เข้าสู่ระบบ” ตาม UI-01-01) ยืนยันแล้ว; labels/layout/UI ID/mockup Auth อื่นยังเปิดแต่ไม่ขวาง flow ขั้นต่ำ | Register navigation ตรวจใน T-10 ของ Register; T-13/T-16 ครอบคลุม login/OTP |
++| Q-02-10 | ตอบบางส่วน: Login เป็นหน้าแรก; ปุ่มสมัครสมาชิกและลิงก์กลับ Login (label “เข้าสู่ระบบ” ตาม UI-01-01) ยืนยันแล้ว; labels/layout/UI ID/mockup Auth อื่นยังเปิด | Register navigation ตรวจใน T-10; T-13/T-16 ถูก Blocked จาก handoff Register ไม่ใช่รายละเอียด UI นี้ |
+ | Q-02-11 | owner/PO/ผู้ตรวจและเวลาที่จะอนุมัติ version/Baseline ยังไม่กำหนด | ไม่มีงาน implement; คงเอกสารเป็น Draft จนกว่าทีมกำหนด
+\ No newline at end of file
