@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AuthFlow } from "./auth/AuthFields.jsx";
 import RegisterPage from "./register/RegisterPage.jsx";
 import BookingPage from "./booking/BookingPage.jsx";
+import CancellationDemo from "./cancellation/CancellationDemo.jsx";
 import PaymentPage from "./payment/PaymentPage.jsx";
 import BookingOverviewPage from "./tracking/pages/BookingOverviewPage.jsx";
 import CustomerTrackingPage from "./tracking/pages/CustomerTrackingPage.jsx";
@@ -18,6 +19,7 @@ const FIND_DRIVER_MS = Number(import.meta.env.VITE_DEMO_FIND_DRIVER_MS) || 30000
 export default function App({ onAuthenticated } = {}) {
   const [token, setToken] = useState(null);
   const [bookingId, setBookingId] = useState(null);
+  const [showCancellation, setShowCancellation] = useState(false);
   const [booking, setBooking] = useState(null); // ข้อมูลการจองที่สร้างจริง (ใช้วันเวลาและพิกัดรับ-ส่ง)
   const [view, setView] = useState(null); // null | "overview" | "track"
   const [route, setRoute] = useState(null); // เส้นทางตามถนนจากจุดรับไปจุดส่ง (ใช้ทั้งคนขับจำลองและเส้นบนแผนที่)
@@ -37,7 +39,7 @@ export default function App({ onAuthenticated } = {}) {
 
   if (isRegisterRoute) {
     return (
-      <main className="wrap">
+      <main className="wrap" data-testid="app-root">
         <header className="top">
           <h1>Khonย้าย</h1>
         </header>
@@ -49,7 +51,7 @@ export default function App({ onAuthenticated } = {}) {
   // ยังไม่ผ่าน Auth → แสดง Login/OTP
   if (!token) {
     return (
-      <main className="wrap">
+      <main className="wrap" data-testid="app-root">
         <header className="top">
           <h1>Khonย้าย</h1>
         </header>
@@ -110,10 +112,29 @@ export default function App({ onAuthenticated } = {}) {
     },
   };
 
+  if (showCancellation) {
+    return (
+      <main className="wrap" data-testid="app-root">
+        <header className="top">
+          <h1>Khonย้าย</h1>
+          <span className="tag">Cancellation Demo</span>
+        </header>
+        <CancellationDemo />
+        <button
+          type="button"
+          className="link"
+          onClick={() => setShowCancellation(false)}
+        >
+          กลับไปยัง flow หลัก
+        </button>
+      </main>
+    );
+  }
+
   if (bookingId) {
     if (view === "track") {
       return (
-        <main className="wrap">
+        <main className="wrap" data-testid="app-root">
           <CustomerTrackingPage
             jobId={bookingId}
             api={trackingMapApi}
@@ -130,7 +151,7 @@ export default function App({ onAuthenticated } = {}) {
     }
     if (view === "overview") {
       return (
-        <main className="wrap">
+        <main className="wrap" data-testid="app-root">
           <BookingOverviewPage jobId={bookingId} api={overviewApi} onTrack={() => setView("track")} />
           <button type="button" className="link" onClick={() => setView(null)}>
             กลับไปหน้าชำระมัดจำ
@@ -139,21 +160,29 @@ export default function App({ onAuthenticated } = {}) {
       );
     }
     return (
-      <main className="wrap">
+      <main className="wrap" data-testid="app-root">
         <PaymentPage bookingId={bookingId} onTrackStatus={openOverview} />
         <button type="button" className="link" onClick={() => { setView(null); setBookingId(null); }}>
           กลับไปหน้าจองรถขนย้าย
+        </button>
+        <button type="button" className="link" onClick={() => setShowCancellation(true)}>
+          เปิด Cancellation Demo
         </button>
       </main>
     );
   }
 
   return (
-    <BookingPage
-      onBooked={(id, created) => {
-        setBookingId(id);
-        setBooking(created);
-      }}
-    />
+    <div data-testid="app-root">
+      <BookingPage
+        onBooked={(id, created) => {
+          setBookingId(id);
+          setBooking(created);
+        }}
+      />
+      <button type="button" className="link" onClick={() => setShowCancellation(true)}>
+        เปิด Cancellation Demo
+      </button>
+    </div>
   );
 }
