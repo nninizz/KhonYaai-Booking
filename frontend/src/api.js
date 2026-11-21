@@ -54,6 +54,8 @@ export const seedBooking = (distanceKm) =>
 
 // รองรับ REQ-FN-305, REQ-FN-302, REQ-FN-304 (T-12)
 export const getPlaces = () => api("/places");
+export const cancelBooking = (bookingId, confirmWarning = false) =>
+  api(`/bookings/${bookingId}/cancel`, { method: "POST", body: { confirm_warning: confirmWarning } });
 export const getBookingQuote = (body) =>
   api("/bookings/quote", { method: "POST", body });
 export const createBooking = (body) =>

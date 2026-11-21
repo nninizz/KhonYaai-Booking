@@ -5,33 +5,35 @@ import BookingPage from "./booking/BookingPage.jsx";
 import PaymentPage from "./payment/PaymentPage.jsx";
 import CancellationDemo from "./cancellation/CancellationDemo.jsx";
 
-// รองรับ REQ-FN-201, REQ-FN-203, REQ-FN-205: เปิด Auth เป็นหน้าเริ่มต้นและส่ง token ให้ผู้เรียก
-// รองรับ REQ-FN-304, REQ-IF-301 (T-12): หลัง Auth สำเร็จเข้าหน้าจอง แล้วส่ง bookingId ต่อให้หน้าชำระมัดจำ
-// รองรับ REQ-FN-DRAFT-CAN-05: เปิด Cancellation Demo (ข้อมูลจำลอง) จากหน้าจอง โดยไม่กระทบ flow จอง → ชำระมัดจำ
+// flow: Register → Login/OTP → จอง ③ → ชำระมัดจำ ④ → รายละเอียดการจอง + ยกเลิก ⑥ (ยกเลิกเป็น Demo)
+// รองรับ REQ-FN-201, REQ-FN-203, REQ-FN-205, REQ-FN-304, REQ-IF-301, REQ-FN-DRAFT-CAN-05
 export default function App({ onAuthenticated } = {}) {
   const [token, setToken] = useState(null);
-  const [bookingId, setBookingId] = useState(null);
-  const [view, setView] = useState("booking"); // "booking" | "cancellation-demo"
+  const [booking, setBooking] = useState(null);   // response 201 ของ ③
+  const [view, setView] = useState("booking");    // booking | payment | details
   const isRegisterRoute = window.location.pathname === "/register";
+
+  const header = (
+    <header className="top">
+      <h1>Khonย้าย</h1>
+    </header>
+  );
+  const reset = () => { setBooking(null); setView("booking"); };
 
   if (isRegisterRoute) {
     return (
-      <main className="wrap">
-        <header className="top">
-          <h1>Khonย้าย</h1>
-        </header>
+      <main className="wrap" data-testid="app-root">
+        {header}
         <RegisterPage />
       </main>
     );
   }
 
-  // ยังไม่ผ่าน Auth → แสดง Login/OTP
+  // ยังไม่ผ่าน Auth → Login/OTP
   if (!token) {
     return (
-      <main className="wrap">
-        <header className="top">
-          <h1>Khonย้าย</h1>
-        </header>
+      <main className="wrap" data-testid="app-root">
+        {header}
         <AuthFlow
           onAuthenticated={(t) => {
             setToken(t);
@@ -42,40 +44,39 @@ export default function App({ onAuthenticated } = {}) {
     );
   }
 
-  // Cancellation Demo (⑥) — ใช้ข้อมูลจำลอง ไม่เรียก backend
-  if (view === "cancellation-demo") {
+  // ชำระมัดจำ (④) → เมื่อ CONFIRMED ไปหน้ารายละเอียดการจองอัตโนมัติ
+  if (view === "payment" && booking) {
     return (
-      <main className="wrap">
-        <header className="top">
-          <h1>Khonย้าย</h1>
-          <span className="tag">Cancellation Demo</span>
-        </header>
-        <CancellationDemo />
-        <button type="button" className="link" onClick={() => setView("booking")}>
+      <main className="wrap" data-testid="app-root">
+        <PaymentPage bookingId={booking.id} onConfirmed={() => setView("details")} />
+        <button type="button" className="link" onClick={reset}>
           กลับไปหน้าจองรถขนย้าย
         </button>
       </main>
     );
   }
 
-  // จองสำเร็จ → หน้าชำระมัดจำของ ④
-  if (bookingId) {
+  // รายละเอียดการจอง + ทางยกเลิก (⑥)
+  if (view === "details" && booking) {
     return (
-      <main className="wrap">
-        <PaymentPage bookingId={bookingId} />
-        <button type="button" className="link" onClick={() => setBookingId(null)}>
-          กลับไปหน้าจองรถขนย้าย
+      <main className="wrap" data-testid="app-root">
+        {header}
+        <CancellationDemo booking={booking} />
+        <button type="button" className="link" onClick={reset}>
+          จองรถขนย้ายใหม่
         </button>
       </main>
     );
   }
 
   return (
-    <>
-      <BookingPage onBooked={(id) => setBookingId(id)} />
-      <button type="button" className="link" onClick={() => setView("cancellation-demo")}>
-        ดูหน้าจอยกเลิกการจอง (Demo)
-      </button>
-    </>
+    <div data-testid="app-root">
+      <BookingPage
+        onBooked={(id, created) => {
+          setBooking(created ?? { id });
+          setView("payment");
+        }}
+      />
+    </div>
   );
 }
