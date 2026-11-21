@@ -1,69 +1,70 @@
 # Feature 002 Auth — Draft acceptance criteria (Gherkin)
 # ไม่พบ UC ID ใน spec.md จึงยังไม่ระบุ UC ID
-# BR-02-01 ถึง BR-02-03 มีใน rules.md แต่ยังเป็น "AI เสนอ รอทีมยืนยัน"
-# backend/app/auth.py ปัจจุบันมีเพียง get_current_user; ยังไม่พบ login/verify-otp endpoint
-# AC-02-05 เป็นข้อจำกัดเชิงเทคนิค/ข้อมูล ไม่มี Then ที่เป็นพฤติกรรมผู้ใช้โดยไม่เพิ่มข้อกำหนดใหม่
+# BR-02-01 ถึง BR-02-03 ยังเป็น "AI เสนอ รอทีมยืนยัน"
+# AC-02-05 เป็นข้อจำกัดเชิงเทคนิค/ข้อมูล จึงไม่มี Gherkin Scenario
 # Scenarios เป็นเกณฑ์ร่าง ไม่ใช่หลักฐานว่าโค้ดปัจจุบันรองรับแล้ว
 
-Feature: Auth — ผู้จองเข้าสู่ระบบและยืนยันตัวตน
-  ผู้จองเข้าสู่ระบบด้วย email และ password; บัญชีที่ยังไม่ยืนยันต้องยืนยัน OTP
-  ที่จำลองส่งทาง SMS ส่วนบัญชีที่ยืนยันแล้วไม่ต้องทำ OTP ซ้ำ
+Feature: Auth — ผู้จองยืนยันบัญชีและเข้าสู่ระบบ
+  ผู้จองเริ่มยืนยัน OTP จาก handoff หลังสมัคร; การยืนยันสำเร็จกลับไปหน้า Login
+  และจะออก token เฉพาะเมื่อ login ด้วยบัญชีที่ยืนยันแล้ว
 
   Background:
     Given มีบัญชีผู้จองใน mock data ที่มี email, password และ phone
 
   @AC-02-01 @REQ-FN-201
-  Scenario: Start at login and navigate to registration and back
-    Given ผู้จองเปิดแอปที่หน้า "/"
-    Then UI แสดงฟอร์ม Register
-    And หน้า Register แสดงปุ่ม "เข้าสู่ระบบ" ไปที่ "/login"
-    When ผู้จองเลือกปุ่ม "เข้าสู่ระบบ"
-    Then UI ไปที่หน้า "/login" พร้อมฟอร์ม email และ password
-    And ฟอร์ม Login แสดงปุ่ม "สมัครสมาชิก" ไปที่ "/register"
-    When ผู้จองเลือกปุ่ม "สมัครสมาชิก"
-    Then UI ไปที่หน้า "/register" พร้อมฟอร์ม Register
-    And หน้า Register แสดงลิงก์ข้อความ "/login" ไปที่ "/login"
-    When ผู้จองเลือกลิงก์ "/login"
-    Then UI กลับไปที่หน้า "/login" พร้อมฟอร์ม email และ password
-
-  @AC-02-01 @REQ-FN-201 @REQ-FN-205 @BR-02-02
-  Scenario: เริ่ม login และกรอก OTP โดยไม่เปิดเผยรหัส mock บน UI
-    Given ผู้จองยังไม่ได้ยืนยัน OTP
-    When ผู้จองส่ง email และ password ที่ใช้เข้าสู่ระบบ
+  Scenario: เริ่ม OTP จาก handoff หลังสมัครและกลับหน้า Login เมื่อยืนยันสำเร็จ
+    Given Register ส่ง registration_proof แบบ opaque ที่ผูกกับบัญชีและยังไม่เคยใช้
+    When Auth แลก registration_proof เป็น OTP challenge
     Then ระบบจำลองการส่ง OTP ไปยัง phone ของผู้จองโดยไม่เรียก SMS provider ภายนอก
-    And API ยังคงตอบ `mock_otp` ตาม contract
+    And API ตอบ otp_challenge_id และ mock_otp ตาม contract
     And UI แสดงช่อง OTP ว่างโดยไม่แสดงค่ารหัสหรือคำใบ้/placeholder ที่เผยรหัส
     When ผู้จองพิมพ์ OTP 6 หลักเองและกด Enter
-    Then UI ส่ง `otp_challenge_id` และ OTP ที่กรอกไปยืนยันตาม API contract
+    Then Auth ตั้ง users.is_verified เป็น true โดยไม่ออก token
+    And UI กลับไปหน้า Login
 
   @AC-02-01 @REQ-FN-201 @REQ-FN-203
-  Scenario: Login สำเร็จโดยไม่ยืนยัน OTP ซ้ำเมื่อบัญชียืนยันแล้ว
+  Scenario: Login บัญชีที่ยืนยันแล้วและไปหน้า Booking
     Given ผู้จองมีบัญชีที่ users.is_verified เป็น true
-    When ผู้จองส่ง email และ password ที่ใช้เข้าสู่ระบบ
-    Then ระบบให้ login สำเร็จและมี token สำหรับใช้ต่อ
-    And ระบบไม่กำหนดให้ผู้จองยืนยัน OTP ซ้ำ
+    When ผู้จองส่ง email และ password ที่ถูกต้อง
+    Then ระบบออก token สำหรับบัญชี
+    And UI พาไปหน้า Booking โดยไม่ขอ OTP ซ้ำ
+
+  @AC-02-01 @REQ-FN-201
+  Scenario: ปฏิเสธ Login ของบัญชีที่ยังไม่ยืนยันโดยไม่เริ่ม OTP
+    Given ผู้จองมีบัญชีที่ users.is_verified ไม่เป็น true
+    When ผู้จองส่ง email และ password ที่ถูกต้อง
+    Then API ตอบ HTTP 403 และ detail "Account verification required"
+    And ระบบไม่ออก token และไม่สร้าง OTP challenge
+
+  @AC-02-01 @REQ-FN-201
+  Scenario: ปฏิเสธ registration proof ที่ผิดหรือใช้แล้ว
+    Given registration_proof ไม่ถูกต้องหรือเคยใช้เริ่ม OTP challenge แล้ว
+    When Auth รับคำขอเริ่ม OTP
+    Then API ตอบ HTTP 400 และ detail "Invalid registration proof"
+    And ระบบไม่สร้าง OTP challenge
 
   @AC-02-02 @REQ-FN-202
   Scenario: ตรวจ method และ path ของ endpoint Auth
     Given ระบบ Auth ถูกเริ่มทำงาน
     When ตรวจสอบรายการ route ที่ Auth ลงทะเบียน
     Then พบ method และ path ต่อไปนี้
-      | Method | Path                   |
-      | POST   | /api/auth/login        |
-      | POST   | /api/auth/verify-otp   |
-      | GET    | /api/auth/me           |
+      | Method | Path                                                  |
+      | POST   | /api/auth/login                                       |
+      | POST   | /api/auth/otp-challenges                              |
+      | POST   | /api/auth/otp-challenges/{otp_challenge_id}/resend    |
+      | POST   | /api/auth/verify-otp                                  |
+      | GET    | /api/auth/me                                          |
 
   @AC-02-03 @REQ-FN-203 @BR-02-01
-  Scenario: ยืนยัน OTP สำเร็จโดยไม่ต้องมี token ก่อน
+  Scenario: ยืนยัน OTP สำเร็จโดยไม่ออก token
     Given ผู้จองยังไม่เคยยืนยัน OTP, ยังไม่มี token และมี OTP ที่ยังไม่หมดอายุ
     When ผู้จองส่ง OTP "123456" โดยไม่แนบ token
-    Then ระบบยืนยันตัวตนสำเร็จ
-    And ระบบตั้ง users.is_verified เป็น true
-    And flow login สำเร็จและมี token สำหรับใช้ต่อ
+    Then ระบบตั้ง users.is_verified เป็น true
+    And API ตอบ {"is_verified":true} โดยไม่มี token
 
   @AC-02-04 @REQ-FN-204
-  Scenario: Feature อื่นใช้ token เพื่อตรวจผู้จองปัจจุบัน
-    Given ผู้จองได้รับ token หลังยืนยัน OTP สำเร็จ
+  Scenario: Feature อื่นใช้ token ที่ได้จาก Login
+    Given ผู้จองได้รับ token หลัง login ด้วยบัญชีที่ยืนยันแล้ว
     When Feature อื่นส่ง token ให้ระบบตรวจสอบผู้ใช้ปัจจุบัน
     Then ระบบระบุผู้จองที่ผูกกับ token นั้นให้ Feature อื่นได้
 
@@ -91,15 +92,12 @@ Feature: Auth — ผู้จองเข้าสู่ระบบและ�
     Given ผู้จองมี OTP ชุดเดิมที่ยังไม่หมดอายุ
     When ผู้จองขอ OTP ใหม่
     Then ระบบจำลองการส่ง OTP ไปยัง phone ของผู้จองโดยไม่เรียก SMS provider ภายนอก
+    And API ตอบ otp_challenge_id ใหม่และ mock_otp ตาม contract
     And UI ยังคงแสดงช่อง OTP ว่างโดยไม่เปิดเผยค่ารหัส mock
     And OTP ชุดเดิมยังยืนยันได้จนกว่าจะหมดอายุ
     And ผู้จองยังยืนยันตัวตนได้ด้วย OTP ชุดใหม่โดยไม่ใช้จำนวนครั้งที่กรอกผิดของชุดเดิม
 
-# คำถามค้าง (ห้ามเดา contract หรือผลตอบกลับ):
-# - ไม่มี UC ID ที่ยืนยันแล้ว; BR-02-01 ถึง BR-02-03 ต้องรอทีมยืนยัน
-# - ยังไม่มีข้อกำหนด HTTP status หรือข้อความ/รูปแบบ error สำหรับ OTP ที่ผิด หมดอายุ หรือใช้ครบจำนวนครั้ง
-# - ยืนยันจุดเริ่มนับอายุ 15 นาทีเมื่อ mock SMS/OTP แสดงผลแล้ว; วิธีแยก OTP หลายคำขอและนับจำนวนครั้งผิดแยกชุดยังไม่กำหนด
-# - Token ใช้ mapping ปัจจุบัน token → user_id; อายุ/หมดอายุและ lifecycle อื่นยังไม่กำหนด
-# - รายละเอียด schema, validation, error response และ HTTP status ยังไม่กำหนด
-# - Method/path ยืนยันแล้ว แต่ flow login/OTP ยังไม่มีในโค้ดปัจจุบัน
-# - AC-02-05 ไม่มี Scenario ใน Gherkin เนื่องจากเป็นข้อจำกัดเชิงเทคนิค/ข้อมูล; ทีมยืนยันให้ตรวจ config/dependency และ mock data ใน RTM
+# ข้อมูลที่ Register ต้องส่งต่อ:
+# - backend registration response ต้องมี registration_proof opaque ที่ผูกกับ user_id และใช้ได้ครั้งเดียว
+# - RegisterPage ต้องส่ง proof ไป POST /api/auth/otp-challenges แล้วนำทางไป Auth พร้อม otp_challenge_id
+# - รายละเอียดไฟล์ฝั่ง Register ที่ต้องเปลี่ยนยังสรุปใน spec.md; ห้ามแก้ Feature 001 ในงานนี้

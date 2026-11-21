@@ -38,7 +38,43 @@ export async function api(path, { method = "GET", body, auth = true } = {}) {
 export const authLogin = (body) =>
   api("/auth/login", { method: "POST", body, auth: false });
 
-// รองรับ REQ-FN-203, REQ-FN-205: verify OTP ไม่ต้องใช้ token ก่อนเรียก
+// รองรับ REQ-FN-201, REQ-FN-205: แลกหลักฐานสมัครเป็น challenge และเก็บ handoff ชั่วคราวให้หน้า Auth
+export async function startRegistrationOtp(registrationProof) {
+  const result = await api("/auth/otp-challenges", {
+    method: "POST",
+    body: { registration_proof: registrationProof },
+    auth: false,
+  });
+  if (!result.otp_challenge_id) {
+    throw new Error("รูปแบบผลตอบกลับจากระบบไม่ถูกต้อง");
+  }
+  window.sessionStorage.setItem("authOtpChallengeId", result.otp_challenge_id);
+  return result;
+}
+
+// รองรับ REQ-FN-201: อ่าน challenge ID ที่ส่งต่อจาก registration handoff
+export function readOtpChallengeHandoff() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  return window.sessionStorage.getItem("authOtpChallengeId") || "";
+}
+
+// รองรับ REQ-FN-201: ล้าง handoff หลัง Auth รับค่าไปแล้ว
+export function clearOtpChallengeHandoff() {
+  if (typeof window !== "undefined") {
+    window.sessionStorage.removeItem("authOtpChallengeId");
+  }
+}
+
+// รองรับ REQ-FN-205: ขอ OTP ชุดใหม่โดยไม่เริ่มจาก Login และไม่แนบ token
+export const resendOtp = (otpChallengeId) =>
+  api(`/auth/otp-challenges/${encodeURIComponent(otpChallengeId)}/resend`, {
+    method: "POST",
+    auth: false,
+  });
+
+// รองรับ REQ-FN-203, REQ-FN-205: verify OTP ไม่ต้องใช้ token ก่อนยืนยัน
 export const verifyOtp = (body) =>
   api("/auth/verify-otp", { method: "POST", body, auth: false });
 
@@ -54,6 +90,8 @@ export const seedBooking = (distanceKm) =>
 
 // รองรับ REQ-FN-305, REQ-FN-302, REQ-FN-304 (T-12)
 export const getPlaces = () => api("/places");
+
+// ⑥ ยกเลิกการจอง (ข้อเสนอของ AI รอทีมยืนยัน path และ body)
 export const cancelBooking = (bookingId, confirmWarning = false) =>
   api(`/bookings/${bookingId}/cancel`, { method: "POST", body: { confirm_warning: confirmWarning } });
 export const getBookingQuote = (body) =>
@@ -177,8 +215,10 @@ export function validateMockBookingState(scheduledAt, pickup, dropoff, itemSize)
   if (!itemSize) return "กรอกข้อมูลไม่ครบ";
 
   const scheduled = new Date(scheduledAt);
-  if (Number.isNaN(scheduled.getTime()) || scheduled.getTime() - Date.now() < 4 * 60 * 60 * 1000) {
-    return "จองล่วงหน้าไม่ถึง 4 ชั่วโมง";
+  // กฎ BR-02 ค่าปกติ 4 ชั่วโมง; VITE_DEMO_MIN_ADVANCE_HOURS ใช้เฉพาะตอนเดโม
+  const minHours = Number(import.meta.env.VITE_DEMO_MIN_ADVANCE_HOURS) || 4;
+  if (Number.isNaN(scheduled.getTime()) || scheduled.getTime() - Date.now() < minHours * 60 * 60 * 1000) {
+    return "จองล่วงหน้าไม่ถึง " + minHours + " ชั่วโมง";
   }
   return "";
 }

@@ -1,8 +1,10 @@
 import re
+import secrets
 from collections.abc import Mapping
 from typing import Literal
 
 from app import mock_db
+from app.auth import bind_registration_proof
 
 DuplicateField = Literal["email", "phone"]
 
@@ -46,7 +48,7 @@ def find_duplicate(email: str, phone: str) -> DuplicateField | None:
 
 
 def create_user(data: Mapping[str, str]) -> dict[str, int | str | bool]:
-    # รองรับ REQ-FN-101, REQ-FN-104, REQ-DAT-101, REQ-PRV-101
+    # รองรับ REQ-FN-101, REQ-FN-104, REQ-FN-106, REQ-DAT-101, REQ-PRV-101
     email = normalize_email(data["email"])
     phone = normalize_phone(data["phone"])
     duplicate_field = find_duplicate(email, phone)
@@ -62,6 +64,8 @@ def create_user(data: Mapping[str, str]) -> dict[str, int | str | bool]:
         "is_verified": False,
     }
     mock_db.users.append(user)
+    registration_proof = secrets.token_urlsafe(32)
+    bind_registration_proof(registration_proof, user["id"])
 
     return {
         "id": user["id"],
@@ -69,4 +73,5 @@ def create_user(data: Mapping[str, str]) -> dict[str, int | str | bool]:
         "email": user["email"],
         "phone": user["phone"],
         "is_verified": user["is_verified"],
+        "registration_proof": registration_proof,
     }
