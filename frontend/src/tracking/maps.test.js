@@ -30,7 +30,7 @@ describe('การอ่านคีย์จากตัวแปรสภา�
 describe('ไม่มีคีย์จริงใน repo', () => {
   test('env_example_has_empty_maps_key', () => {
     // เสร็จเมื่อ: .env.example มีชื่อตัวแปรแต่ค่าว่าง ไม่มีคีย์จริง
-    const text = readFileSync(resolve(here, '..', '.env.example'), 'utf-8');
+    const text = readFileSync(resolve(here, '..', '..', '.env.example'), 'utf-8');
     const line = text.split('\n').find((l) => l.startsWith(`${MAPS_KEY_ENV_NAME}=`));
     expect(line).toBeDefined();
     expect(line.slice(`${MAPS_KEY_ENV_NAME}=`.length).trim()).toBe('');

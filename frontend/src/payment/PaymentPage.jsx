@@ -22,7 +22,7 @@ function Alert({ ok, title, children }) {
   );
 }
 
-export default function PaymentPage({ bookingId }) {
+export default function PaymentPage({ bookingId, onTrackStatus }) {
   const [info, setInfo] = useState(null);
   const [method, setMethod] = useState("PROMPTPAY_QR");
   const [busy, setBusy] = useState(false);
@@ -102,7 +102,7 @@ export default function PaymentPage({ bookingId }) {
           {/* รอ Q-05: ข้อความและปุ่มของ ⑤ คงไว้ตามเดิมจนกว่าทีมตัดสิน */}
           <div className="done">
             <p>จองสำเร็จ ระบบกำลังหาคนขับในละแวกใกล้เคียง</p>
-            <button className="btn" disabled title="ต่อกับหน้า ⑤ ติดตามสถานะ">ไปหน้าติดตามสถานะ</button>
+            <button className="btn" type="button" onClick={() => onTrackStatus?.()}>ไปหน้าติดตามสถานะ</button>
           </div>
         </>
       )}
