@@ -1,4 +1,5 @@
-# backend ของ 005-tracking (T-01) ตามที่ทีมอนุมัติใน plan.md ข้อ 2 (FastAPI, pytest)
-# รองรับ: REQ-IF-001, REQ-QA-001 (งานพื้นฐานของ backend)
-fastapi==0.115.0
-pytest==8.3.3
+# backend ของ 005-tracking (T-01) รองรับ REQ-IF-001, REQ-QA-001 (ใช้ชุดเวอร์ชันจาก main)
+fastapi==0.115.6
+uvicorn==0.34.0
+pytest==8.3.4
+httpx==0.28.1

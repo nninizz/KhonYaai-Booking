@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancellation - รายละเอียดการจอง</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      color: #172b4d;
+      background: #f3f6f8;
+      font: 16px/1.6 system-ui, "Noto Sans Thai", sans-serif;
+    }
+    .note, main {
+      width: min(100%, 520px);
+      margin: 0 auto 16px;
+    }
+    .note {
+      padding: 12px 16px;
+      border: 1px dashed #b7791f;
+      border-radius: 12px;
+      color: #704b0e;
+      background: #fff8e8;
+      font-size: 14px;
+    }
+    main {
+      padding: 24px;
+      border: 1px solid #d8e0e7;
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 8px 24px #172b4d12;
+    }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    h2 { margin: 24px 0 8px; font-size: 18px; }
+    .lead { margin: 0; color: #526579; }
+    dl { margin: 0; }
+    .row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid #e8edf1;
+    }
+    dt { color: #526579; }
+    dd { margin: 0; font-weight: 600; }
+    .pending {
+      padding: 12px;
+      border: 1px dashed #b7791f;
+      border-radius: 10px;
+      color: #704b0e;
+      background: #fffaf0;
+    }
+    .button {
+      display: block;
+      margin-top: 24px;
+      padding: 13px 18px;
+      border-radius: 12px;
+      color: #fff;
+      background: #a33131;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .footer { margin: 16px 0 0; color: #66788a; font-size: 13px; }
+    @media (max-width: 420px) {
+      body { padding: 14px; }
+      main { padding: 18px; }
+      .row { grid-template-columns: 1fr; gap: 2px; }
+    }
+  </style>
+</head>
+<body>
+  <p class="note">Mockup ชั่วคราว — ยังไม่มี UI ID และยังไม่ผ่านการยืนยันจากทีม</p>
+  <main>
+    <h1>รายละเอียดการจอง</h1>
+    <p class="lead">เวลาคงเหลือก่อนนัดหมาย: <strong data-req="REQ-FN-DRAFT-CAN-05">120 นาที</strong></p>
+
+    <h2>ข้อมูลการจอง</h2>
+    <dl>
+      <div class="row">
+        <dt>วันนัดหมาย</dt>
+        <dd data-req="REQ-FN-DRAFT-CAN-08">รอทีมยืนยัน</dd>
+      </div>
+      <div class="row">
+        <dt>เวลา</dt>
+        <dd data-req="REQ-FN-DRAFT-CAN-08">รอทีมยืนยัน</dd>
+      </div>
+      <div class="row">
+        <dt>สถานที่</dt>
+        <dd data-req="REQ-FN-DRAFT-CAN-08">รอทีมยืนยัน</dd>
+      </div>
+      <div class="row">
+        <dt>ขนาดสิ่งของ</dt>
+        <dd data-req="REQ-FN-DRAFT-CAN-08">รอทีมยืนยัน (เล็ก / กลาง / ใหญ่)</dd>
+      </div>
+    </dl>
+
+    <h2>เงินมัดจำ</h2>
+    <p class="pending" data-req="REQ-FN-DRAFT-CAN-06">ยอดมัดจำ: รอทีมยืนยัน (Q-06-12)</p>
+
+    <a class="button" href="cancellation-refund-result.html#refund" data-req="REQ-FN-DRAFT-CAN-05">ยกเลิกการจอง</a>
+    <p class="footer">กรณีตัวอย่างที่เวลาคงเหลือ 120 นาที ตาม BR-CAN-DRAFT-09</p>
+  </main>
+</body>
+</html>

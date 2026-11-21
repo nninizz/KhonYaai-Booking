@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI-03-01 จองรถขนย้าย</title>
+<style>
+  /* สี ฟอนต์ และระยะห่าง คือส่วนที่ "ยืดหยุ่นได้" ใช้ชุดเดียวกับ UI-04-01 (ชำระมัดจำ) */
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,"Segoe UI","Noto Sans Thai",Tahoma,sans-serif;background:#eef2f4;color:#1e293b;padding:24px;line-height:1.6}
+  .note{max-width:1100px;margin:0 auto 16px;background:#fff7e6;border:1px dashed #d79a2b;border-radius:10px;padding:10px 14px;font-size:14px;color:#7a5414}
+  .row{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+  .state{width:340px}
+  .state h2{font-size:14px;color:#475569;margin:0 0 8px 4px;font-weight:600}
+  .phone{background:#fff;border:1px solid #cbd5e1;border-radius:22px;padding:18px 16px 22px;box-shadow:0 6px 18px rgba(0,0,0,.06);min-height:480px}
+  .bar{font-weight:700;font-size:18px;margin-bottom:14px;color:#115e59}
+  label{display:block;font-size:13px;color:#475569;margin:12px 0 4px}
+  .input{border:1px solid #94a3b8;border-radius:10px;padding:10px 12px;background:#fff;color:#64748b}
+  .input.bad{border-color:#fca5a5;background:#fef2f2}
+  .btn{display:block;text-align:center;background:#0f766e;color:#fff;border-radius:12px;padding:12px;font-weight:700;margin-top:18px}
+  .btn.ghost{background:#fff;color:#0f766e;border:1px solid #0f766e}
+  .alert{border-radius:12px;padding:12px 14px;margin-top:10px;font-size:14px;background:#fef2f2;border:1px solid #fca5a5;color:#991b1b}
+  .alert.ok{background:#f0fdf4;border-color:#86efac;color:#166534}
+  .alert b{display:block;font-size:16px;margin-bottom:2px}
+  .todo{border:2px dashed #d79a2b;border-radius:12px;padding:14px;text-align:center;color:#7a5414;background:#fffaf0;margin-top:12px;font-size:14px}
+  .sum{border:1px solid #e2e8f0;border-radius:12px;padding:8px 12px;font-size:14px;margin-top:12px}
+  .sum div{display:flex;justify-content:space-between;padding:3px 0}
+  .sum .hl{font-weight:700;color:#0f766e}
+  .small{font-size:12px;color:#64748b;margin-top:6px}
+  .tabs{display:flex;gap:6px;margin-top:4px}
+  .tabs span{flex:1;text-align:center;border:1px solid #0f766e;border-radius:10px;padding:8px;font-size:14px;color:#0f766e}
+  .tabs span.on{background:#0f766e;color:#fff}
+  .btn.off{background:#94a3b8}
+  .link{font-size:13px;color:#0f766e;margin-top:6px;border:1px solid #0f766e;border-radius:10px;padding:6px 10px;display:inline-block}
+  .caret{float:right;color:#64748b}
+  .two{display:flex;gap:8px}.two>div{flex:1}
+</style>
+</head>
+<body>
+<!-- MOCKUP สำหรับคุยกับผู้ใช้และ PO ไม่ใช่โค้ดจริง ห้ามคัดลอกไฟล์นี้ไปเป็นโค้ดทั้งไฟล์
+     ฉบับร่างตาม D-03-14 ใช้ธีมเดียวกับ UI-04-01-payment.html -->
+<p class="note">MOCKUP UI-03-01 จองรถขนย้าย | รองรับ REQ-FN-301, REQ-FN-302, REQ-FN-303, REQ-FN-304, REQ-FN-305, REQ-FN-306 | ข้อมูลทั้งหมดเป็นตัวอย่าง | ฉบับร่าง (D-03-14, Q-10)</p>
+<div class="row">
+
+  <section class="state">
+    <h2>สถานะ 1: กรอกข้อมูลการจอง (AC-03-01, AC-03-05)</h2>
+    <div class="phone">
+      <div class="bar">จองรถขนย้าย</div>
+      <label>วันและเวลานัดหมาย</label>
+      <div class="input" data-req="REQ-FN-301">19 พ.ย. 2569 เวลา 16:00</div>
+      <label>จุดรับ</label>
+      <div class="input" data-req="REQ-FN-305">สยามพารากอน<span class="caret">▾ เลือกจากรายการ</span></div>
+      <span class="link" data-req="REQ-FN-306">ใช้ตำแหน่งปัจจุบัน</span>
+      <label>จุดส่ง</label>
+      <div class="input" data-req="REQ-FN-305">เซ็นทรัลเวิลด์<span class="caret">▾ เลือกจากรายการ</span></div>
+      <label>ประเภทสิ่งของ</label>
+      <div class="tabs" data-req="REQ-FN-301"><span>เล็ก</span><span class="on">กลาง</span><span>ใหญ่</span></div>
+      <span class="btn" data-req="REQ-FN-302">ดูราคา</span>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 2: แสดงราคาก่อนยืนยัน (AC-03-02, AC-03-03)</h2>
+    <div class="phone">
+      <div class="bar">สรุปราคา</div>
+      <div class="sum" data-req="REQ-FN-302">
+        <div><span>ระยะทาง</span><span>12.3 กม.</span></div>
+        <div><span>ค่าบริการทั้งหมด</span><span>123 บาท</span></div>
+        <div class="hl"><span>มัดจำ 30%</span><span>37 บาท</span></div>
+        <div><span>ส่วนที่เหลือ 70%</span><span>86 บาท</span></div>
+      </div>
+      <p class="small">ส่วนที่เหลือ 86 บาท จ่ายกับคนขับหลังจบงาน แก้จุดรับหรือจุดส่งแล้วกด "ดูราคา" ใหม่ ราคาจะคำนวณใหม่ (AC-03-03)</p>
+      <span class="btn" data-req="REQ-FN-304">ยืนยันการจอง</span>
+      <span class="btn ghost">กลับไปแก้ข้อมูล</span>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 3: จองไม่ผ่าน (AC-03-04, AC-03-05)</h2>
+    <div class="phone">
+      <div class="bar">จองรถขนย้าย</div>
+      <div class="alert" data-req="REQ-FN-303"><b>จองล่วงหน้าไม่ถึง 4 ชั่วโมง</b>กรุณาเลือกเวลานัดหมายที่ห่างจากตอนนี้อย่างน้อย 4 ชั่วโมง</div>
+      <label>วันและเวลานัดหมาย</label>
+      <div class="input bad" data-req="REQ-FN-303">19 พ.ย. 2569 เวลา 13:00</div>
+      <div class="alert" data-req="REQ-FN-301"><b>กรอกข้อมูลไม่ครบ</b>ช่องที่ขาด: จุดส่ง, ประเภทสิ่งของ</div>
+      <span class="btn ghost">กลับไปแก้ข้อมูล</span>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 4: จองแล้ว ไปชำระมัดจำ (AC-03-01, AC-03-06, AC-03-07)</h2>
+    <div class="phone">
+      <div class="bar">สร้างการจองแล้ว</div>
+      <div class="alert ok" data-req="REQ-FN-304"><b>การจองหมายเลข 101 รอชำระมัดจำ</b>ไปหน้าชำระมัดจำเพื่อดำเนินการต่อ</div>
+      <div class="sum" data-req="REQ-IF-301">
+        <div><span>ค่าบริการทั้งหมด</span><span>123 บาท</span></div>
+        <div class="hl"><span>มัดจำ 30%</span><span>37 บาท</span></div>
+        <div><span>ส่วนที่เหลือ 70%</span><span>86 บาท</span></div>
+      </div>
+      <p class="small">ยอดต้องตรงกับหน้าชำระมัดจำ (UI-04-01)</p>
+      <span class="btn">ไปชำระมัดจำ</span>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 5: อ่านตำแหน่งปัจจุบันไม่ได้ (AC-03-13)</h2>
+    <div class="phone">
+      <div class="bar">จองรถขนย้าย</div>
+      <label>จุดรับ</label>
+      <div class="input bad" data-req="REQ-FN-306">เลือกจุดรับ<span class="caret">▾ เลือกจากรายการ</span></div>
+      <span class="link">ใช้ตำแหน่งปัจจุบัน</span>
+      <div class="alert" data-req="REQ-FN-306"><b>อ่านตำแหน่งปัจจุบันไม่ได้</b>กรุณาเลือกจากรายการ</div>
+      <label>จุดส่ง</label>
+      <div class="input">เลือกจุดส่ง<span class="caret">▾ เลือกจากรายการ</span></div>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 6: แก้ข้อมูลหลังดูราคา ต้องดูราคาใหม่ (AC-03-03)</h2>
+    <div class="phone">
+      <div class="bar">จองรถขนย้าย</div>
+      <label>จุดส่ง</label>
+      <div class="input">อนุสาวรีย์ชัยสมรภูมิ<span class="caret">▾ เลือกจากรายการ</span></div>
+      <p class="small" data-req="REQ-FN-304">แก้วันเวลา จุดรับ จุดส่ง หรือประเภทสิ่งของแล้ว ผลดูราคาเดิมถูกล้าง กรุณากด "ดูราคา" ใหม่ก่อนยืนยัน</p>
+      <span class="btn" data-req="REQ-FN-302">ดูราคา</span>
+      <span class="btn off" data-req="REQ-FN-304">ยืนยันการจอง</span>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 7: สร้างการจองแล้ว แต่เปิดหน้าชำระมัดจำไม่ได้ (AC-03-06)</h2>
+    <div class="phone">
+      <div class="bar">สร้างการจองแล้ว</div>
+      <div class="alert" data-req="REQ-IF-301"><b>การจองหมายเลข 101</b>สร้างการจองแล้ว แต่เปิดหน้าชำระมัดจำไม่ได้ กรุณาลองใหม่</div>
+      <p class="small">กดซ้ำได้ ใช้เลขการจองเดิม ไม่สร้างการจองใหม่</p>
+      <span class="btn" data-req="REQ-IF-301">ไปชำระมัดจำ</span>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ 8: ระยะใกล้เกินไป มัดจำ 0 บาท (AC-03-14)</h2>
+    <div class="phone">
+      <div class="bar">จองรถขนย้าย</div>
+      <div class="alert" data-req="REQ-FN-302"><b>ระยะใกล้เกินไป</b>จุดรับและจุดส่งอยู่ใกล้กันเกินไป กรุณาเลือกจุดใหม่</div>
+      <span class="btn ghost">กลับไปแก้ข้อมูล</span>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

@@ -1,10 +1,12 @@
 {
-  "name": "tracking-frontend",
+  "name": "khonyaai-frontend",
   "private": true,
-  "version": "0.0.0",
-  "description": "frontend ของ 005-tracking (T-02) รองรับ REQ-IF-001, REQ-QA-001",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "vitest run"
   },
   "dependencies": {
@@ -12,6 +14,7 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@vitejs/plugin-react": "4.3.4",
     "jsdom": "25.0.1",
     "vite": "5.4.11",
     "vitest": "2.1.5"
