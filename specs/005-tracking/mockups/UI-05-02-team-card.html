@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI-05-02 การ์ดทีมงานและประเภทรถ</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,"Segoe UI","Noto Sans Thai",Tahoma,sans-serif;background:#eef2f4;color:#1e293b;padding:24px;line-height:1.6}
+  .note{max-width:1100px;margin:0 auto 16px;background:#fff7e6;border:1px dashed #d79a2b;border-radius:10px;padding:10px 14px;font-size:14px;color:#7a5414}
+  .row{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+  .state{width:340px}
+  .state h2{font-size:14px;color:#475569;margin:0 0 8px 4px;font-weight:600}
+  .phone{background:#fff;border:1px solid #cbd5e1;border-radius:22px;padding:18px 16px 22px;box-shadow:0 6px 18px rgba(0,0,0,.06);min-height:480px}
+  .bar{font-weight:700;font-size:18px;margin-bottom:14px;color:#115e59}
+  .card{display:flex;gap:12px;align-items:center;border:1px solid #cbd5e1;border-radius:14px;padding:12px}
+  .avatar{width:64px;height:64px;border-radius:50%;background:#e2e8f0;color:#64748b;display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+  .card p{font-size:14px;margin-bottom:2px}
+  .card p b{color:#115e59}
+  .types{margin-top:12px;font-size:14px}
+  .types li{margin:4px 0 4px 18px}
+  .chip{display:inline-block;border:1px solid #0f766e;color:#0f766e;border-radius:999px;padding:2px 10px;font-size:13px;margin:2px}
+  .ended{border:1px dashed #94a3b8;border-radius:12px;padding:14px;text-align:center;color:#475569;background:#f8fafc;font-size:14px}
+  .todo{border:2px dashed #d79a2b;border-radius:12px;padding:14px;text-align:center;color:#7a5414;background:#fffaf0;margin-top:12px;font-size:14px}
+</style>
+</head>
+<body>
+<!-- MOCKUP สำหรับคุยกับผู้ใช้และ PO ไม่ใช่โค้ดจริง ห้ามคัดลอกไฟล์นี้ไปเป็นโค้ดทั้งไฟล์
+     สร้างจาก docs/mockup-template.html
+     ข้อมูลทั้งหมดเป็นตัวอย่าง ไม่ใช่ข้อมูลจริงของใคร
+     เบอร์และรูปแสดงเฉพาะตั้งแต่จับคู่งานจนงานสิ้นสุด (D-05-29) ไม่แสดงหลังงานสิ้นสุด
+     รายการประเภทรถด้านล่างเป็นรายการเริ่มต้น ยังไม่ครบ รอทีมยืนยัน (D-05-30) -->
+<p class="note">MOCKUP UI-05-02 การ์ดทีมงานและประเภทรถ | รองรับ REQ-IF-001, REQ-QA-001 | ข้อมูลทั้งหมดเป็นตัวอย่าง | ยังไม่ได้ให้ PO ยืนยัน</p>
+<div class="row">
+  <section class="state">
+    <h2>สถานะ: จับคู่งานแล้ว (แสดงการ์ด)</h2>
+    <div class="phone">
+      <div class="bar">คนขับกำลังมาหาคุณ</div>
+      <div class="card" data-req="D-05-28">
+        <div class="avatar" data-req="D-05-29">รูป</div>
+        <div>
+          <p><b>หัวหน้าทีม</b> ชื่อตัวอย่าง</p>
+          <p><b>เบอร์โทร</b> 0800000000</p>
+          <p><b>ทะเบียนรถ</b> กข 1234</p>
+          <p><b>ประเภทรถ</b> รถ 4 ล้อตู้ทึบ</p>
+        </div>
+      </div>
+      <div class="types" data-req="D-05-30">
+        <b>รายการประเภทรถ (เริ่มต้น)</b>
+        <ul>
+          <li>รถ 4 ล้อตู้ทึบ</li>
+          <li>รถ 6 ล้อ</li>
+        </ul>
+        <div class="todo">รอทีมยืนยันรายการประเภทรถที่เหลือ (D-05-30)</div>
+      </div>
+    </div>
+  </section>
+  <section class="state">
+    <h2>สถานะ: งานสิ้นสุดแล้ว (ซ่อนการ์ด)</h2>
+    <div class="phone">
+      <div class="bar">งานสิ้นสุดแล้ว</div>
+      <div class="ended" data-req="D-05-29">ไม่แสดงข้อมูลทีมงานหลังงานสิ้นสุด (D-05-29)</div>
+    </div>
+  </section>
+  <section class="state">
+    <h2>สถานะ: ยังไม่จับคู่งาน (ซ่อนการ์ด)</h2>
+    <div class="phone">
+      <div class="bar">หาคนขับ</div>
+      <div class="ended" data-req="D-05-29">ยังไม่มีคนขับรับงาน ไม่แสดงข้อมูลทีมงาน</div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

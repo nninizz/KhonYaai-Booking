@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI-05-03 ภาพรวมสถานะการจอง</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,"Segoe UI","Noto Sans Thai",Tahoma,sans-serif;background:#eef2f4;color:#1e293b;padding:24px;line-height:1.6}
+  .note{max-width:1100px;margin:0 auto 16px;background:#fff7e6;border:1px dashed #d79a2b;border-radius:10px;padding:10px 14px;font-size:14px;color:#7a5414}
+  .row{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+  .state{width:340px}
+  .state h2{font-size:14px;color:#475569;margin:0 0 8px 4px;font-weight:600}
+  .phone{background:#fff;border:1px solid #cbd5e1;border-radius:22px;padding:18px 16px 22px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+  .bar{font-weight:700;font-size:17px;margin-bottom:10px;color:#115e59}
+  .steps{display:flex;gap:4px;margin:10px 0 14px}
+  .step{flex:1;text-align:center;font-size:11px;color:#94a3b8;border-top:4px solid #e2e8f0;padding-top:4px}
+  .step.done{color:#115e59;border-color:#0f766e}
+  .step.now{color:#0f766e;font-weight:700;border-color:#f59e0b}
+  .addr{display:flex;gap:8px;margin-top:8px;font-size:13px}
+  .addr div{flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px}
+  .addr b{display:block;color:#475569;font-size:12px}
+  .count{display:flex;gap:6px;margin-top:12px;text-align:center}
+  .count div{flex:1;background:#ecfeff;border-radius:10px;padding:8px 0}
+  .count b{display:block;font-size:20px;color:#0e7490}
+  .count span{font-size:11px;color:#475569}
+  .date{font-size:13px;color:#475569;margin-top:6px;text-align:center}
+  .link{display:block;text-align:center;background:#0f766e;color:#fff;border-radius:12px;padding:12px;font-weight:700;margin-top:14px;text-decoration:none}
+  .msg{font-size:14px;color:#334155;margin-top:10px;text-align:center}
+  .todo{border:2px dashed #d79a2b;border-radius:12px;padding:12px;text-align:center;color:#7a5414;background:#fffaf0;margin-top:12px;font-size:13px}
+</style>
+</head>
+<body>
+<!-- MOCKUP สำหรับดูภาพรวมเท่านั้น ไม่ใช่โค้ดจริง ห้ามคัดลอกไฟล์นี้ไปเป็นโค้ดทั้งไฟล์
+     ข้อมูลทั้งหมดเป็นตัวอย่าง
+     4 ขั้น: ต้องชำระเงิน > กำลังจัดหารถและทีมช่าง > รอกำหนดการตามนัด (นับถอยหลัง) > สิ้นสุดงาน
+     "ที่ต้องได้รับ" = สถานะย่อยของขั้นรอกำหนดการ เมื่อถึงวันและเวลานัดแล้วและกำลังไปส่งที่ปลายทาง แสดงลิงก์ไปหน้าแผนที่
+     ฟีเจอร์เจ้าของยังไม่ทราบ (Q-32) จึงยังไม่มี data-req -->
+<p class="note">MOCKUP UI-05-03 ภาพรวมสถานะการจอง | ข้อมูลทั้งหมดเป็นตัวอย่าง | ฟีเจอร์เจ้าของยังไม่ทราบ รอ Q-32 | ยังไม่ได้ให้ PO ยืนยัน</p>
+<div class="row">
+
+  <section class="state">
+    <h2>สถานะ: ต้องชำระเงิน</h2>
+    <div class="phone">
+      <div class="bar">การจองของคุณ (ตัวอย่าง)</div>
+      <div class="steps">
+        <div class="step now">ต้องชำระเงิน</div>
+        <div class="step">จัดหารถและทีมช่าง</div>
+        <div class="step">รอกำหนดการ</div>
+        <div class="step">สิ้นสุดงาน</div>
+      </div>
+      <div class="addr">
+        <div><b>จุดรับของ</b>ที่อยู่ตัวอย่าง A</div>
+        <div><b>ปลายทาง</b>ที่อยู่ตัวอย่าง B</div>
+      </div>
+      <div class="msg">ชำระเงินสำเร็จ (ข้อมูลจำลอง)</div>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ: กำลังจัดหารถและทีมช่าง</h2>
+    <div class="phone">
+      <div class="bar">การจองของคุณ (ตัวอย่าง)</div>
+      <div class="steps">
+        <div class="step done">ต้องชำระเงิน</div>
+        <div class="step now">จัดหารถและทีมช่าง</div>
+        <div class="step">รอกำหนดการ</div>
+        <div class="step">สิ้นสุดงาน</div>
+      </div>
+      <div class="addr">
+        <div><b>จุดรับของ</b>ที่อยู่ตัวอย่าง A</div>
+        <div><b>ปลายทาง</b>ที่อยู่ตัวอย่าง B</div>
+      </div>
+      <div class="msg">กำลังจัดหารถและทีมช่างให้คุณ</div>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ: รอกำหนดการตามนัด (นับถอยหลัง)</h2>
+    <div class="phone">
+      <div class="bar">การจองของคุณ (ตัวอย่าง)</div>
+      <div class="steps">
+        <div class="step done">ต้องชำระเงิน</div>
+        <div class="step done">จัดหารถและทีมช่าง</div>
+        <div class="step now">รอกำหนดการ</div>
+        <div class="step">สิ้นสุดงาน</div>
+      </div>
+      <div class="addr">
+        <div><b>จุดรับของ</b>ที่อยู่ตัวอย่าง A</div>
+        <div><b>ปลายทาง</b>ที่อยู่ตัวอย่าง B</div>
+      </div>
+      <div class="count">
+        <div><b>02</b><span>วัน</span></div>
+        <div><b>05</b><span>ชั่วโมง</span></div>
+        <div><b>30</b><span>นาที</span></div>
+      </div>
+      <div class="date">นัดขนย้าย 25 พฤศจิกายน 2569 (ตัวอย่าง)</div>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ: ที่ต้องได้รับ (ถึงเวลานัดแล้ว)</h2>
+    <div class="phone">
+      <div class="bar">การจองของคุณ (ตัวอย่าง)</div>
+      <div class="steps">
+        <div class="step done">ต้องชำระเงิน</div>
+        <div class="step done">จัดหารถและทีมช่าง</div>
+        <div class="step now">รอกำหนดการ</div>
+        <div class="step">สิ้นสุดงาน</div>
+      </div>
+      <div class="addr">
+        <div><b>จุดรับของ</b>ที่อยู่ตัวอย่าง A</div>
+        <div><b>ปลายทาง</b>ที่อยู่ตัวอย่าง B</div>
+      </div>
+      <div class="msg">ถึงเวลานัดแล้ว กำลังขนย้ายไปปลายทาง</div>
+      <a class="link" href="#">ติดตามสถานะ</a>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>สถานะ: สิ้นสุดงาน</h2>
+    <div class="phone">
+      <div class="bar">การจองของคุณ (ตัวอย่าง)</div>
+      <div class="steps">
+        <div class="step done">ต้องชำระเงิน</div>
+        <div class="step done">จัดหารถและทีมช่าง</div>
+        <div class="step done">รอกำหนดการ</div>
+        <div class="step now">สิ้นสุดงาน</div>
+      </div>
+      <div class="addr">
+        <div><b>จุดรับของ</b>ที่อยู่ตัวอย่าง A</div>
+        <div><b>ปลายทาง</b>ที่อยู่ตัวอย่าง B</div>
+      </div>
+      <div class="msg">งานขนย้ายเสร็จสิ้นแล้ว</div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
