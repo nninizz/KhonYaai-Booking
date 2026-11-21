@@ -6,7 +6,37 @@ const DEMO_DETAILS = [
   ["ขนาดสิ่งของ", "ข้อมูลจำลอง"],
 ];
 
-export default function BookingDetail({ minutesRemaining, onRequestCancellation }) {
+const SIZE_LABEL = { SMALL: "เล็ก", MEDIUM: "กลาง", LARGE: "ใหญ่" };
+
+// ถ้ามีการจองจริงให้แสดงข้อมูลจริง ไม่เช่นนั้นใช้ข้อมูลจำลองเดิม
+function detailsOf(booking) {
+  if (!booking || !booking.scheduled_at) return DEMO_DETAILS;
+  const when = new Date(booking.scheduled_at);
+  return [
+    ["หมายเลขการจอง", String(booking.id)],
+    ["วันนัดหมาย", when.toLocaleDateString("th-TH")],
+    ["เวลา", when.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })],
+    ["สถานที่", `${booking.pickup_address} → ${booking.dropoff_address}`],
+    ["ขนาดสิ่งของ", SIZE_LABEL[booking.item_size] ?? booking.item_size],
+  ];
+}
+
+const baht = (n) => `${Number(n).toLocaleString()} บาท`;
+
+// ยอดเงินจริงจาก ③ (คำนวณและเก็บใน booking) ⑥ ไม่คำนวณเอง
+function hasMoney(booking) {
+  return booking && booking.deposit_amount !== undefined && booking.total_price !== undefined;
+}
+
+function moneyRows(booking) {
+  return [
+    ["ค่าบริการทั้งหมด", baht(booking.total_price)],
+    ["เงินมัดจำที่ชำระแล้ว", baht(booking.deposit_amount)],
+    ["ส่วนที่เหลือ (จ่ายกับคนขับหลังจบงาน)", baht(booking.remaining_amount)],
+  ];
+}
+
+export default function BookingDetail({ booking, live = false, minutesRemaining, onRequestCancellation }) {
   return (
     <section className="cancellation-card" data-ui-id="UI-06-01">
       <h2>รายละเอียดการจอง</h2>
@@ -16,7 +46,7 @@ export default function BookingDetail({ minutesRemaining, onRequestCancellation 
 
       <h3>ข้อมูลการจอง</h3>
       <dl className="cancellation-details">
-        {DEMO_DETAILS.map(([label, value]) => (
+        {detailsOf(booking).map(([label, value]) => (
           <div className="cancellation-detail-row" key={label}>
             <dt>{label}</dt>
             <dd>{value}</dd>
@@ -25,10 +55,21 @@ export default function BookingDetail({ minutesRemaining, onRequestCancellation 
       </dl>
 
       <h3>เงินมัดจำ</h3>
-      <p className="cancellation-placeholder">ไม่แสดงยอดเงินจริงใน Demo</p>
+      {hasMoney(booking) ? (
+        <dl className="cancellation-details">
+          {moneyRows(booking).map(([label, value]) => (
+            <div className="cancellation-detail-row" key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p className="cancellation-placeholder">ไม่แสดงยอดเงินจริงใน Demo</p>
+      )}
 
       <button className="cancellation-button cancellation-button-danger" type="button" onClick={onRequestCancellation}>
-        ทดลองเงื่อนไขการยกเลิก
+        {live ? "ยกเลิกการจอง" : "ทดลองเงื่อนไขการยกเลิก"}
       </button>
     </section>
   );

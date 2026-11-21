@@ -1,0 +1,76 @@
+/* ปรับ UI ให้ responsive ทุกส่วน (โหลดหลังไฟล์ css อื่นเพื่อทับค่าเดิม) ตั้งแต่มือถือ 320px ถึงจอกว้าง */
+
+/* โครงหน้า: ความกว้างยืดตามจอ ระยะขอบปรับตามขนาด */
+.wrap { width: 100%; max-width: 1100px; padding: 16px clamp(12px, 4vw, 28px) 48px; }
+.top { flex-wrap: wrap; }
+.top h1 { font-size: clamp(19px, 5vw, 24px); }
+.card { padding: clamp(14px, 4vw, 26px); border-radius: clamp(16px, 4vw, 22px); }
+@media (min-width: 640px) { .wrap { padding-top: 32px; } }
+
+/* ข้อความยาว (ที่อยู่) ขึ้นบรรทัดใหม่ ไม่ดันหน้าให้เลื่อนแนวนอน */
+dd, .selected-location, .alert, .hint, .cancellation-result span { overflow-wrap: anywhere; }
+
+/* ปุ่มกดง่ายบนจอสัมผัส */
+.btn, button.primary, .tabs button, .cancellation-button, .cancellation-time-options button { min-height: 44px; }
+button.link { min-height: 44px; padding: 0 4px; }
+
+/* ฟอร์มบัตร: ช่องวันหมดอายุ/CVV ขึ้นบรรทัดใหม่เมื่อจอแคบ */
+.row { flex-wrap: wrap; }
+.row .field { flex: 1 1 140px; }
+.qr { width: min(60vw, 180px); height: auto; aspect-ratio: 1; }
+
+/* ตารางประวัติการชำระ: ข้อความในช่องขึ้นบรรทัดใหม่ได้เมื่อจอแคบ */
+.history th, .history td { overflow-wrap: anywhere; }
+
+/* ปุ่มรอง (ตัวที่สองของหน้าจองสำเร็จ) ใช้สไตล์ขอบ ไม่ให้แย่งปุ่มหลัก */
+.done .btn + .btn { background: #fff; color: var(--brand); border: 1px solid var(--brand); }
+
+/* ปุ่ม Demo ของหน้าติดตามสถานะ */
+.demo-btn { min-height: 44px; padding: 8px 12px; border: 1px solid var(--brand); border-radius: 10px;
+  background: #fff; color: var(--brand); font: inherit; cursor: pointer; }
+
+/* ยกเลิกการจอง (⑥) */
+.cancellation-time-options { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+/* รายละเอียดการจองให้กระชับ: แถวละบรรทัด (ป้าย | ค่า) ไม่ซ้อนสองบรรทัด และจอกว้างแบ่งสองคอลัมน์ */
+.cancellation-card h3 { margin: 14px 0 4px; font-size: 16px; }
+.cancellation-card h2 { font-size: 20px; }
+.cancellation-detail-row { grid-template-columns: minmax(84px, 120px) 1fr; gap: 4px 12px; padding: 6px 0; }
+.cancellation-demo-banner, .cancellation-demo-notice { padding: 8px 12px; font-size: 14px; }
+.cancellation-demo-banner { margin: 0 0 10px; }
+.cancellation-demo-fold { margin: 0 0 12px; }
+.cancellation-demo-fold > summary { cursor: pointer; padding: 10px 4px; color: var(--brand); font-weight: 600; min-height: 44px; }
+.cancellation-demo-fold .cancellation-time-selector { margin-top: 0; }
+@media (min-width: 720px) {
+  .cancellation-details { display: grid; grid-template-columns: 1fr 1fr; column-gap: 32px; }
+}
+
+/* ติดตามสถานะ (⑤): กรอบแผนที่สูงตามจอ (ค่า inline เดิมคือ 400px จึงต้องใช้ !important) */
+[data-testid="customer-page"] { height: clamp(300px, 62vh, 560px) !important; }
+
+/* ภาพรวมการจอง (⑤): ป้ายขั้นและที่อยู่ไม่ล้นจอแคบ (ค่า inline เดิมจึงใช้ !important) */
+[data-testid="overview-steps"] li { min-width: 0; overflow-wrap: anywhere; }
+[data-testid="overview-addresses"] { flex-wrap: wrap !important; overflow-wrap: anywhere; }
+[data-testid="overview-addresses"] > div { flex: 1 1 150px !important; min-width: 0; }
+
+/* ภาพรวมการจอง (⑤): ขยายเนื้อหาในกล่องให้เต็มความกว้างและตัวอักษรใหญ่ขึ้น (ค่า inline เดิมจึงใช้ !important) */
+[data-testid="overview-page"] { max-width: none !important; font-size: 16px; }
+[data-testid="overview-steps"] { gap: 8px !important; margin: 4px 0 12px !important; }
+[data-testid="overview-steps"] li { font-size: clamp(12px, 1.7vw, 15px) !important; padding-top: 8px; }
+[data-testid="overview-addresses"] { font-size: clamp(14px, 1.8vw, 16px) !important; gap: 16px !important; margin-top: 12px !important; }
+[data-testid="countdown"] { margin-top: 20px !important; font-size: clamp(16px, 2.6vw, 24px); }
+[data-testid="countdown"] > div:last-child { font-size: clamp(13px, 1.6vw, 15px) !important; margin-top: 4px; }
+[data-testid="track-button"] { font-size: 16px; }
+
+/* ภาพรวมการจอง (⑤): ให้เข้าธีมเดียวกับหน้าอื่น (สีแบรนด์ พื้นอ่อน มุมมน ฟอนต์เดียวกัน) */
+[data-testid="overview-page"] { font-family: inherit !important; color: var(--fg); }
+[data-testid="overview-steps"] li { border-top-width: 5px !important; border-radius: 3px; }
+[data-testid="overview-addresses"] > div { background: var(--soft); border: 1px solid var(--line-soft); border-radius: 12px; padding: 10px 14px; }
+[data-testid="overview-addresses"] b { display: block; color: var(--brand-dark); margin-bottom: 2px; }
+[data-testid="countdown"] { background: var(--soft); border: 1px solid var(--line-soft); border-radius: 12px; padding: 14px 12px; }
+[data-testid="countdown"] b { color: var(--brand); font-variant-numeric: tabular-nums; }
+[data-testid="countdown"] > div:last-child { color: var(--label) !important; }
+[data-testid="track-button"] { background: var(--brand) !important; border-radius: 12px !important; }
+[data-testid="overview-page"] + h3, .card > section h3 { color: var(--label); }
+
+/* ปุ่มกลับด้านบนกับการ์ดถัดไปเว้นระยะ */
+.btn + .card { margin-top: 12px; }

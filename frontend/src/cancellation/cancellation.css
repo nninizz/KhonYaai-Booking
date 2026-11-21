@@ -35,7 +35,7 @@
 
 .cancellation-time-selector,
 .cancellation-card {
-  width: min(100%, 520px);
+  width: 100%;
   margin: 0 auto 16px;
   padding: 20px;
   border: 1px solid #d8e0e7;

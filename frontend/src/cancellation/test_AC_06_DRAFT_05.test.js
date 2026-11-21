@@ -40,3 +40,13 @@ test("test_AC_06_DRAFT_05_cancellation_boundaries", async (t) => {
     assert.equal(result.confirmed, false);
   });
 });
+
+import { minutesUntil } from "./demoState.js";
+
+test("test_AC_06_DRAFT_05_minutes_until_real_booking", () => {
+  const now = new Date("2026-11-21T10:00:00").getTime();
+  assert.equal(minutesUntil("2026-11-21T12:00:00", now), 120);
+  assert.equal(minutesUntil("2026-11-21T10:44:59", now), 44);
+  assert.equal(minutesUntil("2026-11-21T09:00:00", now), 0);
+  assert.equal(createInitialDemoState(90).minutesRemaining, 90);
+});

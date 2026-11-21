@@ -1,6 +1,38 @@
 // รองรับ REQ-FN-DRAFT-CAN-05 โดยแสดงผลตาม BR-CAN-DRAFT-09 เป็นตัวอย่างเท่านั้น
-export default function ResultPreview({ minutesRemaining, onBack }) {
+export default function ResultPreview({ minutesRemaining, onBack, live = false, liveResult = null }) {
   const eligibleForRefund = minutesRemaining >= 120;
+
+  // โหมดจริง: แสดงผลจาก backend (④ คืน/ริบมัดจำ, ⑤ หยุดติดตาม)
+  if (live) {
+    const data = liveResult?.data;
+    return (
+      <section className="cancellation-card" data-ui-id="UI-06-04">
+        <h2>ผลการยกเลิก</h2>
+        {(!liveResult || liveResult.phase === "loading") && <p role="status">กำลังยกเลิกการจอง…</p>}
+        {liveResult?.phase === "error" && (
+          <>
+            <div className="cancellation-result" role="alert">
+              <strong>ยกเลิกไม่สำเร็จ</strong>
+              <span>{liveResult.message}</span>
+            </div>
+            <button className="cancellation-button cancellation-button-secondary" type="button" onClick={onBack}>
+              กลับไปยังรายละเอียดการจอง
+            </button>
+          </>
+        )}
+        {liveResult?.phase === "done" && (
+          <div className="cancellation-result" role="status">
+            <strong>ยกเลิกการจองหมายเลข {data.booking_id} แล้ว</strong>
+            {data.deposit_result === "REFUNDED" ? (
+              <span>คืนมัดจำเต็มจำนวน {Number(data.deposit_amount).toLocaleString()} บาท</span>
+            ) : (
+              <span>ไม่คืนมัดจำ {Number(data.deposit_amount).toLocaleString()} บาท มัดจำเป็นของ Platform</span>
+            )}
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="cancellation-card" data-ui-id="UI-06-04">
